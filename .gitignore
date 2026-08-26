@@ -4,7 +4,12 @@ node_modules/
 # Build output
 dist/
 .next/
+out/
 coverage/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
 # Environment
 .env
@@ -19,3 +24,4 @@ Thumbs.db
 
 # Logs
 *.log
+npm-debug.log*

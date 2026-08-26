@@ -2,6 +2,29 @@
 
 Sistema de gestão de vendas e comissões de consórcio.
 
+## Requisitos
+
+- Node.js 20.9 ou superior.
+- npm 10 ou superior.
+
+## Executar localmente
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+A aplicação estará disponível em `http://localhost:3000`.
+
+## Validação
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
 ## Objetivo do MVP
 
 Permitir que a corretora cadastre as vendas efetuadas, calcule as parcelas de comissão e mostre ao vendedor quanto ele tem a receber em cada mês.

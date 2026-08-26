@@ -1,0 +1,32 @@
+# Comissia
+
+Sistema de gestão de vendas e comissões de consórcio.
+
+## Objetivo do MVP
+
+Permitir que a corretora cadastre as vendas efetuadas, calcule as parcelas de comissão e mostre ao vendedor quanto ele tem a receber em cada mês.
+
+## Primeiro ciclo
+
+- Cadastro e edição de vendedores.
+- Configuração do percentual de comissão acordado com cada vendedor.
+- Cadastro de vendas efetuadas.
+- Cálculo das parcelas de comissão.
+- Data prevista de pagamento de cada parcela.
+- Situação da venda: adimplente, inadimplente, cancelada ou contemplada.
+- Visão mensal das comissões do vendedor.
+- Separação entre o percentual da corretora e o percentual visível ao vendedor.
+
+## Fora do primeiro ciclo
+
+- Conciliação automática de extratos das administradoras.
+- Gestão completa de parceiros e indicadores.
+- Importação de arquivos das administradoras.
+- Metas e classificações comerciais.
+- Repasse financeiro e demonstrativos definitivos.
+
+Esses módulos serão adicionados depois que o fluxo principal de vendas e comissões estiver validado com dados reais.
+
+## Documentação
+
+- [Escopo inicial do MVP](docs/mvp.md)

@@ -6,12 +6,49 @@ Sistema de gestão de vendas e comissões de consórcio.
 
 - Node.js 20.9 ou superior.
 - npm 10 ou superior.
+- Docker Desktop.
+
+## Configurar o ambiente
+
+Crie o arquivo local de variáveis a partir do exemplo:
+
+```bash
+cp .env.example .env.local
+```
+
+O `.env.local` contém as credenciais usadas pelo PostgreSQL e pela aplicação e
+não deve ser versionado.
+
+## Banco de dados local
+
+Inicie o PostgreSQL:
+
+```bash
+npm run db:up
+```
+
+O banco ficará disponível em `localhost:5432`. Para conferir a inicialização:
+
+```bash
+docker compose ps
+npm run db:logs
+```
+
+Para encerrar o banco sem apagar os dados:
+
+```bash
+npm run db:down
+```
+
+Os dados ficam armazenados no volume Docker `comissia_postgres_data`. O comando
+`docker compose down -v` também remove esse volume e deve ser usado somente
+quando for necessário recriar o banco do zero.
 
 ## Executar localmente
 
 ```bash
 npm install
-cp .env.example .env.local
+npm run db:up
 npm run dev
 ```
 

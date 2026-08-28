@@ -13,7 +13,7 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "tsx scripts/migrate.ts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint . --max-warnings=0",
@@ -39,6 +39,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.3",
     "prettier": "3.9.6",
+    "tsx": "^4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11"
   }

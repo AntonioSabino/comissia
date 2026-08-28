@@ -116,3 +116,4 @@ Esses módulos serão adicionados depois que o fluxo principal de vendas e comis
 ## Documentação
 
 - [Escopo inicial do MVP](docs/mvp.md)
+- [Arquitetura e convenções](docs/architecture.md)

@@ -173,7 +173,7 @@
       "checkConstraints": {
         "users_role_seller_link_check": {
           "name": "users_role_seller_link_check",
-          "value": "(\"users\".\"role\" = 'seller' AND \"users\".\"seller_id\" IS NOT NULL)\\n          OR (\"users\".\"role\" = 'admin' AND \"users\".\"seller_id\" IS NULL)"
+          "value": "(\"users\".\"role\" = 'seller' AND \"users\".\"seller_id\" IS NOT NULL)\n          OR (\"users\".\"role\" = 'admin' AND \"users\".\"seller_id\" IS NULL)"
         }
       },
       "isRLSEnabled": false

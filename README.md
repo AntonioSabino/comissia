@@ -83,10 +83,17 @@ A aplicação estará disponível em `http://localhost:3000`.
 ## Validação
 
 ```bash
+npm run format:check
+npm run typecheck
 npm run lint
 npm run test
+npm run db:check
 npm run build
 ```
+
+O GitHub Actions executa esses comandos automaticamente em pull requests e em
+pushes para a `main`. Uma alteração só deve ser integrada quando o check
+`Quality` estiver aprovado.
 
 ## Objetivo do MVP
 

@@ -93,7 +93,7 @@ npm run build
 
 O GitHub Actions executa esses comandos automaticamente em pull requests e em
 pushes para a `main`. Uma alteração só deve ser integrada quando o check
-`Quality` estiver aprovado.
+`CI / Quality` estiver aprovado.
 
 ## Objetivo do MVP
 

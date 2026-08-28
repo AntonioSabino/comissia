@@ -20,3 +20,16 @@ uma conta de acesso.
 A tabela armazena somente `password_hash`. A geração e a verificação segura do
 hash pertencem aos casos de uso de autenticação e serão implementadas junto ao
 login. Senhas em texto puro nunca devem ser persistidas.
+
+## Login e sessões
+
+- Senhas usam `scrypt` com salt aleatório e comparação em tempo constante.
+- Credenciais inválidas retornam sempre a mesma mensagem.
+- A sessão dura sete dias e usa um token aleatório de 256 bits.
+- Somente o SHA-256 do token é persistido na tabela `sessions`.
+- O navegador recebe o token em cookie `HttpOnly`, `SameSite=Lax` e
+  `Secure` em produção.
+- O logout apaga a sessão do PostgreSQL antes de expirar o cookie.
+
+A autorização de páginas e operações de acordo com o perfil é responsabilidade
+da etapa de proteção de rotas.

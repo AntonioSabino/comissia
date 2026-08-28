@@ -38,9 +38,9 @@ describe("database schema", () => {
       "created_at",
       "updated_at",
     ]);
-    expect(table.uniqueConstraints.map((constraint) => constraint.name)).toContain(
-      "users_seller_id_unique",
-    );
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toContain("users_seller_id_unique");
     expect(table.foreignKeys).toHaveLength(1);
     expect(table.checks.map((constraint) => constraint.name)).toContain(
       "users_role_seller_link_check",

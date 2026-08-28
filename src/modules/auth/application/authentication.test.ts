@@ -58,10 +58,7 @@ describe("authentication", () => {
     );
 
     expect(repository.searchedEmail).toBe("admin@comissia.local");
-    expect(verifyPassword).toHaveBeenCalledWith(
-      "senha-correta",
-      "stored-hash",
-    );
+    expect(verifyPassword).toHaveBeenCalledWith("senha-correta", "stored-hash");
     expect(result.sessionToken).toBe("raw-session-token");
     expect(result.expiresAt).toEqual(
       new Date(now.getTime() + SESSION_DURATION_MS),

@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 10
 
     env:
+      DATABASE_URL: postgresql://comissia:comissia@localhost:5432/comissia
       NEXT_TELEMETRY_DISABLED: 1
 
     steps:

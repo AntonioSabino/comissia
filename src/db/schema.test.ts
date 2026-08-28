@@ -1,6 +1,6 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { sellers, userRoleEnum, users } from "./schema";
+import { sellers, sessions, userRoleEnum, users } from "./schema";
 
 describe("database schema", () => {
   it("defines the initial sellers table", () => {
@@ -17,6 +17,20 @@ describe("database schema", () => {
       "created_at",
       "updated_at",
     ]);
+  });
+
+  it("defines revocable sessions", () => {
+    const table = getTableConfig(sessions);
+
+    expect(table.name).toBe("sessions");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "user_id",
+      "token_hash",
+      "expires_at",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
   });
 
   it("persists the supported access profiles", () => {

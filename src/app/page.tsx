@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const firstCycle = [
   "Cadastro de vendedores",
   "Cadastro de vendas",
@@ -15,6 +17,9 @@ export default function Home() {
         <p className="eyebrow">MVP em construção</p>
         <h1>Comissia</h1>
         <p className="subtitle">Gestão de vendas e comissões de consórcio.</p>
+        <Link className="primary-link" href="/login">
+          Acessar a Comissia
+        </Link>
 
         <div className="cycle-card">
           <p>Primeiro ciclo</p>

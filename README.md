@@ -44,6 +44,32 @@ Os dados ficam armazenados no volume Docker `comissia_postgres_data`. O comando
 `docker compose down -v` também remove esse volume e deve ser usado somente
 quando for necessário recriar o banco do zero.
 
+## Schema e migrações
+
+O schema do PostgreSQL é definido em TypeScript com Drizzle ORM. Depois de
+alterar o schema, gere e revise a migração SQL:
+
+```bash
+npm run db:generate
+```
+
+Com o PostgreSQL em execução, aplique as migrações pendentes:
+
+```bash
+npm run db:migrate
+```
+
+Para verificar a consistência do histórico ou abrir o explorador local:
+
+```bash
+npm run db:check
+npm run db:studio
+```
+
+As migrações geradas na pasta `drizzle/` fazem parte do código e devem ser
+versionadas. Alterações de produção devem usar migrações revisadas; o projeto
+não utiliza `drizzle-kit push` como fluxo de implantação.
+
 ## Executar localmente
 
 ```bash

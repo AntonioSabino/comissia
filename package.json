@@ -13,7 +13,7 @@
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "tsx scripts/migrate.mts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint . --max-warnings=0",

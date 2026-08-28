@@ -1,5 +1,8 @@
-export { sellers } from "../modules/sellers/infrastructure/db/schema";
+export { userRoleEnum, users } from "../modules/auth/infrastructure/db/schema";
 export type {
-  NewSeller,
-  Seller,
-} from "../modules/sellers/infrastructure/db/schema";
+  NewUser,
+  User,
+  UserRole,
+} from "../modules/auth/infrastructure/db/schema";
+export { sellers } from "../modules/sellers";
+export type { NewSeller, Seller } from "../modules/sellers";

@@ -4,6 +4,72 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.seller_commission_rates": {
+      "name": "seller_commission_rates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "seller_id": {
+          "name": "seller_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate_basis_points": {
+          "name": "rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "seller_commission_rates_seller_id_sellers_id_fk": {
+          "name": "seller_commission_rates_seller_id_sellers_id_fk",
+          "tableFrom": "seller_commission_rates",
+          "tableTo": "sellers",
+          "columnsFrom": ["seller_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "seller_commission_rates_seller_effective_from_unique": {
+          "name": "seller_commission_rates_seller_effective_from_unique",
+          "nullsNotDistinct": false,
+          "columns": ["seller_id", "effective_from"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "seller_commission_rates_rate_basis_points_check": {
+          "name": "seller_commission_rates_rate_basis_points_check",
+          "value": "\"seller_commission_rates\".\"rate_basis_points\" > 0 AND \"seller_commission_rates\".\"rate_basis_points\" <= 10000"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.sellers": {
       "name": "sellers",
       "schema": "",
@@ -68,16 +134,12 @@
         "sellers_document_unique": {
           "name": "sellers_document_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "document"
-          ]
+          "columns": ["document"]
         },
         "sellers_email_unique": {
           "name": "sellers_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -127,12 +189,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -142,9 +200,7 @@
         "sessions_token_hash_unique": {
           "name": "sessions_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -221,12 +277,8 @@
           "name": "users_seller_id_sellers_id_fk",
           "tableFrom": "users",
           "tableTo": "sellers",
-          "columnsFrom": [
-            "seller_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seller_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -236,16 +288,12 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "users_seller_id_unique": {
           "name": "users_seller_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "seller_id"
-          ]
+          "columns": ["seller_id"]
         }
       },
       "policies": {},
@@ -256,89 +304,13 @@
         }
       },
       "isRLSEnabled": false
-    },
-    "public.seller_commission_rates": {
-      "name": "seller_commission_rates",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "seller_id": {
-          "name": "seller_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rate_basis_points": {
-          "name": "rate_basis_points",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "effective_from": {
-          "name": "effective_from",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "seller_commission_rates_seller_id_sellers_id_fk": {
-          "name": "seller_commission_rates_seller_id_sellers_id_fk",
-          "tableFrom": "seller_commission_rates",
-          "tableTo": "sellers",
-          "columnsFrom": [
-            "seller_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "seller_commission_rates_seller_effective_from_unique": {
-          "name": "seller_commission_rates_seller_effective_from_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "seller_id",
-            "effective_from"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "seller_commission_rates_rate_basis_points_check": {
-          "name": "seller_commission_rates_rate_basis_points_check",
-          "value": "\"seller_commission_rates\".\"rate_basis_points\" > 0 AND \"seller_commission_rates\".\"rate_basis_points\" <= 10000"
-        }
-      },
-      "isRLSEnabled": false
     }
   },
   "enums": {
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "admin",
-        "seller"
-      ]
+      "values": ["admin", "seller"]
     }
   },
   "schemas": {},

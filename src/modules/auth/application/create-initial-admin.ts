@@ -75,18 +75,8 @@ export async function createInitialAdmin(
   }: CreateInitialAdminDependencies,
 ): Promise<CreatedInitialAdmin> {
   const normalizedInput = validateInput(input);
-
-  if (await repository.adminExists()) {
-    throw new InitialAdminAlreadyExistsError();
-  }
-
-  if (await repository.userEmailExists(normalizedInput.email)) {
-    throw new InitialAdminEmailInUseError();
-  }
-
   const passwordHash = await hashPassword(normalizedInput.password);
-
-  return repository.createAdmin({
+  const result = await repository.createInitialAdmin({
     name: normalizedInput.name,
     email: normalizedInput.email,
     passwordHash,
@@ -94,4 +84,14 @@ export async function createInitialAdmin(
     sellerId: null,
     active: true,
   });
+
+  if (result.status === "admin-already-exists") {
+    throw new InitialAdminAlreadyExistsError();
+  }
+
+  if (result.status === "email-in-use") {
+    throw new InitialAdminEmailInUseError();
+  }
+
+  return result.admin;
 }

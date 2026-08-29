@@ -206,3 +206,266 @@ h1 {
     padding: 24px;
   }
 }
+
+
+.admin-shell {
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.admin-content {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.admin-header .eyebrow {
+  margin-top: 0;
+}
+
+.admin-header h1 {
+  font-size: clamp(38px, 7vw, 58px);
+}
+
+.admin-header .subtitle {
+  margin-bottom: 0;
+}
+
+.admin-header > a {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-card {
+  margin-bottom: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 12px 35px rgb(25 47 89 / 6%);
+}
+
+.admin-card h2 {
+  margin: 0 0 22px;
+  font-size: 22px;
+}
+
+.seller-form {
+  display: grid;
+  gap: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.seller-form label {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.seller-form .field-wide {
+  grid-column: 1 / -1;
+}
+
+.seller-form input {
+  min-width: 0;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--foreground);
+  font: inherit;
+}
+
+.seller-form input:focus {
+  border-color: var(--brand);
+  outline: 3px solid rgb(33 86 216 / 15%);
+}
+
+.seller-form input[aria-invalid="true"] {
+  border-color: #bd2828;
+}
+
+.input-suffix {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.input-suffix:focus-within {
+  border-color: var(--brand);
+  outline: 3px solid rgb(33 86 216 / 15%);
+}
+
+.input-suffix input {
+  border: 0;
+  outline: 0;
+}
+
+.input-suffix span {
+  padding-right: 14px;
+  color: var(--muted);
+}
+
+.checkbox-field {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  justify-content: start;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+}
+
+.field-error {
+  color: #a32121;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.form-success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #e8f8ef;
+  color: #176b3a;
+  font-size: 14px;
+}
+
+.seller-form > button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--brand);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.seller-form > button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+}
+
+.section-heading span {
+  display: grid;
+  min-width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.empty-state {
+  margin: 22px 0 0;
+  color: var(--muted);
+}
+
+.table-scroll {
+  margin-top: 22px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+th {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 14px;
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-active {
+  background: #e8f8ef;
+  color: #176b3a;
+}
+
+.status-inactive {
+  background: #eef1f5;
+  color: #566174;
+}
+
+@media (max-width: 680px) {
+  .admin-shell {
+    padding: 24px 16px;
+  }
+
+  .admin-header {
+    display: grid;
+  }
+
+  .admin-header > a {
+    justify-self: start;
+  }
+
+  .admin-card {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-form .field-wide {
+    grid-column: auto;
+  }
+}

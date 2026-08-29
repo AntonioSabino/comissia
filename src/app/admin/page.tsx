@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 
 export const metadata: Metadata = {
@@ -16,6 +17,9 @@ export default async function AdminPage() {
         <p className="subtitle">
           Acesso confirmado aos módulos administrativos da Comissia.
         </p>
+        <Link className="primary-link" href="/admin/sellers">
+          Gerenciar vendedores
+        </Link>
       </section>
     </main>
   );

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 
 export const metadata: Metadata = {
   title: "Administração | Comissia",
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  await requirePageRole("admin");
+
   return (
     <main className="page-shell">
       <section className="hero">

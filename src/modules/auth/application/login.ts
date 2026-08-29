@@ -1,3 +1,4 @@
+import { normalizeEmail } from "../domain/email";
 import { verifyPassword as verifyStoredPassword } from "../domain/password";
 import {
   calculateSessionExpiration,
@@ -42,7 +43,7 @@ export async function login(
     now = () => new Date(),
   }: LoginDependencies,
 ): Promise<LoginResult> {
-  const email = input.email.trim().toLowerCase();
+  const email = normalizeEmail(input.email);
   const user = await repository.findUserByEmail(email);
   const passwordMatches = await verifyPassword(
     input.password,

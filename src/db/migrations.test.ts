@@ -3,7 +3,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const migrationPath = fileURLToPath(
-  new URL("../../drizzle/0003_seller_commission_rates.sql", import.meta.url),
+  new URL(
+    "../../drizzle/0004_append_only_commission_rates.sql",
+    import.meta.url,
+  ),
 );
 const migrationSql = readFileSync(migrationPath, "utf8");
 

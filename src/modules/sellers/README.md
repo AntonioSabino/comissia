@@ -23,6 +23,10 @@ flutuante: `200` representa 2% e `250` representa 2,5%. São aceitos valores
 entre 1 e 10.000 pontos-base. Um vendedor pode ter somente uma regra iniciando
 na mesma data.
 
+O banco rejeita alterações e exclusões de percentuais já registrados. Para
+corrigir um lançamento ou alterar um acordo, deve-se criar uma nova vigência,
+preservando o histórico anterior para consulta e auditoria.
+
 ## Não pertence a este módulo
 
 - dados da venda de consórcio;

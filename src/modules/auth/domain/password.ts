@@ -11,16 +11,56 @@ const BLOCK_SIZE = 8;
 const PARALLELIZATION = 1;
 const KEY_LENGTH = 64;
 const SALT_LENGTH = 16;
-const MAX_MEMORY = 64 * 1024 * 1024;
+const MAX_MEMORY = 128 * 1024 * 1024;
+const MAX_COST = 65_536;
+const MAX_BLOCK_SIZE = 16;
+const MAX_PARALLELIZATION = 4;
 
-const options: ScryptOptions = {
-  N: COST,
-  r: BLOCK_SIZE,
-  p: PARALLELIZATION,
-  maxmem: MAX_MEMORY,
+type ScryptParameters = {
+  cost: number;
+  blockSize: number;
+  parallelization: number;
 };
 
-function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
+const currentParameters: ScryptParameters = {
+  cost: COST,
+  blockSize: BLOCK_SIZE,
+  parallelization: PARALLELIZATION,
+};
+
+function isSafeIntegerInRange(
+  value: number,
+  minimum: number,
+  maximum: number,
+): boolean {
+  return Number.isSafeInteger(value) && value >= minimum && value <= maximum;
+}
+
+function areSafeParameters(parameters: ScryptParameters): boolean {
+  const { cost, blockSize, parallelization } = parameters;
+  const estimatedMemory = 128 * cost * blockSize;
+
+  return (
+    isSafeIntegerInRange(cost, COST, MAX_COST) &&
+    (cost & (cost - 1)) === 0 &&
+    isSafeIntegerInRange(blockSize, 1, MAX_BLOCK_SIZE) &&
+    isSafeIntegerInRange(parallelization, 1, MAX_PARALLELIZATION) &&
+    estimatedMemory < MAX_MEMORY
+  );
+}
+
+function deriveKey(
+  password: string,
+  salt: Buffer,
+  parameters: ScryptParameters,
+): Promise<Buffer> {
+  const options: ScryptOptions = {
+    N: parameters.cost,
+    r: parameters.blockSize,
+    p: parameters.parallelization,
+    maxmem: MAX_MEMORY,
+  };
+
   return new Promise((resolve, reject) => {
     scrypt(password, salt, KEY_LENGTH, options, (error, key) => {
       if (error) {
@@ -35,13 +75,13 @@ function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(SALT_LENGTH);
-  const derivedKey = await deriveKey(password, salt);
+  const derivedKey = await deriveKey(password, salt, currentParameters);
 
   return [
     ALGORITHM,
-    COST,
-    BLOCK_SIZE,
-    PARALLELIZATION,
+    currentParameters.cost,
+    currentParameters.blockSize,
+    currentParameters.parallelization,
     salt.toString("base64url"),
     derivedKey.toString("base64url"),
   ].join("$");
@@ -59,13 +99,13 @@ export async function verifyPassword(
 
   const [algorithm, cost, blockSize, parallelization, saltValue, hashValue] =
     parts;
+  const parameters: ScryptParameters = {
+    cost: Number(cost),
+    blockSize: Number(blockSize),
+    parallelization: Number(parallelization),
+  };
 
-  if (
-    algorithm !== ALGORITHM ||
-    Number(cost) !== COST ||
-    Number(blockSize) !== BLOCK_SIZE ||
-    Number(parallelization) !== PARALLELIZATION
-  ) {
+  if (algorithm !== ALGORITHM || !areSafeParameters(parameters)) {
     return false;
   }
 
@@ -77,7 +117,7 @@ export async function verifyPassword(
       return false;
     }
 
-    const actualKey = await deriveKey(password, salt);
+    const actualKey = await deriveKey(password, salt, parameters);
 
     return timingSafeEqual(actualKey, expectedKey);
   } catch {

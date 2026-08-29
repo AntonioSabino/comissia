@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type {
   AuthRepository,
@@ -19,7 +19,7 @@ export const authRepository: AuthRepository = {
         active: users.active,
       })
       .from(users)
-      .where(eq(users.email, email))
+      .where(eq(sql<string>`lower(${users.email})`, email))
       .limit(1);
 
     return user ?? null;

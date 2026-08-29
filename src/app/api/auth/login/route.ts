@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { InvalidCredentialsError } from "@/modules/auth/application/errors";
 import { login } from "@/modules/auth/application/login";
+import { normalizeEmail } from "@/modules/auth/domain/email";
 import { SESSION_COOKIE_NAME } from "@/modules/auth/domain/session";
 import { authRepository } from "@/modules/auth/infrastructure/db/auth-repository";
 
@@ -18,18 +19,22 @@ function parseCredentials(value: unknown): Credentials | null {
 
   const { email, password } = value as Record<string, unknown>;
 
+  if (typeof email !== "string" || typeof password !== "string") {
+    return null;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+
   if (
-    typeof email !== "string" ||
-    typeof password !== "string" ||
-    email.trim().length === 0 ||
-    email.length > 254 ||
+    normalizedEmail.length === 0 ||
+    normalizedEmail.length > 254 ||
     password.length === 0 ||
     password.length > 1_024
   ) {
     return null;
   }
 
-  return { email, password };
+  return { email: normalizedEmail, password };
 }
 
 export async function POST(request: Request) {

@@ -15,6 +15,16 @@ O perfil é persistido pelo enum PostgreSQL `user_role`. A restrição
 `seller_id` é único: um cadastro de vendedor não pode ser associado a mais de
 uma conta de acesso.
 
+## Administrador inicial
+
+O primeiro administrador é criado uma única vez pelo comando
+`npm run admin:create`. Nome e e-mail são argumentos obrigatórios, enquanto a
+senha é lida e confirmada de forma oculta em um terminal interativo.
+
+O fluxo normaliza nome e e-mail, exige ao menos 12 caracteres na senha, impede
+e-mail duplicado e recusa a criação se já houver um administrador. Nenhuma senha
+padrão existe no código ou na configuração.
+
 ## Senhas
 
 A tabela armazena somente `password_hash`. Senhas usam `scrypt` com salt

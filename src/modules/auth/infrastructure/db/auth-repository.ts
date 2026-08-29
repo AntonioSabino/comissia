@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type {
   AuthRepository,
@@ -20,6 +20,29 @@ export const authRepository: AuthRepository = {
       })
       .from(users)
       .where(eq(sql<string>`lower(${users.email})`, email))
+      .limit(1);
+
+    return user ?? null;
+  },
+
+  async findActiveUserBySessionTokenHash(tokenHash, now) {
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        sellerId: users.sellerId,
+      })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(
+        and(
+          eq(sessions.tokenHash, tokenHash),
+          gt(sessions.expiresAt, now),
+          eq(users.active, true),
+        ),
+      )
       .limit(1);
 
     return user ?? null;

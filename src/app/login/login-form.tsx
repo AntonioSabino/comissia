@@ -15,6 +15,12 @@ async function readErrorMessage(response: Response): Promise<string> {
   }
 }
 
+type LoginResult = {
+  user?: {
+    role?: unknown;
+  };
+};
+
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +47,15 @@ export function LoginForm() {
         return;
       }
 
-      router.replace("/");
+      const result = (await response.json()) as LoginResult;
+      const role = result.user?.role;
+
+      if (role !== "admin" && role !== "seller") {
+        setError("Não foi possível identificar o perfil do usuário");
+        return;
+      }
+
+      router.replace(role === "admin" ? "/admin" : "/seller");
       router.refresh();
     } catch {
       setError("Não foi possível conectar ao sistema");

@@ -1,6 +1,12 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { sellers, sessions, userRoleEnum, users } from "./schema";
+import {
+  sellerCommissionRates,
+  sellers,
+  sessions,
+  userRoleEnum,
+  users,
+} from "./schema";
 
 describe("database schema", () => {
   it("defines the initial sellers table", () => {
@@ -17,6 +23,26 @@ describe("database schema", () => {
       "created_at",
       "updated_at",
     ]);
+  });
+
+  it("keeps seller commission rates as dated history", () => {
+    const table = getTableConfig(sellerCommissionRates);
+
+    expect(table.name).toBe("seller_commission_rates");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "seller_id",
+      "rate_basis_points",
+      "effective_from",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toContain("seller_commission_rates_seller_effective_from_unique");
+    expect(table.checks.map((constraint) => constraint.name)).toContain(
+      "seller_commission_rates_rate_basis_points_check",
+    );
   });
 
   it("defines revocable sessions", () => {

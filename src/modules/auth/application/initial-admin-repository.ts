@@ -13,8 +13,13 @@ export type CreatedInitialAdmin = {
   email: string;
 };
 
+export type InitialAdminCreationResult =
+  | { status: "created"; admin: CreatedInitialAdmin }
+  | { status: "admin-already-exists" }
+  | { status: "email-in-use" };
+
 export interface InitialAdminRepository {
-  adminExists(): Promise<boolean>;
-  userEmailExists(email: string): Promise<boolean>;
-  createAdmin(admin: InitialAdminRecord): Promise<CreatedInitialAdmin>;
+  createInitialAdmin(
+    admin: InitialAdminRecord,
+  ): Promise<InitialAdminCreationResult>;
 }

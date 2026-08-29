@@ -6,7 +6,7 @@ import {
   InvalidInitialAdminInputError,
 } from "./create-initial-admin";
 import type {
-  CreatedInitialAdmin,
+  InitialAdminCreationResult,
   InitialAdminRecord,
   InitialAdminRepository,
 } from "./initial-admin-repository";
@@ -15,19 +15,24 @@ class InMemoryInitialAdminRepository implements InitialAdminRepository {
   admins: InitialAdminRecord[] = [];
   emails = new Set<string>();
 
-  async adminExists(): Promise<boolean> {
-    return this.admins.length > 0;
-  }
+  async createInitialAdmin(
+    admin: InitialAdminRecord,
+  ): Promise<InitialAdminCreationResult> {
+    if (this.admins.length > 0) {
+      return { status: "admin-already-exists" };
+    }
 
-  async userEmailExists(email: string): Promise<boolean> {
-    return this.emails.has(email);
-  }
+    if (this.emails.has(admin.email)) {
+      return { status: "email-in-use" };
+    }
 
-  async createAdmin(admin: InitialAdminRecord): Promise<CreatedInitialAdmin> {
     this.admins.push(admin);
     this.emails.add(admin.email);
 
-    return { id: "admin-1", name: admin.name, email: admin.email };
+    return {
+      status: "created",
+      admin: { id: "admin-1", name: admin.name, email: admin.email },
+    };
   }
 }
 
@@ -79,23 +84,21 @@ describe("createInitialAdmin", () => {
       sellerId: null,
       active: true,
     });
-    const hashPassword = vi.fn();
+    const hashPassword = vi.fn().mockResolvedValue("password-hash");
 
     await expect(
       createInitialAdmin(validInput, { repository, hashPassword }),
     ).rejects.toBeInstanceOf(InitialAdminAlreadyExistsError);
-    expect(hashPassword).not.toHaveBeenCalled();
   });
 
   it("refuses an e-mail already linked to another user", async () => {
     const repository = new InMemoryInitialAdminRepository();
     repository.emails.add(validInput.email);
-    const hashPassword = vi.fn();
+    const hashPassword = vi.fn().mockResolvedValue("password-hash");
 
     await expect(
       createInitialAdmin(validInput, { repository, hashPassword }),
     ).rejects.toBeInstanceOf(InitialAdminEmailInUseError);
-    expect(hashPassword).not.toHaveBeenCalled();
   });
 
   it.each([

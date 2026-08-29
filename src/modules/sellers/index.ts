@@ -1,7 +1,4 @@
-export {
-  sellerCommissionRates,
-  sellers,
-} from "./infrastructure/db/schema";
+export { sellerCommissionRates, sellers } from "./infrastructure/db/schema";
 export type {
   NewSeller,
   NewSellerCommissionRate,

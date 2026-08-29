@@ -5,7 +5,7 @@ export type UserRole = AuthenticatedUser["role"];
 export function hasRequiredRole(
   user: AuthenticatedUser | null,
   requiredRole: UserRole,
-): user is AuthenticatedUser {
+): boolean {
   return user?.role === requiredRole;
 }
 

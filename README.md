@@ -70,6 +70,20 @@ As migrações geradas na pasta `drizzle/` fazem parte do código e devem ser
 versionadas. Alterações de produção devem usar migrações revisadas; o projeto
 não utiliza `drizzle-kit push` como fluxo de implantação.
 
+## Administrador inicial
+
+Depois de aplicar as migrações, crie o primeiro administrador com nome e e-mail
+explícitos:
+
+```bash
+npm run admin:create -- --name "Nome do administrador" --email "admin@empresa.com.br"
+```
+
+O comando solicita e confirma uma senha de pelo menos 12 caracteres sem
+exibi-la no terminal. Ele grava somente o hash `scrypt` e recusa a operação
+quando já existe um administrador. Não coloque a senha no comando, no código,
+no arquivo de ambiente ou em logs.
+
 ## Executar localmente
 
 ```bash

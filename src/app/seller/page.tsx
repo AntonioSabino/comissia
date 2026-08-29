@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 
 export const metadata: Metadata = {
   title: "Área do vendedor | Comissia",
 };
 
-export default function SellerPage() {
+export default async function SellerPage() {
+  await requirePageRole("seller");
+
   return (
     <main className="page-shell">
       <section className="hero">

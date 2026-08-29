@@ -60,15 +60,19 @@ A autenticação de uma requisição consulta o hash do cookie na tabela
 `sessions` e só retorna usuários ativos com sessão ainda válida. O hash da
 senha nunca faz parte desse resultado.
 
-- `/admin` e todas as páginas abaixo dela exigem o perfil `admin`;
-- `/seller` e todas as páginas abaixo dela exigem o perfil `seller`;
+- `/admin` e cada página abaixo dela exigem o perfil `admin`;
+- `/seller` e cada página abaixo dela exigem o perfil `seller`;
 - usuários sem sessão válida são redirecionados para `/login`;
 - usuários autenticados no perfil incorreto são redirecionados para sua própria
   área;
 - usuários já autenticados não retornam à tela de login.
 
-Os layouts protegidos usam `requirePageRole`. Operações administrativas em
-Route Handlers devem usar `authorizeCurrentUser("admin")` e responder com
-`401` ou `403` quando não houver o perfil exigido. A verificação acontece no
-servidor; esconder links no navegador é apenas uma melhoria de interface e não
-substitui autorização.
+Os layouts e cada página protegida usam `requirePageRole`. A repetição é
+intencional: layouts compartilhados podem ser reutilizados durante navegações
+no cliente, enquanto a página ou sua camada de dados deve revalidar a sessão.
+
+Operações administrativas em Route Handlers devem usar
+`authorizeCurrentUser("admin")`. O resultado `unauthenticated` corresponde a
+`401`, `forbidden` a `403` e `authorized` contém o usuário permitido. A
+verificação acontece no servidor; esconder links no navegador é apenas uma
+melhoria de interface e não substitui autorização.

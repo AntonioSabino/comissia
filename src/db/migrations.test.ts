@@ -16,7 +16,7 @@ describe("database migrations", () => {
       'BEFORE UPDATE OR DELETE ON "seller_commission_rates"',
     );
     expect(migrationSql).toContain(
-      'RAISE EXCEPTION \'seller_commission_rates is append-only\'',
+      "RAISE EXCEPTION 'seller_commission_rates is append-only'",
     );
   });
 });

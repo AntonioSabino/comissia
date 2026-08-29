@@ -8,6 +8,11 @@ export type AuthenticationUser = {
   active: boolean;
 };
 
+export type AuthenticatedUser = Omit<
+  AuthenticationUser,
+  "passwordHash" | "active"
+>;
+
 export type SessionRecord = {
   userId: string;
   tokenHash: string;
@@ -16,6 +21,10 @@ export type SessionRecord = {
 
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<AuthenticationUser | null>;
+  findActiveUserBySessionTokenHash(
+    tokenHash: string,
+    now: Date,
+  ): Promise<AuthenticatedUser | null>;
   createSession(session: SessionRecord): Promise<void>;
   deleteSessionByTokenHash(tokenHash: string): Promise<void>;
 }

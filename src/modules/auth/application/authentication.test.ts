@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { hashSessionToken, SESSION_DURATION_MS } from "../domain/session";
+import { authenticateSession } from "./authenticate-session";
 import type {
+  AuthenticatedUser,
   AuthenticationUser,
   AuthRepository,
   SessionRecord,
@@ -17,6 +19,31 @@ class InMemoryAuthRepository implements AuthRepository {
   async findUserByEmail(email: string): Promise<AuthenticationUser | null> {
     this.searchedEmail = email;
     return this.users.find((user) => user.email === email) ?? null;
+  }
+
+  async findActiveUserBySessionTokenHash(
+    tokenHash: string,
+    now: Date,
+  ): Promise<AuthenticatedUser | null> {
+    const session = this.sessions.find(
+      (candidate) =>
+        candidate.tokenHash === tokenHash && candidate.expiresAt > now,
+    );
+    const user = this.users.find(
+      (candidate) => candidate.id === session?.userId && candidate.active,
+    );
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      sellerId: user.sellerId,
+    };
   }
 
   async createSession(session: SessionRecord): Promise<void> {
@@ -70,6 +97,63 @@ describe("authentication", () => {
         expiresAt: result.expiresAt,
       },
     ]);
+  });
+
+  it("resolves an active user from a valid session token", async () => {
+    const repository = new InMemoryAuthRepository();
+    repository.users.push(activeUser);
+    repository.sessions.push({
+      userId: activeUser.id,
+      tokenHash: hashSessionToken("valid-token"),
+      expiresAt: new Date("2026-09-05T12:00:00.000Z"),
+    });
+
+    const user = await authenticateSession("valid-token", {
+      repository,
+      now: () => new Date("2026-09-01T12:00:00.000Z"),
+    });
+
+    expect(user).toEqual({
+      id: activeUser.id,
+      name: activeUser.name,
+      email: activeUser.email,
+      role: activeUser.role,
+      sellerId: null,
+    });
+  });
+
+  it.each([
+    ["missing-token", new Date("2026-09-01T12:00:00.000Z")],
+    ["valid-token", new Date("2026-09-06T12:00:00.000Z")],
+  ])("rejects missing or expired sessions", async (token, now) => {
+    const repository = new InMemoryAuthRepository();
+    repository.users.push(activeUser);
+    repository.sessions.push({
+      userId: activeUser.id,
+      tokenHash: hashSessionToken("valid-token"),
+      expiresAt: new Date("2026-09-05T12:00:00.000Z"),
+    });
+
+    await expect(
+      authenticateSession(token, { repository, now: () => now }),
+    ).resolves.toBeNull();
+  });
+
+  it("rejects sessions belonging to inactive users", async () => {
+    const repository = new InMemoryAuthRepository();
+    repository.users.push({ ...activeUser, active: false });
+    repository.sessions.push({
+      userId: activeUser.id,
+      tokenHash: hashSessionToken("valid-token"),
+      expiresAt: new Date("2026-09-05T12:00:00.000Z"),
+    });
+
+    await expect(
+      authenticateSession("valid-token", {
+        repository,
+        now: () => new Date("2026-09-01T12:00:00.000Z"),
+      }),
+    ).resolves.toBeNull();
   });
 
   it("rejects unknown users without creating a session", async () => {

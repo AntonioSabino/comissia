@@ -56,13 +56,11 @@ function readHiddenInput(prompt: string): Promise<string> {
         if (character === "\u007f" || character === "\b") {
           if (value.length > 0) {
             value = value.slice(0, -1);
-            process.stdout.write("\b \b");
           }
           continue;
         }
 
         value += character;
-        process.stdout.write("*");
       }
     };
 

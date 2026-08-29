@@ -10,5 +10,10 @@ export type {
   User,
   UserRole,
 } from "../modules/auth/infrastructure/db/schema";
-export { sellers } from "../modules/sellers";
-export type { NewSeller, Seller } from "../modules/sellers";
+export { sellerCommissionRates, sellers } from "../modules/sellers";
+export type {
+  NewSeller,
+  NewSellerCommissionRate,
+  Seller,
+  SellerCommissionRate,
+} from "../modules/sellers";

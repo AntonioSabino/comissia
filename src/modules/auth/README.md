@@ -17,19 +17,32 @@ uma conta de acesso.
 
 ## Senhas
 
-A tabela armazena somente `password_hash`. A geração e a verificação segura do
-hash pertencem aos casos de uso de autenticação e serão implementadas junto ao
-login. Senhas em texto puro nunca devem ser persistidas.
+A tabela armazena somente `password_hash`. Senhas usam `scrypt` com salt
+aleatório e comparação em tempo constante. Os parâmetros usados na derivação
+fazem parte do hash e são validados contra limites seguros antes da verificação.
+Senhas em texto puro nunca devem ser persistidas.
 
 ## Login e sessões
 
-- Senhas usam `scrypt` com salt aleatório e comparação em tempo constante.
 - Credenciais inválidas retornam sempre a mesma mensagem.
 - A sessão dura sete dias e usa um token aleatório de 256 bits.
 - Somente o SHA-256 do token é persistido na tabela `sessions`.
 - O navegador recebe o token em cookie `HttpOnly`, `SameSite=Lax` e
   `Secure` em produção.
 - O logout apaga a sessão do PostgreSQL antes de expirar o cookie.
+
+## Limite de tentativas
+
+Antes de executar o `scrypt`, o login limita tentativas em janelas de 15
+minutos:
+
+- até 5 tentativas por e-mail;
+- até 50 tentativas por endereço IP.
+
+O limite por e-mail é reiniciado após um login válido. Os contadores permanecem
+na memória do processo para evitar infraestrutura adicional no MVP de instância
+única. Antes de executar múltiplas instâncias, esse estado deve migrar para um
+armazenamento compartilhado.
 
 A autorização de páginas e operações de acordo com o perfil é responsabilidade
 da etapa de proteção de rotas.

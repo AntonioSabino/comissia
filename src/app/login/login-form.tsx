@@ -3,6 +3,18 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+async function readErrorMessage(response: Response): Promise<string> {
+  try {
+    const result = (await response.json()) as { message?: unknown };
+
+    return typeof result.message === "string"
+      ? result.message
+      : "Não foi possível entrar";
+  } catch {
+    return "Não foi possível entrar";
+  }
+}
+
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -23,10 +35,9 @@ export function LoginForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const result = (await response.json()) as { message?: string };
 
       if (!response.ok) {
-        setError(result.message ?? "Não foi possível entrar");
+        setError(await readErrorMessage(response));
         return;
       }
 

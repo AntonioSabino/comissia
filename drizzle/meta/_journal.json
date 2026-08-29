@@ -29,6 +29,13 @@
       "when": 1788012000000,
       "tag": "0003_seller_commission_rates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788013260000,
+      "tag": "0004_append_only_commission_rates",
+      "breakpoints": true
     }
   ]
 }

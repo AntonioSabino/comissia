@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { authenticateSession } from "../../application/authenticate-session";
 import type { AuthenticatedUser } from "../../application/auth-repository";
 import {
+  authorizeRole,
   getRoleHome,
-  hasRequiredRole,
+  type AuthorizationResult,
   type UserRole,
 } from "../../application/authorization";
 import { SESSION_COOKIE_NAME } from "../../domain/session";
@@ -22,24 +23,24 @@ export const getCurrentUser = cache(
 
 export async function authorizeCurrentUser(
   requiredRole: UserRole,
-): Promise<AuthenticatedUser | null> {
+): Promise<AuthorizationResult> {
   const user = await getCurrentUser();
 
-  return hasRequiredRole(user, requiredRole) ? user : null;
+  return authorizeRole(user, requiredRole);
 }
 
 export async function requirePageRole(
   requiredRole: UserRole,
 ): Promise<AuthenticatedUser> {
-  const user = await getCurrentUser();
+  const authorization = await authorizeCurrentUser(requiredRole);
 
-  if (!user) {
+  if (authorization.status === "unauthenticated") {
     redirect("/login");
   }
 
-  if (!hasRequiredRole(user, requiredRole)) {
-    redirect(getRoleHome(user.role));
+  if (authorization.status === "forbidden") {
+    redirect(getRoleHome(authorization.user.role));
   }
 
-  return user;
+  return authorization.user;
 }

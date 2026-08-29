@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AuthenticatedUser } from "./auth-repository";
-import { getRoleHome, hasRequiredRole } from "./authorization";
+import { authorizeRole, getRoleHome, hasRequiredRole } from "./authorization";
 
 const admin: AuthenticatedUser = {
   id: "admin-1",
@@ -29,5 +29,19 @@ describe("authorization", () => {
   it("maps each profile to its own initial area", () => {
     expect(getRoleHome("admin")).toBe("/admin");
     expect(getRoleHome("seller")).toBe("/seller");
+  });
+
+  it("distinguishes authorized, unauthenticated and forbidden access", () => {
+    expect(authorizeRole(admin, "admin")).toEqual({
+      status: "authorized",
+      user: admin,
+    });
+    expect(authorizeRole(null, "admin")).toEqual({
+      status: "unauthenticated",
+    });
+    expect(authorizeRole(seller, "admin")).toEqual({
+      status: "forbidden",
+      user: seller,
+    });
   });
 });

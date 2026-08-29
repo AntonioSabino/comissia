@@ -89,8 +89,8 @@ describe("password hashing", () => {
       key,
     ].join("$");
 
-    await expect(
-      verifyPassword("senha-correta", excessiveHash),
-    ).resolves.toBe(false);
+    await expect(verifyPassword("senha-correta", excessiveHash)).resolves.toBe(
+      false,
+    );
   });
 });

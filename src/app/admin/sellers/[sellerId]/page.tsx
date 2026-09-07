@@ -137,9 +137,7 @@ export default async function SellerDetailsPage({
           </div>
 
           {seller.commissionRates.length === 0 ? (
-            <p className="empty-state">
-              Nenhuma regra de comissão cadastrada.
-            </p>
+            <p className="empty-state">Nenhuma regra de comissão cadastrada.</p>
           ) : (
             <div className="table-scroll">
               <table>

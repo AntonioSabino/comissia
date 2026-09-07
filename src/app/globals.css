@@ -469,7 +469,6 @@ td {
   }
 }
 
-
 .seller-filters {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(160px, 220px) auto;

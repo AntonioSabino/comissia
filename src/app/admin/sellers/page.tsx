@@ -34,9 +34,7 @@ type SellersPageProps = {
   }>;
 };
 
-export default async function SellersPage({
-  searchParams,
-}: SellersPageProps) {
+export default async function SellersPage({ searchParams }: SellersPageProps) {
   await requirePageRole("admin");
   const filters = parseSellerListFilters(await searchParams);
   const sellerList = await sellerRepository.list(filters);

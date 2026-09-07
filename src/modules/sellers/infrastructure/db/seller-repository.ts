@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
 import { DuplicateSellerError } from "../../application/errors";
 import type { SellerRepository } from "../../application/seller-repository";
@@ -20,6 +20,10 @@ function mapUniqueViolation(error: unknown): never {
   }
 
   throw error;
+}
+
+function todayAsDatabaseDate(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export const sellerRepository: SellerRepository = {
@@ -70,26 +74,123 @@ export const sellerRepository: SellerRepository = {
     }
   },
 
-  async list() {
-    const rows = await db
-      .selectDistinctOn([sellers.id], {
+  async list(filters = {}) {
+    const search = filters.search?.trim();
+    const conditions = [];
+
+    if (search) {
+      const digits = search.replace(/\D/g, "");
+      const searchableFields = [
+        ilike(sellers.name, `%${search}%`),
+        ilike(sellers.email, `%${search}%`),
+      ];
+
+      if (digits) {
+        searchableFields.push(ilike(sellers.document, `%${digits}%`));
+      }
+
+      conditions.push(or(...searchableFields));
+    }
+
+    if (filters.active !== undefined) {
+      conditions.push(eq(sellers.active, filters.active));
+    }
+
+    const sellerRows = await db
+      .select({
         id: sellers.id,
         name: sellers.name,
         document: sellers.document,
         email: sellers.email,
         active: sellers.active,
+      })
+      .from(sellers)
+      .where(and(...conditions))
+      .orderBy(asc(sellers.name));
+
+    if (sellerRows.length === 0) {
+      return [];
+    }
+
+    const rateRows = await db
+      .select({
+        sellerId: sellerCommissionRates.sellerId,
         rateBasisPoints: sellerCommissionRates.rateBasisPoints,
         effectiveFrom: sellerCommissionRates.effectiveFrom,
       })
-      .from(sellers)
-      .leftJoin(
-        sellerCommissionRates,
-        eq(sellerCommissionRates.sellerId, sellers.id),
+      .from(sellerCommissionRates)
+      .where(
+        inArray(
+          sellerCommissionRates.sellerId,
+          sellerRows.map((seller) => seller.id),
+        ),
       )
-      .orderBy(sellers.id, desc(sellerCommissionRates.effectiveFrom));
+      .orderBy(desc(sellerCommissionRates.effectiveFrom));
 
-    return rows.sort((first, second) =>
-      first.name.localeCompare(second.name, "pt-BR"),
+    const currentRateBySeller = new Map<
+      string,
+      { rateBasisPoints: number; effectiveFrom: string }
+    >();
+    const today = todayAsDatabaseDate();
+
+    for (const rate of rateRows) {
+      if (
+        rate.effectiveFrom <= today &&
+        !currentRateBySeller.has(rate.sellerId)
+      ) {
+        currentRateBySeller.set(rate.sellerId, rate);
+      }
+    }
+
+    return sellerRows.map((seller) => {
+      const currentRate = currentRateBySeller.get(seller.id);
+
+      return {
+        ...seller,
+        rateBasisPoints: currentRate?.rateBasisPoints ?? null,
+        effectiveFrom: currentRate?.effectiveFrom ?? null,
+      };
+    });
+  },
+
+  async findById(id) {
+    const [seller] = await db
+      .select({
+        id: sellers.id,
+        name: sellers.name,
+        document: sellers.document,
+        email: sellers.email,
+        phone: sellers.phone,
+        active: sellers.active,
+      })
+      .from(sellers)
+      .where(eq(sellers.id, id))
+      .limit(1);
+
+    if (!seller) {
+      return null;
+    }
+
+    const commissionRates = await db
+      .select({
+        id: sellerCommissionRates.id,
+        rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+        effectiveFrom: sellerCommissionRates.effectiveFrom,
+      })
+      .from(sellerCommissionRates)
+      .where(eq(sellerCommissionRates.sellerId, id))
+      .orderBy(desc(sellerCommissionRates.effectiveFrom));
+
+    const today = todayAsDatabaseDate();
+    const currentRate = commissionRates.find(
+      (rate) => rate.effectiveFrom <= today,
     );
+
+    return {
+      ...seller,
+      rateBasisPoints: currentRate?.rateBasisPoints ?? null,
+      effectiveFrom: currentRate?.effectiveFrom ?? null,
+      commissionRates,
+    };
   },
 };

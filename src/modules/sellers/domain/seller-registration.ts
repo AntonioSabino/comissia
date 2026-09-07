@@ -1,11 +1,11 @@
 export type SellerRegistrationInput = {
-  name: unknown;
-  document: unknown;
-  email: unknown;
+  name?: unknown;
+  document?: unknown;
+  email?: unknown;
   phone?: unknown;
   active?: unknown;
-  ratePercentage: unknown;
-  effectiveFrom: unknown;
+  ratePercentage?: unknown;
+  effectiveFrom?: unknown;
 };
 
 export type ValidSellerRegistration = {
@@ -151,7 +151,7 @@ export function validateSellerRegistration(
     document,
     email,
     phone: phone || null,
-    active: input.active ?? true,
+    active: typeof input.active === "boolean" ? input.active : true,
     rateBasisPoints,
     effectiveFrom,
   };

@@ -76,8 +76,16 @@ export default async function SellersPage() {
                       <td>{seller.name}</td>
                       <td>{formatDocument(seller.document)}</td>
                       <td>{seller.email}</td>
-                      <td>{formatRate(seller.rateBasisPoints)}</td>
-                      <td>{formatDate(seller.effectiveFrom)}</td>
+                      <td>
+                        {seller.rateBasisPoints === null
+                          ? "Não informado"
+                          : formatRate(seller.rateBasisPoints)}
+                      </td>
+                      <td>
+                        {seller.effectiveFrom === null
+                          ? "Não informado"
+                          : formatDate(seller.effectiveFrom)}
+                      </td>
                       <td>
                         <span
                           className={

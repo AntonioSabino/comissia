@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { DuplicateSellerError } from "../../application/errors";
 import type { SellerRepository } from "../../application/seller-repository";
@@ -37,7 +37,7 @@ export const sellerRepository: SellerRepository = {
     const [seller] = await db
       .select({ id: sellers.id })
       .from(sellers)
-      .where(eq(sql<string>`lower(${sellers.email})`, email))
+      .where(eq(sellers.email, email))
       .limit(1);
 
     return Boolean(seller);
@@ -82,7 +82,7 @@ export const sellerRepository: SellerRepository = {
         effectiveFrom: sellerCommissionRates.effectiveFrom,
       })
       .from(sellers)
-      .innerJoin(
+      .leftJoin(
         sellerCommissionRates,
         eq(sellerCommissionRates.sellerId, sellers.id),
       )

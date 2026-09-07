@@ -6,8 +6,8 @@ export type SellerListItem = {
   document: string;
   email: string;
   active: boolean;
-  rateBasisPoints: number;
-  effectiveFrom: string;
+  rateBasisPoints: number | null;
+  effectiveFrom: string | null;
 };
 
 export interface SellerRepository {

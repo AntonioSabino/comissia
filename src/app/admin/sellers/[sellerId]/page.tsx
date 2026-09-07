@@ -1,0 +1,175 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
+import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+
+export const metadata: Metadata = {
+  title: "Detalhes do vendedor | Comissia",
+};
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function formatDocument(document: string): string {
+  return document.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+}
+
+function formatPhone(phone: string | null): string {
+  if (!phone) {
+    return "Não informado";
+  }
+
+  if (phone.length === 11) {
+    return phone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+  }
+
+  if (phone.length === 10) {
+    return phone.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+  }
+
+  return phone;
+}
+
+function formatRate(basisPoints: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "percent",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(basisPoints / 10_000);
+}
+
+function formatDate(date: string): string {
+  const [year, month, day] = date.split("-");
+
+  return `${day}/${month}/${year}`;
+}
+
+type SellerDetailsPageProps = {
+  params: Promise<{ sellerId: string }>;
+};
+
+export default async function SellerDetailsPage({
+  params,
+}: SellerDetailsPageProps) {
+  await requirePageRole("admin");
+  const { sellerId } = await params;
+
+  if (!UUID_PATTERN.test(sellerId)) {
+    notFound();
+  }
+
+  const seller = await sellerRepository.findById(sellerId);
+
+  if (!seller) {
+    notFound();
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const currentRateId = seller.commissionRates.find(
+    (rate) => rate.effectiveFrom <= today,
+  )?.id;
+
+  return (
+    <main className="admin-shell">
+      <div className="admin-content">
+        <header className="admin-header">
+          <div>
+            <p className="eyebrow">Vendedor</p>
+            <h1>{seller.name}</h1>
+            <p className="subtitle">
+              Dados cadastrais e histórico de percentuais de comissão.
+            </p>
+          </div>
+          <Link href="/admin/sellers">Voltar para vendedores</Link>
+        </header>
+
+        <section className="admin-card">
+          <div className="section-heading">
+            <h2>Dados do vendedor</h2>
+            <span
+              className={
+                seller.active
+                  ? "status-badge status-active"
+                  : "status-badge status-inactive"
+              }
+            >
+              {seller.active ? "Ativo" : "Inativo"}
+            </span>
+          </div>
+
+          <dl className="seller-details-grid">
+            <div>
+              <dt>CPF</dt>
+              <dd>{formatDocument(seller.document)}</dd>
+            </div>
+            <div>
+              <dt>E-mail</dt>
+              <dd>{seller.email}</dd>
+            </div>
+            <div>
+              <dt>Telefone</dt>
+              <dd>{formatPhone(seller.phone)}</dd>
+            </div>
+            <div>
+              <dt>Percentual vigente</dt>
+              <dd>
+                {seller.rateBasisPoints === null
+                  ? "Não informado"
+                  : formatRate(seller.rateBasisPoints)}
+              </dd>
+            </div>
+            <div>
+              <dt>Início da vigência atual</dt>
+              <dd>
+                {seller.effectiveFrom === null
+                  ? "Não informado"
+                  : formatDate(seller.effectiveFrom)}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section className="admin-card">
+          <div className="section-heading">
+            <h2>Histórico de percentuais</h2>
+            <span>{seller.commissionRates.length}</span>
+          </div>
+
+          {seller.commissionRates.length === 0 ? (
+            <p className="empty-state">
+              Nenhuma regra de comissão cadastrada.
+            </p>
+          ) : (
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Percentual</th>
+                    <th>Início da vigência</th>
+                    <th>Condição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {seller.commissionRates.map((rate) => (
+                    <tr key={rate.id}>
+                      <td>{formatRate(rate.rateBasisPoints)}</td>
+                      <td>{formatDate(rate.effectiveFrom)}</td>
+                      <td>
+                        {rate.id === currentRateId
+                          ? "Vigente"
+                          : rate.effectiveFrom > today
+                            ? "Futura"
+                            : "Encerrada"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

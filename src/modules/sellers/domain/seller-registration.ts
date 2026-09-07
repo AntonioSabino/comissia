@@ -54,8 +54,7 @@ export function isValidCpf(value: string): boolean {
       .slice(0, length)
       .split("")
       .reduce(
-        (total, digit, index) =>
-          total + Number(digit) * (length + 1 - index),
+        (total, digit, index) => total + Number(digit) * (length + 1 - index),
         0,
       );
     const remainder = (sum * 10) % 11;
@@ -131,10 +130,7 @@ export function validateSellerRegistration(
     fieldErrors.phone = "Informe um telefone com DDD";
   }
 
-  if (
-    input.active !== undefined &&
-    typeof input.active !== "boolean"
-  ) {
+  if (input.active !== undefined && typeof input.active !== "boolean") {
     fieldErrors.active = "Informe uma situação válida";
   }
 

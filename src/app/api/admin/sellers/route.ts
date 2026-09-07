@@ -37,11 +37,17 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const seller = await createSeller(
-      body && typeof body === "object" ? body : {},
-      { repository: sellerRepository },
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json(
+      { message: "Informe os dados do vendedor" },
+      { status: 400 },
     );
+  }
+
+  try {
+    const seller = await createSeller(body, {
+      repository: sellerRepository,
+    });
 
     return NextResponse.json(seller, { status: 201 });
   } catch (error) {

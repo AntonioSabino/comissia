@@ -1,6 +1,9 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import {
+  administrators,
+  quotaStatusEnum,
+  sales,
   sellerCommissionRates,
   sellers,
   sessions,
@@ -85,5 +88,78 @@ describe("database schema", () => {
     expect(table.checks.map((constraint) => constraint.name)).toContain(
       "users_role_seller_link_check",
     );
+  });
+
+  it("defines administrators with a unique name", () => {
+    const table = getTableConfig(administrators);
+
+    expect(table.name).toBe("administrators");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "name",
+      "active",
+      "created_at",
+      "updated_at",
+    ]);
+    expect(
+      table.columns.find((column) => column.name === "name")?.isUnique,
+    ).toBe(true);
+  });
+
+  it("persists the supported quota situations", () => {
+    expect(quotaStatusEnum.enumValues).toEqual([
+      "adimplente",
+      "inadimplente",
+      "cancelado",
+      "contemplado",
+    ]);
+  });
+
+  it("defines sales with the commission rate applied to them", () => {
+    const table = getTableConfig(sales);
+
+    expect(table.name).toBe("sales");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "code",
+      "administrator_id",
+      "seller_id",
+      "seller_commission_rate_id",
+      "customer_name",
+      "product",
+      "group_code",
+      "quota_code",
+      "sold_on",
+      "credit_amount_in_cents",
+      "seller_rate_basis_points",
+      "commission_installments",
+      "first_installment_due_on",
+      "quota_status",
+      "created_at",
+      "updated_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(3);
+    expect(
+      table.columns.find((column) => column.name === "code")?.isUnique,
+    ).toBe(true);
+    expect(table.checks.map((constraint) => constraint.name)).toEqual([
+      "sales_credit_amount_in_cents_check",
+      "sales_seller_rate_basis_points_check",
+      "sales_commission_installments_check",
+      "sales_first_installment_due_on_check",
+    ]);
+    expect(table.indexes.map((constraint) => constraint.config.name)).toEqual([
+      "sales_seller_id_index",
+      "sales_quota_index",
+    ]);
+  });
+
+  it("stores the sale credit in cents", () => {
+    const table = getTableConfig(sales);
+    const credit = table.columns.find(
+      (column) => column.name === "credit_amount_in_cents",
+    );
+
+    expect(credit?.getSQLType()).toBe("bigint");
   });
 });

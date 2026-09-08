@@ -3,7 +3,7 @@ import { adminAccessError } from "@/app/api/admin/_utils/access-error";
 import { authorizeCurrentUser } from "@/modules/auth/infrastructure/next/current-user";
 import { createSeller } from "@/modules/sellers/application/create-seller";
 import { DuplicateSellerError } from "@/modules/sellers/application/errors";
-import { SellerValidationError } from "@/modules/sellers/domain/seller-registration";
+import { SellerValidationError } from "@/modules/sellers/domain/seller-validation";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 
 export const runtime = "nodejs";

@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  isValidCpf,
-  SellerValidationError,
-  validateSellerRegistration,
-} from "./seller-registration";
+import { validateSellerRegistration } from "./seller-registration";
+import { SellerValidationError } from "./seller-validation";
 
 const validInput = {
   name: "  Maria   da Silva ",
@@ -28,37 +25,31 @@ describe("seller registration validation", () => {
     });
   });
 
-  it("validates CPF check digits", () => {
-    expect(isValidCpf("529.982.247-25")).toBe(true);
-    expect(isValidCpf("111.111.111-11")).toBe(false);
-    expect(isValidCpf("529.982.247-24")).toBe(false);
+  it("registers an active seller when the situation is omitted", () => {
+    expect(
+      validateSellerRegistration({ ...validInput, active: undefined }).active,
+    ).toBe(true);
   });
 
-  it("rejects invalid required fields and percentage", () => {
-    expect(() =>
+  it("joins profile and commission rate errors", () => {
+    let thrown: unknown;
+
+    try {
       validateSellerRegistration({
         ...validInput,
         name: "",
-        document: "123",
-        email: "invalid",
+        active: "sim",
         ratePercentage: "100,01",
-        effectiveFrom: "2026-02-30",
-      }),
-    ).toThrow(SellerValidationError);
-  });
+      });
+    } catch (error) {
+      thrown = error;
+    }
 
-  it("accepts the percentage boundaries", () => {
-    expect(
-      validateSellerRegistration({
-        ...validInput,
-        ratePercentage: "0,01",
-      }).rateBasisPoints,
-    ).toBe(1);
-    expect(
-      validateSellerRegistration({
-        ...validInput,
-        ratePercentage: "100",
-      }).rateBasisPoints,
-    ).toBe(10_000);
+    expect(thrown).toBeInstanceOf(SellerValidationError);
+    expect((thrown as SellerValidationError).fieldErrors).toEqual({
+      name: "Informe um nome entre 2 e 160 caracteres",
+      active: "Informe uma situação válida",
+      ratePercentage: "Informe um percentual entre 0,01% e 100%",
+    });
   });
 });

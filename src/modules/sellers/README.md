@@ -11,6 +11,14 @@ longo do tempo.
 - percentuais acordados e suas vigências;
 - consulta do percentual válido em uma data.
 
+## Edição cadastral
+
+Nome, CPF, e-mail e telefone podem ser corrigidos a qualquer momento. CPF e
+e-mail continuam únicos entre vendedores e a verificação de duplicidade ignora o
+próprio cadastro. A situação do vendedor é alterada por um fluxo próprio e o
+percentual nunca é editado no cadastro: cada acordo novo entra como uma vigência
+adicional.
+
 ## Histórico de percentuais
 
 Cada novo acordo gera um registro em `seller_commission_rates`; registros

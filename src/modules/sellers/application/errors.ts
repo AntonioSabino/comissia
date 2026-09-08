@@ -20,3 +20,17 @@ export class SellerStatusValidationError extends Error {
     this.name = "SellerStatusValidationError";
   }
 }
+
+export class InvalidSellerIdError extends Error {
+  constructor() {
+    super("Identificador do vendedor inválido");
+    this.name = "InvalidSellerIdError";
+  }
+}
+
+export class DuplicateSellerCommissionRateError extends Error {
+  constructor() {
+    super("Já existe um percentual com esta data de vigência");
+    this.name = "DuplicateSellerCommissionRateError";
+  }
+}

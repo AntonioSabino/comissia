@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { DuplicateSellerError } from "../../application/errors";
 import type { SellerRepository } from "../../application/seller-repository";
@@ -76,20 +76,26 @@ export const sellerRepository: SellerRepository = {
 
   async list(filters = {}) {
     const search = filters.search?.trim();
-    const conditions = [];
+    const conditions: SQL[] = [];
 
     if (search) {
       const digits = search.replace(/\D/g, "");
-      const searchableFields = [
+      const isDocumentSearch =
+        digits.length > 0 && digits.length <= 11 && /^[\d.\-\s]+$/.test(search);
+      const searchableFields: SQL[] = [
         ilike(sellers.name, `%${search}%`),
         ilike(sellers.email, `%${search}%`),
       ];
 
-      if (digits) {
+      if (isDocumentSearch) {
         searchableFields.push(ilike(sellers.document, `%${digits}%`));
       }
 
-      conditions.push(or(...searchableFields));
+      const searchCondition = or(...searchableFields);
+
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     if (filters.active !== undefined) {
@@ -105,7 +111,7 @@ export const sellerRepository: SellerRepository = {
         active: sellers.active,
       })
       .from(sellers)
-      .where(and(...conditions))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(asc(sellers.name));
 
     if (sellerRows.length === 0) {

@@ -1,3 +1,5 @@
+import type { ValidSellerCommissionRate } from "../domain/seller-commission-rate";
+import type { ValidSellerProfile } from "../domain/seller-profile";
 import type { ValidSellerRegistration } from "../domain/seller-registration";
 
 export type SellerListFilters = {
@@ -34,12 +36,17 @@ export type SellerDetails = {
 };
 
 export interface SellerRepository {
-  isDocumentInUse(document: string): Promise<boolean>;
-  isEmailInUse(email: string): Promise<boolean>;
+  isDocumentInUse(document: string, exceptSellerId?: string): Promise<boolean>;
+  isEmailInUse(email: string, exceptSellerId?: string): Promise<boolean>;
   createWithInitialRate(
     seller: ValidSellerRegistration,
   ): Promise<{ id: string }>;
   list(filters?: SellerListFilters): Promise<SellerListItem[]>;
   findById(id: string): Promise<SellerDetails | null>;
   setActive(id: string, active: boolean): Promise<boolean>;
+  updateProfile(id: string, profile: ValidSellerProfile): Promise<boolean>;
+  addCommissionRate(
+    sellerId: string,
+    rate: ValidSellerCommissionRate,
+  ): Promise<{ id: string } | null>;
 }

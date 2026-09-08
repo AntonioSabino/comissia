@@ -1,7 +1,20 @@
-import { and, asc, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  ne,
+  or,
+  type SQL,
+} from "drizzle-orm";
 import { db } from "@/db";
 import { getBusinessDate } from "@/lib/business-date";
-import { DuplicateSellerError } from "../../application/errors";
+import {
+  DuplicateSellerCommissionRateError,
+  DuplicateSellerError,
+} from "../../application/errors";
 import type { SellerRepository } from "../../application/seller-repository";
 import { sellerCommissionRates, sellers } from "./schema";
 
@@ -23,22 +36,50 @@ function mapUniqueViolation(error: unknown): never {
   throw error;
 }
 
+function mapCommissionRateViolation(error: unknown): null {
+  if (error && typeof error === "object" && "code" in error) {
+    const databaseError = error as { code?: unknown; constraint?: unknown };
+
+    if (
+      databaseError.code === "23505" &&
+      databaseError.constraint ===
+        "seller_commission_rates_seller_effective_from_unique"
+    ) {
+      throw new DuplicateSellerCommissionRateError();
+    }
+
+    if (databaseError.code === "23503") {
+      return null;
+    }
+  }
+
+  throw error;
+}
+
+function otherSellerWith(condition: SQL, exceptSellerId?: string): SQL {
+  const scoped = exceptSellerId
+    ? and(condition, ne(sellers.id, exceptSellerId))
+    : condition;
+
+  return scoped ?? condition;
+}
+
 export const sellerRepository: SellerRepository = {
-  async isDocumentInUse(document) {
+  async isDocumentInUse(document, exceptSellerId) {
     const [seller] = await db
       .select({ id: sellers.id })
       .from(sellers)
-      .where(eq(sellers.document, document))
+      .where(otherSellerWith(eq(sellers.document, document), exceptSellerId))
       .limit(1);
 
     return Boolean(seller);
   },
 
-  async isEmailInUse(email) {
+  async isEmailInUse(email, exceptSellerId) {
     const [seller] = await db
       .select({ id: sellers.id })
       .from(sellers)
-      .where(eq(sellers.email, email))
+      .where(otherSellerWith(eq(sellers.email, email), exceptSellerId))
       .limit(1);
 
     return Boolean(seller);
@@ -154,6 +195,43 @@ export const sellerRepository: SellerRepository = {
         effectiveFrom: currentRate?.effectiveFrom ?? null,
       };
     });
+  },
+
+  async updateProfile(id, profile) {
+    try {
+      const [updatedSeller] = await db
+        .update(sellers)
+        .set({
+          name: profile.name,
+          document: profile.document,
+          email: profile.email,
+          phone: profile.phone,
+          updatedAt: new Date(),
+        })
+        .where(eq(sellers.id, id))
+        .returning({ id: sellers.id });
+
+      return Boolean(updatedSeller);
+    } catch (error) {
+      return mapUniqueViolation(error);
+    }
+  },
+
+  async addCommissionRate(sellerId, rate) {
+    try {
+      const [createdRate] = await db
+        .insert(sellerCommissionRates)
+        .values({
+          sellerId,
+          rateBasisPoints: rate.rateBasisPoints,
+          effectiveFrom: rate.effectiveFrom,
+        })
+        .returning({ id: sellerCommissionRates.id });
+
+      return createdRate;
+    } catch (error) {
+      return mapCommissionRateViolation(error);
+    }
   },
 
   async setActive(id, active) {

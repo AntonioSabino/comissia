@@ -11,6 +11,7 @@ function createRepository(
     isEmailInUse: vi.fn().mockResolvedValue(false),
     createWithInitialRate: vi.fn().mockResolvedValue({ id: "seller-1" }),
     list: vi.fn().mockResolvedValue([]),
+    findById: vi.fn().mockResolvedValue(null),
     ...overrides,
   };
 }

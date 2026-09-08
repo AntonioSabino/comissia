@@ -3,15 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
+import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 import { SellerStatusForm } from "./seller-status-form";
 
 export const metadata: Metadata = {
   title: "Detalhes do vendedor | Comissia",
 };
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function formatDocument(document: string): string {
   return document.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
@@ -57,7 +55,7 @@ export default async function SellerDetailsPage({
   await requirePageRole("admin");
   const { sellerId } = await params;
 
-  if (!UUID_PATTERN.test(sellerId)) {
+  if (!isSellerId(sellerId)) {
     notFound();
   }
 

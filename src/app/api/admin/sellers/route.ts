@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminAccessError } from "@/app/api/admin/_utils/access-error";
 import { authorizeCurrentUser } from "@/modules/auth/infrastructure/next/current-user";
 import { createSeller } from "@/modules/sellers/application/create-seller";
 import { DuplicateSellerError } from "@/modules/sellers/application/errors";
@@ -7,23 +8,11 @@ import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-rep
 
 export const runtime = "nodejs";
 
-function accessError(status: "unauthenticated" | "forbidden") {
-  return NextResponse.json(
-    {
-      message:
-        status === "unauthenticated"
-          ? "Faça login para continuar"
-          : "Acesso permitido apenas para administradores",
-    },
-    { status: status === "unauthenticated" ? 401 : 403 },
-  );
-}
-
 export async function POST(request: Request) {
   const authorization = await authorizeCurrentUser("admin");
 
   if (authorization.status !== "authorized") {
-    return accessError(authorization.status);
+    return adminAccessError(authorization.status);
   }
 
   let body: unknown;

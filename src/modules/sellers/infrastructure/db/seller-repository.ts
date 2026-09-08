@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 import { db } from "@/db";
+import { getBusinessDate } from "@/lib/business-date";
 import { DuplicateSellerError } from "../../application/errors";
 import type { SellerRepository } from "../../application/seller-repository";
 import { sellerCommissionRates, sellers } from "./schema";
@@ -20,10 +21,6 @@ function mapUniqueViolation(error: unknown): never {
   }
 
   throw error;
-}
-
-function todayAsDatabaseDate(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 export const sellerRepository: SellerRepository = {
@@ -137,7 +134,7 @@ export const sellerRepository: SellerRepository = {
       string,
       { rateBasisPoints: number; effectiveFrom: string }
     >();
-    const today = todayAsDatabaseDate();
+    const today = getBusinessDate();
 
     for (const rate of rateRows) {
       if (
@@ -187,7 +184,7 @@ export const sellerRepository: SellerRepository = {
       .where(eq(sellerCommissionRates.sellerId, id))
       .orderBy(desc(sellerCommissionRates.effectiveFrom));
 
-    const today = todayAsDatabaseDate();
+    const today = getBusinessDate();
     const currentRate = commissionRates.find(
       (rate) => rate.effectiveFrom <= today,
     );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 
@@ -65,7 +66,7 @@ export default async function SellerDetailsPage({
     notFound();
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getBusinessDate();
   const currentRateId = seller.commissionRates.find(
     (rate) => rate.effectiveFrom <= today,
   )?.id;

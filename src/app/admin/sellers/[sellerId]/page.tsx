@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+import { SellerStatusForm } from "./seller-status-form";
 
 export const metadata: Metadata = {
   title: "Detalhes do vendedor | Comissia",
@@ -129,6 +130,8 @@ export default async function SellerDetailsPage({
               </dd>
             </div>
           </dl>
+
+          <SellerStatusForm sellerId={seller.id} active={seller.active} />
         </section>
 
         <section className="admin-card">

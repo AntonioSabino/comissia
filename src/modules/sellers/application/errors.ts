@@ -6,3 +6,17 @@ export class DuplicateSellerError extends Error {
     this.name = "DuplicateSellerError";
   }
 }
+
+export class SellerNotFoundError extends Error {
+  constructor() {
+    super("Vendedor não encontrado");
+    this.name = "SellerNotFoundError";
+  }
+}
+
+export class SellerStatusValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SellerStatusValidationError";
+  }
+}

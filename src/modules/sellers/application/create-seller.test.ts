@@ -12,6 +12,7 @@ function createRepository(
     createWithInitialRate: vi.fn().mockResolvedValue({ id: "seller-1" }),
     list: vi.fn().mockResolvedValue([]),
     findById: vi.fn().mockResolvedValue(null),
+    setActive: vi.fn().mockResolvedValue(true),
     ...overrides,
   };
 }

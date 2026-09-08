@@ -156,6 +156,16 @@ export const sellerRepository: SellerRepository = {
     });
   },
 
+  async setActive(id, active) {
+    const [updatedSeller] = await db
+      .update(sellers)
+      .set({ active, updatedAt: new Date() })
+      .where(eq(sellers.id, id))
+      .returning({ id: sellers.id });
+
+    return Boolean(updatedSeller);
+  },
+
   async findById(id) {
     const [seller] = await db
       .select({

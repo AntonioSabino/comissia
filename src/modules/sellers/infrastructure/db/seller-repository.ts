@@ -75,33 +75,32 @@ function mapCommissionRateViolation(error: unknown): null {
   throw error;
 }
 
-function otherSellerWith(condition: SQL, exceptSellerId?: string): SQL {
-  const scoped = exceptSellerId
-    ? and(condition, ne(sellers.id, exceptSellerId))
-    : condition;
+async function hasSellerMatching(
+  condition: SQL,
+  exceptSellerId?: string,
+): Promise<boolean> {
+  const conditions = [condition];
 
-  return scoped ?? condition;
+  if (exceptSellerId) {
+    conditions.push(ne(sellers.id, exceptSellerId));
+  }
+
+  const [seller] = await db
+    .select({ id: sellers.id })
+    .from(sellers)
+    .where(and(...conditions))
+    .limit(1);
+
+  return Boolean(seller);
 }
 
 export const sellerRepository: SellerRepository = {
   async isDocumentInUse(document, exceptSellerId) {
-    const [seller] = await db
-      .select({ id: sellers.id })
-      .from(sellers)
-      .where(otherSellerWith(eq(sellers.document, document), exceptSellerId))
-      .limit(1);
-
-    return Boolean(seller);
+    return hasSellerMatching(eq(sellers.document, document), exceptSellerId);
   },
 
   async isEmailInUse(email, exceptSellerId) {
-    const [seller] = await db
-      .select({ id: sellers.id })
-      .from(sellers)
-      .where(otherSellerWith(eq(sellers.email, email), exceptSellerId))
-      .limit(1);
-
-    return Boolean(seller);
+    return hasSellerMatching(eq(sellers.email, email), exceptSellerId);
   },
 
   async createWithInitialRate(seller) {

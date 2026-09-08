@@ -2,29 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { readApiResult, readMessage } from "../_utils/api-result";
 
 type SellerStatusFormProps = {
   sellerId: string;
   active: boolean;
 };
-
-type ApiResult = {
-  message?: unknown;
-};
-
-async function parseApiResult(response: Response): Promise<ApiResult> {
-  try {
-    const result: unknown = await response.json();
-
-    return result !== null &&
-      typeof result === "object" &&
-      !Array.isArray(result)
-      ? (result as ApiResult)
-      : {};
-  } catch {
-    return {};
-  }
-}
 
 export function SellerStatusForm({ sellerId, active }: SellerStatusFormProps) {
   const router = useRouter();
@@ -45,13 +28,14 @@ export function SellerStatusForm({ sellerId, active }: SellerStatusFormProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ active: nextActive }),
       });
-      const result = await parseApiResult(response);
+      const result = await readApiResult(response);
 
       if (!response.ok) {
         setMessage(
-          typeof result.message === "string"
-            ? result.message
-            : "Não foi possível alterar a situação do vendedor",
+          readMessage(
+            result,
+            "Não foi possível alterar a situação do vendedor",
+          ),
         );
         return;
       }

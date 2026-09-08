@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminAccessError } from "@/app/api/admin/_utils/access-error";
 import { authorizeCurrentUser } from "@/modules/auth/infrastructure/next/current-user";
 import { changeSellerStatus } from "@/modules/sellers/application/change-seller-status";
 import {
@@ -13,23 +14,11 @@ type RouteContext = {
   params: Promise<{ sellerId: string }>;
 };
 
-function accessError(status: "unauthenticated" | "forbidden") {
-  return NextResponse.json(
-    {
-      message:
-        status === "unauthenticated"
-          ? "Faça login para continuar"
-          : "Acesso permitido apenas para administradores",
-    },
-    { status: status === "unauthenticated" ? 401 : 403 },
-  );
-}
-
 export async function PATCH(request: Request, context: RouteContext) {
   const authorization = await authorizeCurrentUser("admin");
 
   if (authorization.status !== "authorized") {
-    return accessError(authorization.status);
+    return adminAccessError(authorization.status);
   }
 
   let body: unknown;

@@ -5,6 +5,8 @@ import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+import { SellerProfileForm } from "./seller-profile-form";
+import { SellerRateForm } from "./seller-rate-form";
 import { SellerStatusForm } from "./seller-status-form";
 
 export const metadata: Metadata = {
@@ -17,7 +19,7 @@ function formatDocument(document: string): string {
 
 function formatPhone(phone: string | null): string {
   if (!phone) {
-    return "Não informado";
+    return "";
   }
 
   if (phone.length === 11) {
@@ -86,7 +88,7 @@ export default async function SellerDetailsPage({
 
         <section className="admin-card">
           <div className="section-heading">
-            <h2>Dados do vendedor</h2>
+            <h2>Dados cadastrais</h2>
             <span
               className={
                 seller.active
@@ -98,19 +100,25 @@ export default async function SellerDetailsPage({
             </span>
           </div>
 
+          <SellerProfileForm
+            sellerId={seller.id}
+            name={seller.name}
+            document={formatDocument(seller.document)}
+            email={seller.email}
+            phone={formatPhone(seller.phone)}
+          />
+
+          <SellerStatusForm sellerId={seller.id} active={seller.active} />
+        </section>
+
+        <section className="admin-card">
+          <h2>Percentual de comissão</h2>
+          <p className="card-hint">
+            Um novo acordo entra como uma nova vigência. As vendas já
+            registradas mantêm o percentual aplicado na data.
+          </p>
+
           <dl className="seller-details-grid">
-            <div>
-              <dt>CPF</dt>
-              <dd>{formatDocument(seller.document)}</dd>
-            </div>
-            <div>
-              <dt>E-mail</dt>
-              <dd>{seller.email}</dd>
-            </div>
-            <div>
-              <dt>Telefone</dt>
-              <dd>{formatPhone(seller.phone)}</dd>
-            </div>
             <div>
               <dt>Percentual vigente</dt>
               <dd>
@@ -129,7 +137,7 @@ export default async function SellerDetailsPage({
             </div>
           </dl>
 
-          <SellerStatusForm sellerId={seller.id} active={seller.active} />
+          <SellerRateForm sellerId={seller.id} defaultEffectiveFrom={today} />
         </section>
 
         <section className="admin-card">

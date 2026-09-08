@@ -6,33 +6,38 @@ import {
   readApiResult,
   readFieldErrors,
   readMessage,
-} from "./_utils/api-result";
+} from "../_utils/api-result";
 
-const REGISTRATION_FIELDS = [
-  "name",
-  "document",
-  "email",
-  "phone",
-  "active",
-  "ratePercentage",
-  "effectiveFrom",
-] as const;
+const PROFILE_FIELDS = ["name", "document", "email", "phone"] as const;
 
-type RegistrationField = (typeof REGISTRATION_FIELDS)[number];
+type ProfileField = (typeof PROFILE_FIELDS)[number];
 
-type FieldErrors = Partial<Record<RegistrationField, string>>;
+type SellerProfileFormProps = {
+  sellerId: string;
+  name: string;
+  document: string;
+  email: string;
+  phone: string;
+};
 
-export function SellerForm() {
+export function SellerProfileForm({
+  sellerId,
+  name,
+  document,
+  email,
+  phone,
+}: SellerProfileFormProps) {
   const router = useRouter();
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<ProfileField, string>>
+  >({});
   const [message, setMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formElement = event.currentTarget;
-    const form = new FormData(formElement);
+    const form = new FormData(event.currentTarget);
 
     setFieldErrors({});
     setMessage(null);
@@ -40,31 +45,27 @@ export function SellerForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/admin/sellers", {
-        method: "POST",
+      const response = await fetch(`/api/admin/sellers/${sellerId}`, {
+        method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           name: form.get("name"),
           document: form.get("document"),
           email: form.get("email"),
           phone: form.get("phone"),
-          active: form.get("active") === "on",
-          ratePercentage: form.get("ratePercentage"),
-          effectiveFrom: form.get("effectiveFrom"),
         }),
       });
       const result = await readApiResult(response);
 
       if (!response.ok) {
         setMessage(
-          readMessage(result, "Não foi possível cadastrar o vendedor"),
+          readMessage(result, "Não foi possível salvar os dados do vendedor"),
         );
-        setFieldErrors(readFieldErrors(result, REGISTRATION_FIELDS));
+        setFieldErrors(readFieldErrors(result, PROFILE_FIELDS));
         return;
       }
 
-      formElement.reset();
-      setSuccess("Vendedor cadastrado com sucesso");
+      setSuccess("Dados atualizados com sucesso");
       router.refresh();
     } catch {
       setMessage("Não foi possível conectar ao sistema");
@@ -73,7 +74,7 @@ export function SellerForm() {
     }
   }
 
-  function fieldError(field: RegistrationField) {
+  function fieldError(field: ProfileField) {
     const error = fieldErrors[field];
 
     return error ? <span className="field-error">{error}</span> : null;
@@ -86,6 +87,7 @@ export function SellerForm() {
           Nome
           <input
             name="name"
+            defaultValue={name}
             maxLength={160}
             required
             aria-invalid={Boolean(fieldErrors.name)}
@@ -97,6 +99,7 @@ export function SellerForm() {
           CPF
           <input
             name="document"
+            defaultValue={document}
             inputMode="numeric"
             placeholder="000.000.000-00"
             maxLength={14}
@@ -110,6 +113,7 @@ export function SellerForm() {
           E-mail
           <input
             name="email"
+            defaultValue={email}
             type="email"
             maxLength={254}
             required
@@ -122,43 +126,13 @@ export function SellerForm() {
           Telefone
           <input
             name="phone"
+            defaultValue={phone}
             type="tel"
             placeholder="(11) 99999-9999"
             maxLength={20}
             aria-invalid={Boolean(fieldErrors.phone)}
           />
           {fieldError("phone")}
-        </label>
-
-        <label>
-          Percentual inicial
-          <div className="input-suffix">
-            <input
-              name="ratePercentage"
-              inputMode="decimal"
-              placeholder="2,50"
-              required
-              aria-invalid={Boolean(fieldErrors.ratePercentage)}
-            />
-            <span>%</span>
-          </div>
-          {fieldError("ratePercentage")}
-        </label>
-
-        <label>
-          Início da vigência
-          <input
-            name="effectiveFrom"
-            type="date"
-            required
-            aria-invalid={Boolean(fieldErrors.effectiveFrom)}
-          />
-          {fieldError("effectiveFrom")}
-        </label>
-
-        <label className="checkbox-field">
-          <input name="active" type="checkbox" defaultChecked />
-          Vendedor ativo
         </label>
       </div>
 
@@ -174,7 +148,7 @@ export function SellerForm() {
       ) : null}
 
       <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Cadastrando..." : "Cadastrar vendedor"}
+        {isSubmitting ? "Salvando..." : "Salvar dados"}
       </button>
     </form>
   );

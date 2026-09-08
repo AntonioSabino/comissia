@@ -18,18 +18,39 @@ import {
 import type { SellerRepository } from "../../application/seller-repository";
 import { sellerCommissionRates, sellers } from "./schema";
 
+type DatabaseViolation = {
+  code?: unknown;
+  constraint?: unknown;
+};
+
+/**
+ * O Drizzle encapsula o erro do driver, então a violação real fica na cadeia de
+ * `cause`.
+ */
+function findDatabaseViolation(error: unknown): DatabaseViolation | null {
+  let current = error;
+
+  while (current && typeof current === "object") {
+    if ("code" in current) {
+      return current as DatabaseViolation;
+    }
+
+    current = (current as { cause?: unknown }).cause;
+  }
+
+  return null;
+}
+
 function mapUniqueViolation(error: unknown): never {
-  if (error && typeof error === "object" && "code" in error) {
-    const databaseError = error as { code?: unknown; constraint?: unknown };
+  const violation = findDatabaseViolation(error);
 
-    if (databaseError.code === "23505") {
-      if (databaseError.constraint === "sellers_document_unique") {
-        throw new DuplicateSellerError("document");
-      }
+  if (violation?.code === "23505") {
+    if (violation.constraint === "sellers_document_unique") {
+      throw new DuplicateSellerError("document");
+    }
 
-      if (databaseError.constraint === "sellers_email_unique") {
-        throw new DuplicateSellerError("email");
-      }
+    if (violation.constraint === "sellers_email_unique") {
+      throw new DuplicateSellerError("email");
     }
   }
 
@@ -37,20 +58,18 @@ function mapUniqueViolation(error: unknown): never {
 }
 
 function mapCommissionRateViolation(error: unknown): null {
-  if (error && typeof error === "object" && "code" in error) {
-    const databaseError = error as { code?: unknown; constraint?: unknown };
+  const violation = findDatabaseViolation(error);
 
-    if (
-      databaseError.code === "23505" &&
-      databaseError.constraint ===
-        "seller_commission_rates_seller_effective_from_unique"
-    ) {
-      throw new DuplicateSellerCommissionRateError();
-    }
+  if (
+    violation?.code === "23505" &&
+    violation.constraint ===
+      "seller_commission_rates_seller_effective_from_unique"
+  ) {
+    throw new DuplicateSellerCommissionRateError();
+  }
 
-    if (databaseError.code === "23503") {
-      return null;
-    }
+  if (violation?.code === "23503") {
+    return null;
   }
 
   throw error;

@@ -41,4 +41,5 @@ export interface SellerRepository {
   ): Promise<{ id: string }>;
   list(filters?: SellerListFilters): Promise<SellerListItem[]>;
   findById(id: string): Promise<SellerDetails | null>;
+  setActive(id: string, active: boolean): Promise<boolean>;
 }

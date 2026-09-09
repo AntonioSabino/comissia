@@ -33,8 +33,10 @@ CREATE TABLE "sales" (
 	CONSTRAINT "sales_first_installment_due_on_check" CHECK ("sales"."first_installment_due_on" >= "sales"."sold_on")
 );
 --> statement-breakpoint
+ALTER TABLE "seller_commission_rates" ADD CONSTRAINT "seller_commission_rates_sale_snapshot_unique" UNIQUE("id","seller_id","rate_basis_points");--> statement-breakpoint
 ALTER TABLE "sales" ADD CONSTRAINT "sales_administrator_id_administrators_id_fk" FOREIGN KEY ("administrator_id") REFERENCES "public"."administrators"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sales" ADD CONSTRAINT "sales_seller_id_sellers_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."sellers"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sales" ADD CONSTRAINT "sales_seller_commission_rate_id_seller_commission_rates_id_fk" FOREIGN KEY ("seller_commission_rate_id") REFERENCES "public"."seller_commission_rates"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sales" ADD CONSTRAINT "sales_seller_commission_snapshot_fk" FOREIGN KEY ("seller_commission_rate_id","seller_id","seller_rate_basis_points") REFERENCES "public"."seller_commission_rates"("id","seller_id","rate_basis_points") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "sales_seller_id_index" ON "sales" USING btree ("seller_id");--> statement-breakpoint
 CREATE INDEX "sales_quota_index" ON "sales" USING btree ("administrator_id","group_code","quota_code");

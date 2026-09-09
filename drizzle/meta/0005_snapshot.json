@@ -50,7 +50,9 @@
         "administrators_name_unique": {
           "name": "administrators_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["name"]
+          "columns": [
+            "name"
+          ]
         }
       },
       "policies": {},
@@ -218,8 +220,12 @@
           "name": "sales_administrator_id_administrators_id_fk",
           "tableFrom": "sales",
           "tableTo": "administrators",
-          "columnsFrom": ["administrator_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "administrator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -227,8 +233,12 @@
           "name": "sales_seller_id_sellers_id_fk",
           "tableFrom": "sales",
           "tableTo": "sellers",
-          "columnsFrom": ["seller_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "seller_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -236,8 +246,29 @@
           "name": "sales_seller_commission_rate_id_seller_commission_rates_id_fk",
           "tableFrom": "sales",
           "tableTo": "seller_commission_rates",
-          "columnsFrom": ["seller_commission_rate_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "seller_commission_rate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "sales_seller_commission_snapshot_fk": {
+          "name": "sales_seller_commission_snapshot_fk",
+          "tableFrom": "sales",
+          "tableTo": "seller_commission_rates",
+          "columnsFrom": [
+            "seller_commission_rate_id",
+            "seller_id",
+            "seller_rate_basis_points"
+          ],
+          "columnsTo": [
+            "id",
+            "seller_id",
+            "rate_basis_points"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -247,7 +278,9 @@
         "sales_code_unique": {
           "name": "sales_code_unique",
           "nullsNotDistinct": false,
-          "columns": ["code"]
+          "columns": [
+            "code"
+          ]
         }
       },
       "policies": {},
@@ -314,8 +347,12 @@
           "name": "seller_commission_rates_seller_id_sellers_id_fk",
           "tableFrom": "seller_commission_rates",
           "tableTo": "sellers",
-          "columnsFrom": ["seller_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "seller_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -325,7 +362,19 @@
         "seller_commission_rates_seller_effective_from_unique": {
           "name": "seller_commission_rates_seller_effective_from_unique",
           "nullsNotDistinct": false,
-          "columns": ["seller_id", "effective_from"]
+          "columns": [
+            "seller_id",
+            "effective_from"
+          ]
+        },
+        "seller_commission_rates_sale_snapshot_unique": {
+          "name": "seller_commission_rates_sale_snapshot_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "seller_id",
+            "rate_basis_points"
+          ]
         }
       },
       "policies": {},
@@ -401,12 +450,16 @@
         "sellers_document_unique": {
           "name": "sellers_document_unique",
           "nullsNotDistinct": false,
-          "columns": ["document"]
+          "columns": [
+            "document"
+          ]
         },
         "sellers_email_unique": {
           "name": "sellers_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -456,8 +509,12 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -467,7 +524,9 @@
         "sessions_token_hash_unique": {
           "name": "sessions_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": ["token_hash"]
+          "columns": [
+            "token_hash"
+          ]
         }
       },
       "policies": {},
@@ -544,8 +603,12 @@
           "name": "users_seller_id_sellers_id_fk",
           "tableFrom": "users",
           "tableTo": "sellers",
-          "columnsFrom": ["seller_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "seller_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -555,12 +618,16 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         },
         "users_seller_id_unique": {
           "name": "users_seller_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["seller_id"]
+          "columns": [
+            "seller_id"
+          ]
         }
       },
       "policies": {},
@@ -577,12 +644,20 @@
     "public.quota_status": {
       "name": "quota_status",
       "schema": "public",
-      "values": ["adimplente", "inadimplente", "cancelado", "contemplado"]
+      "values": [
+        "adimplente",
+        "inadimplente",
+        "cancelado",
+        "contemplado"
+      ]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": ["admin", "seller"]
+      "values": [
+        "admin",
+        "seller"
+      ]
     }
   },
   "schemas": {},

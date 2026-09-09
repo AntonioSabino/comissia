@@ -42,7 +42,12 @@ describe("database schema", () => {
     expect(table.foreignKeys).toHaveLength(1);
     expect(
       table.uniqueConstraints.map((constraint) => constraint.name),
-    ).toContain("seller_commission_rates_seller_effective_from_unique");
+    ).toEqual(
+      expect.arrayContaining([
+        "seller_commission_rates_sale_snapshot_unique",
+        "seller_commission_rates_seller_effective_from_unique",
+      ]),
+    );
     expect(table.checks.map((constraint) => constraint.name)).toContain(
       "seller_commission_rates_rate_basis_points_check",
     );
@@ -138,20 +143,24 @@ describe("database schema", () => {
       "created_at",
       "updated_at",
     ]);
-    expect(table.foreignKeys).toHaveLength(3);
+    expect(table.foreignKeys).toHaveLength(4);
+    expect(
+      table.foreignKeys.map((constraint) => constraint.getName()),
+    ).toContain("sales_seller_commission_snapshot_fk");
     expect(
       table.columns.find((column) => column.name === "code")?.isUnique,
     ).toBe(true);
-    expect(table.checks.map((constraint) => constraint.name)).toEqual([
-      "sales_credit_amount_in_cents_check",
-      "sales_seller_rate_basis_points_check",
-      "sales_commission_installments_check",
-      "sales_first_installment_due_on_check",
-    ]);
-    expect(table.indexes.map((constraint) => constraint.config.name)).toEqual([
-      "sales_seller_id_index",
-      "sales_quota_index",
-    ]);
+    expect(table.checks.map((constraint) => constraint.name).sort()).toEqual(
+      [
+        "sales_credit_amount_in_cents_check",
+        "sales_seller_rate_basis_points_check",
+        "sales_commission_installments_check",
+        "sales_first_installment_due_on_check",
+      ].sort(),
+    );
+    expect(
+      table.indexes.map((constraint) => constraint.config.name).sort(),
+    ).toEqual(["sales_seller_id_index", "sales_quota_index"].sort());
   });
 
   it("stores the sale credit in cents", () => {
@@ -161,5 +170,8 @@ describe("database schema", () => {
     );
 
     expect(credit?.getSQLType()).toBe("bigint");
+    expect(credit?.mapFromDriverValue("9007199254740992")).toBe(
+      9_007_199_254_740_992n,
+    );
   });
 });

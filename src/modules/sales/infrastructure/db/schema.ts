@@ -4,6 +4,7 @@ import {
   boolean,
   check,
   date,
+  foreignKey,
   index,
   integer,
   pgEnum,
@@ -53,7 +54,7 @@ export const sales = pgTable(
     quotaCode: varchar("quota_code", { length: 20 }).notNull(),
     soldOn: date("sold_on").notNull(),
     creditAmountInCents: bigint("credit_amount_in_cents", {
-      mode: "number",
+      mode: "bigint",
     }).notNull(),
     sellerRateBasisPoints: integer("seller_rate_basis_points").notNull(),
     commissionInstallments: integer("commission_installments").notNull(),
@@ -69,6 +70,19 @@ export const sales = pgTable(
       .defaultNow(),
   },
   (table) => [
+    foreignKey({
+      name: "sales_seller_commission_snapshot_fk",
+      columns: [
+        table.sellerCommissionRateId,
+        table.sellerId,
+        table.sellerRateBasisPoints,
+      ],
+      foreignColumns: [
+        sellerCommissionRates.id,
+        sellerCommissionRates.sellerId,
+        sellerCommissionRates.rateBasisPoints,
+      ],
+    }).onDelete("restrict"),
     index("sales_seller_id_index").on(table.sellerId),
     index("sales_quota_index").on(
       table.administratorId,

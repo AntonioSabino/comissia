@@ -171,7 +171,7 @@ describe("database schema", () => {
 
     expect(credit?.getSQLType()).toBe("bigint");
     expect(credit?.mapFromDriverValue("9007199254740992")).toBe(
-      9_007_199_254_740_992n,
+      BigInt("9007199254740992"),
     );
   });
 });

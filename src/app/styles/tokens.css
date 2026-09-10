@@ -1,0 +1,237 @@
+/*
+ * Tokens do Comissia Design System (handoff do Claude Design).
+ * Os valores seguem o pacote original; as fontes vêm do next/font em layout.tsx.
+ */
+
+:root {
+  /* Paleta base: navy */
+  --navy-950: #03233f;
+  --navy-900: #073052;
+  --navy-800: #104164;
+  --navy-700: #1a5480;
+  --navy-ink: #12243b;
+  --navy-heading: #0f2138;
+  --navy-strong: #13263e;
+
+  /* Paleta base: neutros */
+  --slate-900: #152b45;
+  --slate-700: #34475d;
+  --slate-600: #506176;
+  --slate-500: #64748b;
+  --slate-400: #8a97a6;
+  --slate-300: #a2adba;
+  --slate-200: #dce3ea;
+  --slate-150: #e8edf1;
+  --slate-100: #edf0f2;
+  --slate-050: #f6f8fa;
+  --white: #ffffff;
+
+  /* Paleta base: verde (dinheiro e comissão) */
+  --green-700: #00784f;
+  --green-600: #007b53;
+  --green-500: #009b68;
+  --green-400: #00b17b;
+  --green-300: #21d48d;
+  --green-200: #39d9a0;
+  --green-100: #caeddf;
+  --green-050: #eaf8f2;
+  --green-025: #f5fcf9;
+
+  /* Paleta base: âmbar (atenção e pendência) */
+  --amber-text: #8a5403;
+  --amber-700: #9b6105;
+  --amber-600: #b46e03;
+  --amber-500: #e69516;
+  --amber-300: #f4d8a6;
+  --amber-100: #ffe0a7;
+  --amber-050: #fff7e8;
+
+  /* Paleta base: vermelho (cancelamento e erro) */
+  --red-700: #8f2f36;
+  --red-600: #ad3d45;
+  --red-300: #f2c9cd;
+  --red-050: #fff0f1;
+
+  /* Paleta base: cobalto (ação, links e orientação) */
+  --cobalt-800: #14459f;
+  --cobalt-700: #1a56c4;
+  --cobalt-600: #2a66d8;
+  --cobalt-500: #4b83e8;
+  --cobalt-300: #9dbcf5;
+  --cobalt-100: #d7e4fb;
+  --cobalt-050: #eef4fe;
+
+  /* Paleta base: azul-ardósia (informativo, nunca clicável) */
+  --info-700: #33506d;
+  --info-600: #40607f;
+  --info-300: #cdd9e4;
+  --info-050: #f0f4f7;
+
+  /* Superfícies */
+  --canvas: #f6f8fa;
+  --surface-card: #ffffff;
+  --surface-card-hover: #f9fbfc;
+  --surface-sunken: #f5f8f9;
+  --surface-header: #f8fafb;
+  --surface-hover: #fbfdfc;
+  --surface-inverse: #03233f;
+
+  /* Texto */
+  --text-body: #34475d;
+  --text-heading: #13263e;
+  --text-strong: #12243b;
+  --text-field: #24384f;
+  --text-muted: #556374;
+  --text-subtle: #626e7b;
+  --text-on-inverse: #ffffff;
+  --text-on-inverse-muted: #c8d6e2;
+  --text-link: #1a56c4;
+  --text-link-hover: #14459f;
+
+  /* Bordas */
+  --border-default: #dce3ea;
+  --border-strong: #cbd5df;
+  --border-strong-hover: #9aaaba;
+  --border-subtle: #edf0f2;
+  --border-field: #d4dce3;
+  --border-focus: #6f9cf5;
+
+  /* Ação: o cobalto é a única cor de controle. Verde nunca aparece em controle. */
+  --action-primary: #1a56c4;
+  --action-primary-hover: #14459f;
+  --action-primary-text: #ffffff;
+  --action-gradient: linear-gradient(135deg, #1a56c4, #2a66d8);
+  --action-tint: #eef4fe;
+  --action-tint-border: #cfdffb;
+
+  /* Estados */
+  --state-received: #00784f;
+  --state-received-bg: #eaf8f2;
+  --state-received-border: #c9ebdd;
+  --state-pending: #9b6105;
+  --state-pending-bg: #fff7e8;
+  --state-pending-border: #f4d8a6;
+  --state-cancelled: #ad3d45;
+  --state-cancelled-bg: #fff0f1;
+  --state-cancelled-border: #f2c9cd;
+  --state-reconciled: #40607f;
+  --state-reconciled-bg: #f0f4f7;
+  --state-reconciled-border: #cdd9e4;
+  --state-neutral: #5d6d80;
+  --state-neutral-bg: #f5f7f8;
+  --state-neutral-border: #d9e0e6;
+
+  /* Direção do dinheiro */
+  --money-in: #00784f;
+  --money-out: #31526f;
+  --money-deduction: #b14f29;
+
+  --focus-ring: 0 0 0 3px rgba(26, 86, 196, 0.14);
+  --scrim: rgba(3, 28, 49, 0.48);
+
+  /* Menu lateral (superfície escura) */
+  --sidebar-bg: linear-gradient(180deg, #03233f, #021d34);
+  --sidebar-glow: radial-gradient(
+    circle at 15% 95%,
+    rgba(26, 86, 196, 0.3),
+    transparent 34%
+  );
+  --sidebar-item: #c8d6e2;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-item-active: linear-gradient(
+    90deg,
+    rgba(26, 86, 196, 0.5),
+    rgba(47, 110, 224, 0.16)
+  );
+  --sidebar-rule-active: #6f9cf5;
+  --sidebar-rule: rgba(255, 255, 255, 0.1);
+
+  /* Tipografia */
+  --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "SF Mono", ui-monospace, monospace;
+
+  --text-3xl: 43px;
+  --text-2xl: 31px;
+  --text-xl: 25px;
+  --text-lg: 21px;
+  --text-md: 18px;
+  --text-base: 15px;
+  --text-sm: 13px;
+  --text-xs: 11px;
+  --text-2xs: 10px;
+  --text-3xs: 9px;
+
+  --lh-tight: 1;
+  --lh-heading: 1.15;
+  --lh-body: 1.55;
+  --lh-dense: 1.35;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 650;
+  --weight-bold: 750;
+  --weight-black: 820;
+
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.03em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-kicker: 0.14em;
+  --tracking-table-head: 0.06em;
+
+  --type-body: var(--weight-regular) var(--text-sm) / var(--lh-body)
+    var(--font-sans);
+  --type-kicker: var(--weight-black) var(--text-3xs) / 1.2 var(--font-sans);
+  --type-table-head: var(--weight-bold) var(--text-3xs) / 1.2 var(--font-sans);
+
+  /* Espaçamento e layout */
+  --sidebar-width: 232px;
+  --topbar-min-height: 147px;
+  --content-max-width: 1500px;
+  --content-gutter: clamp(28px, 4vw, 62px);
+  --grid-gap: 18px;
+  --card-padding: 26px;
+  --table-cell-padding: 14px 18px;
+  --toolbar-height: 74px;
+  --control-height: 38px;
+  --field-height: 42px;
+  --button-height: 46px;
+
+  /* Bordas e raios */
+  --radius-xs: 6px;
+  --radius-sm: 7px;
+  --radius-md: 8px;
+  --radius-lg: 9px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+  --radius-4xl: 16px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+  --rule-accent-width: 4px;
+
+  /* Elevação */
+  --shadow-card: 0 8px 26px rgba(16, 36, 59, 0.07);
+  --shadow-raised: 0 2px 7px rgba(16, 36, 59, 0.08);
+  --shadow-action: 0 7px 17px rgba(26, 86, 196, 0.22);
+  --shadow-action-hover: 0 9px 21px rgba(20, 69, 159, 0.26);
+  --shadow-modal: 0 28px 80px rgba(0, 24, 43, 0.26);
+  --blur-scrim: blur(3px);
+
+  /* Movimento */
+  --duration-fast: 130ms;
+  --duration-base: 160ms;
+  --duration-slow: 180ms;
+  --duration-panel: 220ms;
+  --ease-standard: ease;
+  --ease-out: ease-out;
+  --transition-control:
+    background var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
+  --transition-lift:
+    transform var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+  --lift-hover: translateY(-1px);
+  --nudge-hover: translateX(2px);
+}

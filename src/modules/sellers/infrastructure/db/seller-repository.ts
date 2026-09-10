@@ -15,7 +15,11 @@ import {
   DuplicateSellerCommissionRateError,
   DuplicateSellerError,
 } from "../../application/errors";
-import type { SellerRepository } from "../../application/seller-repository";
+import type {
+  SellerCommissionRateListItem,
+  SellerRepository,
+} from "../../application/seller-repository";
+import { findRateValidOn } from "../../domain/commission-rate-on-date";
 import { sellerCommissionRates, sellers } from "./schema";
 
 type DatabaseViolation = {
@@ -92,6 +96,20 @@ async function hasSellerMatching(
     .limit(1);
 
   return Boolean(seller);
+}
+
+function selectCommissionRates(
+  sellerId: string,
+): Promise<SellerCommissionRateListItem[]> {
+  return db
+    .select({
+      id: sellerCommissionRates.id,
+      rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+      effectiveFrom: sellerCommissionRates.effectiveFrom,
+    })
+    .from(sellerCommissionRates)
+    .where(eq(sellerCommissionRates.sellerId, sellerId))
+    .orderBy(desc(sellerCommissionRates.effectiveFrom));
 }
 
 export const sellerRepository: SellerRepository = {
@@ -186,26 +204,23 @@ export const sellerRepository: SellerRepository = {
           sellerCommissionRates.sellerId,
           sellerRows.map((seller) => seller.id),
         ),
-      )
-      .orderBy(desc(sellerCommissionRates.effectiveFrom));
+      );
 
-    const currentRateBySeller = new Map<
-      string,
-      { rateBasisPoints: number; effectiveFrom: string }
-    >();
-    const today = getBusinessDate();
+    const ratesBySeller = new Map<string, typeof rateRows>();
 
     for (const rate of rateRows) {
-      if (
-        rate.effectiveFrom <= today &&
-        !currentRateBySeller.has(rate.sellerId)
-      ) {
-        currentRateBySeller.set(rate.sellerId, rate);
-      }
+      const rates = ratesBySeller.get(rate.sellerId) ?? [];
+      rates.push(rate);
+      ratesBySeller.set(rate.sellerId, rates);
     }
 
+    const today = getBusinessDate();
+
     return sellerRows.map((seller) => {
-      const currentRate = currentRateBySeller.get(seller.id);
+      const currentRate = findRateValidOn(
+        ratesBySeller.get(seller.id) ?? [],
+        today,
+      );
 
       return {
         ...seller,
@@ -253,15 +268,7 @@ export const sellerRepository: SellerRepository = {
   },
 
   async listCommissionRates(sellerId) {
-    return db
-      .select({
-        id: sellerCommissionRates.id,
-        rateBasisPoints: sellerCommissionRates.rateBasisPoints,
-        effectiveFrom: sellerCommissionRates.effectiveFrom,
-      })
-      .from(sellerCommissionRates)
-      .where(eq(sellerCommissionRates.sellerId, sellerId))
-      .orderBy(desc(sellerCommissionRates.effectiveFrom));
+    return selectCommissionRates(sellerId);
   },
 
   async setActive(id, active) {
@@ -292,20 +299,8 @@ export const sellerRepository: SellerRepository = {
       return null;
     }
 
-    const commissionRates = await db
-      .select({
-        id: sellerCommissionRates.id,
-        rateBasisPoints: sellerCommissionRates.rateBasisPoints,
-        effectiveFrom: sellerCommissionRates.effectiveFrom,
-      })
-      .from(sellerCommissionRates)
-      .where(eq(sellerCommissionRates.sellerId, id))
-      .orderBy(desc(sellerCommissionRates.effectiveFrom));
-
-    const today = getBusinessDate();
-    const currentRate = commissionRates.find(
-      (rate) => rate.effectiveFrom <= today,
-    );
+    const commissionRates = await selectCommissionRates(id);
+    const currentRate = findRateValidOn(commissionRates, getBusinessDate());
 
     return {
       ...seller,

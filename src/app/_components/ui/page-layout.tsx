@@ -26,36 +26,38 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={styles.headerText}>
-        {breadcrumb && breadcrumb.length > 0 ? (
-          <nav aria-label="Trilha de navegação" className={styles.breadcrumb}>
-            <ol>
-              {breadcrumb.map((item, index) => {
-                const isCurrent = index === breadcrumb.length - 1;
+      <div className={styles.headerInner}>
+        <div className={styles.headerText}>
+          {breadcrumb && breadcrumb.length > 0 ? (
+            <nav aria-label="Trilha de navegação" className={styles.breadcrumb}>
+              <ol>
+                {breadcrumb.map((item, index) => {
+                  const isCurrent = index === breadcrumb.length - 1;
 
-                return (
-                  <li key={`${index}-${item.label}`}>
-                    {index > 0 ? (
-                      <ChevronRight size={13} aria-hidden="true" />
-                    ) : null}
-                    {item.href && !isCurrent ? (
-                      <Link href={item.href}>{item.label}</Link>
-                    ) : (
-                      <span aria-current={isCurrent ? "page" : undefined}>
-                        {item.label}
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
-        ) : null}
-        {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
-        <h1 className={styles.title}>{title}</h1>
-        {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
+                  return (
+                    <li key={`${index}-${item.label}`}>
+                      {index > 0 ? (
+                        <ChevronRight size={13} aria-hidden="true" />
+                      ) : null}
+                      {item.href && !isCurrent ? (
+                        <Link href={item.href}>{item.label}</Link>
+                      ) : (
+                        <span aria-current={isCurrent ? "page" : undefined}>
+                          {item.label}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          ) : null}
+          {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
+          <h1 className={styles.title}>{title}</h1>
+          {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
+        </div>
+        {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
-      {actions ? <div className={styles.actions}>{actions}</div> : null}
     </header>
   );
 }

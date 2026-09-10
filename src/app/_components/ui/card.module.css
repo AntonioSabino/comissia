@@ -44,7 +44,7 @@
 .kicker {
   display: block;
   margin-bottom: 7px;
-  color: var(--green-600);
+  color: var(--cobalt-700);
   font: var(--type-kicker);
   letter-spacing: var(--tracking-kicker);
   text-transform: uppercase;

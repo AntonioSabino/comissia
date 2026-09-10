@@ -1,0 +1,44 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 25px;
+  padding: 0 8px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-3xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.received {
+  border-color: var(--state-received-border);
+  color: var(--state-received);
+  background: var(--state-received-bg);
+}
+
+.pending {
+  border-color: var(--state-pending-border);
+  color: var(--state-pending);
+  background: var(--state-pending-bg);
+}
+
+.cancelled {
+  border-color: var(--state-cancelled-border);
+  color: var(--state-cancelled);
+  background: var(--state-cancelled-bg);
+}
+
+.reconciled {
+  border-color: var(--state-reconciled-border);
+  color: var(--state-reconciled);
+  background: var(--state-reconciled-bg);
+}
+
+.neutral {
+  border-color: var(--state-neutral-border);
+  color: var(--state-neutral);
+  background: var(--state-neutral-bg);
+}

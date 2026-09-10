@@ -45,9 +45,7 @@ export const sales = pgTable(
     sellerId: uuid("seller_id")
       .notNull()
       .references(() => sellers.id, { onDelete: "restrict" }),
-    sellerCommissionRateId: uuid("seller_commission_rate_id")
-      .notNull()
-      .references(() => sellerCommissionRates.id, { onDelete: "restrict" }),
+    sellerCommissionRateId: uuid("seller_commission_rate_id").notNull(),
     customerName: varchar("customer_name", { length: 160 }).notNull(),
     product: varchar("product", { length: 120 }).notNull(),
     groupCode: varchar("group_code", { length: 20 }).notNull(),

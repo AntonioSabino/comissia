@@ -16,6 +16,7 @@ import {
 } from "@/app/_components/ui/status-badge";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
+import { findRateValidOn } from "@/modules/sellers/domain/commission-rate-on-date";
 import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 import styles from "./seller-details.module.css";
@@ -102,9 +103,7 @@ export default async function SellerDetailsPage({
   }
 
   const today = getBusinessDate();
-  const currentRateId = seller.commissionRates.find(
-    (rate) => rate.effectiveFrom <= today,
-  )?.id;
+  const currentRateId = findRateValidOn(seller.commissionRates, today)?.id;
 
   return (
     <>

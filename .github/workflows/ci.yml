@@ -23,6 +23,22 @@ jobs:
       DATABASE_URL: postgresql://comissia:comissia@localhost:5432/comissia
       NEXT_TELEMETRY_DISABLED: 1
 
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: comissia
+          POSTGRES_PASSWORD: comissia
+          POSTGRES_DB: comissia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U comissia -d comissia"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 10s
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -50,6 +66,12 @@ jobs:
 
       - name: Check database migrations
         run: npm run db:check
+
+      - name: Apply database migrations
+        run: npm run db:migrate
+
+      - name: Re-apply database migrations
+        run: npm run db:migrate
 
       - name: Build application
         run: npm run build

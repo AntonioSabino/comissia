@@ -1,0 +1,48 @@
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  line-height: var(--lh-dense);
+}
+
+.icon {
+  flex: 0 0 auto;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.info {
+  border-color: var(--border-default);
+  color: var(--slate-600);
+  background: var(--slate-050);
+}
+
+.attention {
+  border-color: var(--amber-300);
+  color: var(--amber-text);
+  background: var(--amber-050);
+}
+
+.positive {
+  border-color: var(--state-received-border);
+  color: var(--state-received);
+  background: var(--state-received-bg);
+}
+
+.critical {
+  border-color: var(--red-300);
+  color: var(--red-700);
+  background: var(--red-050);
+}

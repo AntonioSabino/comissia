@@ -1,0 +1,96 @@
+.block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 230px;
+  padding: 32px;
+  text-align: center;
+}
+
+.badge {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid;
+  border-radius: var(--radius-circle);
+}
+
+.emptyBadge {
+  border-color: var(--action-tint-border);
+  color: var(--action-primary);
+  background: var(--action-tint);
+}
+
+.errorBadge {
+  border-color: var(--state-cancelled-border);
+  color: var(--state-cancelled);
+  background: var(--state-cancelled-bg);
+}
+
+.title {
+  margin-top: 8px;
+  color: var(--text-heading);
+  font-size: var(--text-md);
+  letter-spacing: var(--tracking-tight);
+}
+
+.description {
+  max-width: 380px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--lh-body);
+}
+
+.action {
+  margin-top: 12px;
+}
+
+.loading {
+  padding: 4px 0;
+}
+
+.loadingRow {
+  display: flex;
+  gap: 18px;
+  padding: 18px;
+}
+
+.loadingRow + .loadingRow {
+  border-top: 1px solid var(--border-subtle);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -420px 0;
+  }
+
+  to {
+    background-position: 420px 0;
+  }
+}
+
+.skeleton {
+  flex: 1;
+  height: 12px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--slate-100) 0%,
+    var(--slate-050) 50%,
+    var(--slate-100) 100%
+  );
+  background-size: 840px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton:first-child {
+  flex: 1.4;
+}
+
+.skeleton:last-child {
+  flex: 0.6;
+}

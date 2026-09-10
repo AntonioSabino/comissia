@@ -34,3 +34,10 @@ export class DuplicateSellerCommissionRateError extends Error {
     this.name = "DuplicateSellerCommissionRateError";
   }
 }
+
+export class MissingCommissionRateError extends Error {
+  constructor() {
+    super("O vendedor não tem percentual vigente na data da venda");
+    this.name = "MissingCommissionRateError";
+  }
+}

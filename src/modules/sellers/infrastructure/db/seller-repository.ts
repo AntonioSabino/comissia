@@ -252,6 +252,18 @@ export const sellerRepository: SellerRepository = {
     }
   },
 
+  async listCommissionRates(sellerId) {
+    return db
+      .select({
+        id: sellerCommissionRates.id,
+        rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+        effectiveFrom: sellerCommissionRates.effectiveFrom,
+      })
+      .from(sellerCommissionRates)
+      .where(eq(sellerCommissionRates.sellerId, sellerId))
+      .orderBy(desc(sellerCommissionRates.effectiveFrom));
+  },
+
   async setActive(id, active) {
     const [updatedSeller] = await db
       .update(sellers)

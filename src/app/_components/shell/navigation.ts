@@ -1,4 +1,9 @@
-import { LayoutDashboard, UsersRound, type LucideIcon } from "lucide-react";
+import {
+  Building2,
+  LayoutDashboard,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 
 export type ShellArea = "admin" | "seller";
 
@@ -19,6 +24,11 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
       exact: true,
     },
     { href: "/admin/sellers", label: "Vendedores", icon: UsersRound },
+    {
+      href: "/admin/administrators",
+      label: "Administradoras",
+      icon: Building2,
+    },
   ],
   seller: [
     { href: "/seller", label: "Resumo", icon: LayoutDashboard, exact: true },

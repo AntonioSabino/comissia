@@ -51,10 +51,10 @@ export function Alert({
         strokeWidth={1.8}
         aria-hidden="true"
       />
-      <span className={styles.content}>
+      <div className={styles.content}>
         {title ? <strong className={styles.title}>{title}</strong> : null}
         {children}
-      </span>
+      </div>
       {action}
     </div>
   );

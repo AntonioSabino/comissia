@@ -106,8 +106,10 @@ npm run build
 ```
 
 O GitHub Actions executa esses comandos automaticamente em pull requests e em
-pushes para a `main`. Uma alteração só deve ser integrada quando o check
-`CI / Quality` estiver aprovado.
+pushes para a `main`. Além disso, o CI aplica todas as migrações duas vezes em
+um PostgreSQL novo, para garantir que o banco aceita a cadeia completa e que
+uma segunda execução não altera nada. Uma alteração só deve ser integrada
+quando o check `CI / Quality` estiver aprovado.
 
 ## Objetivo do MVP
 

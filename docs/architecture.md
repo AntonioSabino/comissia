@@ -14,6 +14,8 @@ regras de vendedores, vendas e comissões.
 ```text
 src/
 ├── app/                         # rotas, páginas e endpoints Next.js
+│   ├── _components/             # componentes de interface (ui/ e shell/)
+│   └── styles/                  # tokens do Design System
 ├── db/
 │   ├── schema.ts                # registro dos schemas Drizzle
 │   └── ...                      # conexão e infraestrutura compartilhada
@@ -115,6 +117,25 @@ Eles são registrados com contexto técnico e retornam uma mensagem segura.
 - Alterações que precisam ocorrer juntas usam uma única transação.
 - Migrações são geradas, revisadas e versionadas.
 - Alterar uma regra atual não modifica snapshots de vendas antigas.
+
+## Interface
+
+A interface segue o Comissia Design System, entregue pelo Claude Design. O
+pacote é especificação, não código de produção: os componentes dele usam estilo
+inline e são reescritos aqui.
+
+- Os tokens de cor, tipografia, espaçamento, bordas, sombras e movimento ficam
+  em `src/app/styles/tokens.css` e são a fonte de cores e medidas das telas.
+- Componentes reutilizáveis ficam em `src/app/_components/`: `ui/` para os
+  primitivos e `shell/` para o menu lateral e a estrutura das áreas.
+- Cada componente tem o seu CSS Module ao lado. Não há estilo inline.
+- Ícones vêm do `lucide-react`; Inter e JetBrains Mono vêm do `next/font`.
+- Valores, percentuais, datas e códigos usam a classe `num`, com algarismos
+  tabulares.
+- Verde marca dinheiro e comissão; cobalto marca ação e navegação. Um controle
+  nunca é verde.
+- Um componente do Design System entra quando uma história precisa dele, não por
+  antecipação.
 
 ## Convenções
 

@@ -33,8 +33,8 @@ type CardHeadingProps = {
   kicker?: ReactNode;
   title: ReactNode;
   titleId?: string;
+  description?: ReactNode;
   action?: ReactNode;
-  children?: ReactNode;
   className?: string;
 };
 
@@ -42,8 +42,8 @@ export function CardHeading({
   kicker,
   title,
   titleId,
+  description,
   action,
-  children,
   className,
 }: CardHeadingProps) {
   return (
@@ -53,7 +53,9 @@ export function CardHeading({
         <h2 id={titleId} className={styles.title}>
           {title}
         </h2>
-        {children}
+        {description ? (
+          <p className={styles.description}>{description}</p>
+        ) : null}
       </div>
       {action ? <div className={styles.action}>{action}</div> : null}
     </div>

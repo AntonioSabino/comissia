@@ -1,4 +1,8 @@
-import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { BrandMark } from "@/app/_components/shell/brand-mark";
+import { ButtonLink } from "@/app/_components/ui/button";
+import { Card, CardHeading } from "@/app/_components/ui/card";
+import styles from "./home.module.css";
 
 const firstCycle = [
   "Cadastro de vendedores",
@@ -9,26 +13,26 @@ const firstCycle = [
 
 export default function Home() {
   return (
-    <main className="page-shell">
-      <section className="hero">
-        <div className="brand-mark" aria-hidden="true">
-          C
-        </div>
-        <p className="eyebrow">MVP em construção</p>
-        <h1>Comissia</h1>
-        <p className="subtitle">Gestão de vendas e comissões de consórcio.</p>
-        <Link className="primary-link" href="/login">
+    <main className={styles.page}>
+      <section className={styles.hero}>
+        <BrandMark size="lg" />
+        <p className={styles.eyebrow}>MVP em construção</p>
+        <h1 className={styles.title}>Comissia</h1>
+        <p className={styles.subtitle}>
+          Gestão de vendas e comissões de consórcio.
+        </p>
+        <ButtonLink href="/login" size="lg" iconAfter={ArrowRight}>
           Acessar a Comissia
-        </Link>
+        </ButtonLink>
 
-        <div className="cycle-card">
-          <p>Primeiro ciclo</p>
-          <ul>
+        <Card className={styles.cycle}>
+          <CardHeading title="Primeiro ciclo" />
+          <ul className={styles.cycleList}>
             {firstCycle.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
+        </Card>
       </section>
     </main>
   );

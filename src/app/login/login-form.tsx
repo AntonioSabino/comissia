@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Alert } from "@/app/_components/ui/alert";
+import { Button } from "@/app/_components/ui/button";
+import { Field, Form, Input } from "@/app/_components/ui/field";
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
@@ -65,38 +68,32 @@ export function LoginForm() {
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit}>
-      <label>
-        E-mail
-        <input
+    <Form onSubmit={handleSubmit}>
+      <Field label="E-mail">
+        <Input
           name="email"
           type="email"
           autoComplete="email"
           maxLength={254}
           required
         />
-      </label>
+      </Field>
 
-      <label>
-        Senha
-        <input
+      <Field label="Senha">
+        <Input
           name="password"
           type="password"
           autoComplete="current-password"
           maxLength={1024}
           required
         />
-      </label>
+      </Field>
 
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error ? <Alert tone="critical">{error}</Alert> : null}
 
-      <button type="submit" disabled={isSubmitting}>
+      <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
         {isSubmitting ? "Entrando..." : "Entrar"}
-      </button>
-    </form>
+      </Button>
+    </Form>
   );
 }

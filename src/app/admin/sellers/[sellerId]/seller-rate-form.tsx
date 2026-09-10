@@ -1,7 +1,17 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Alert } from "@/app/_components/ui/alert";
+import { Button } from "@/app/_components/ui/button";
+import {
+  Field,
+  Form,
+  FormActions,
+  FormGrid,
+  Input,
+} from "@/app/_components/ui/field";
 import {
   readApiResult,
   readFieldErrors,
@@ -71,57 +81,41 @@ export function SellerRateForm({
     }
   }
 
-  function fieldError(field: RateField) {
-    const error = fieldErrors[field];
-
-    return error ? <span className="field-error">{error}</span> : null;
-  }
-
   return (
-    <form className="seller-form" onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <label>
-          Novo percentual
-          <div className="input-suffix">
-            <input
-              name="ratePercentage"
-              inputMode="decimal"
-              placeholder="2,50"
-              required
-              aria-invalid={Boolean(fieldErrors.ratePercentage)}
-            />
-            <span>%</span>
-          </div>
-          {fieldError("ratePercentage")}
-        </label>
+    <Form onSubmit={handleSubmit} noValidate>
+      <FormGrid>
+        <Field label="Novo percentual" error={fieldErrors.ratePercentage}>
+          <Input
+            name="ratePercentage"
+            numeric
+            inputMode="decimal"
+            placeholder="2,50"
+            suffix="%"
+            required
+            aria-invalid={Boolean(fieldErrors.ratePercentage)}
+          />
+        </Field>
 
-        <label>
-          Início da vigência
-          <input
+        <Field label="Início da vigência" error={fieldErrors.effectiveFrom}>
+          <Input
             name="effectiveFrom"
             type="date"
+            numeric
             defaultValue={defaultEffectiveFrom}
             required
             aria-invalid={Boolean(fieldErrors.effectiveFrom)}
           />
-          {fieldError("effectiveFrom")}
-        </label>
-      </div>
+        </Field>
+      </FormGrid>
 
-      {message ? (
-        <p className="form-error" role="alert">
-          {message}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="form-success" role="status">
-          {success}
-        </p>
-      ) : null}
+      {message ? <Alert tone="critical">{message}</Alert> : null}
+      {success ? <Alert tone="positive">{success}</Alert> : null}
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Registrando..." : "Registrar vigência"}
-      </button>
-    </form>
+      <FormActions>
+        <Button type="submit" icon={Plus} disabled={isSubmitting}>
+          {isSubmitting ? "Registrando..." : "Registrar vigência"}
+        </Button>
+      </FormActions>
+    </Form>
   );
 }

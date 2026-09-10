@@ -20,10 +20,15 @@
 
 .heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 22px;
+}
+
+.heading:last-child {
+  margin-bottom: 0;
 }
 
 .flush > .heading {
@@ -32,6 +37,7 @@
 }
 
 .headingText {
+  flex: 1 1 260px;
   min-width: 0;
 }
 
@@ -51,6 +57,14 @@
   font-weight: var(--weight-bold);
   line-height: var(--lh-heading);
   letter-spacing: var(--tracking-tight);
+}
+
+.description {
+  max-width: 60ch;
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--lh-body);
 }
 
 .action {

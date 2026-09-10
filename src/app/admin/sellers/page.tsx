@@ -1,9 +1,18 @@
+import { Filter, SearchX, UsersRound } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button, ButtonLink } from "@/app/_components/ui/button";
+import { Card, CardHeading } from "@/app/_components/ui/card";
+import { DataTable, DataToolbar } from "@/app/_components/ui/data-table";
+import { SearchBox, Select } from "@/app/_components/ui/field";
+import { PageBody, PageHeader } from "@/app/_components/ui/page-layout";
+import { EmptyState } from "@/app/_components/ui/state-block";
+import { StatusBadge } from "@/app/_components/ui/status-badge";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { parseSellerListFilters } from "@/modules/sellers/application/seller-list-filters";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 import { SellerForm } from "./seller-form";
+import styles from "./sellers.module.css";
 
 export const metadata: Metadata = {
   title: "Vendedores | Comissia",
@@ -27,6 +36,10 @@ function formatDate(date: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function formatSellerCount(count: number): string {
+  return count === 1 ? "1 vendedor" : `${count} vendedores`;
+}
+
 type SellersPageProps = {
   searchParams: Promise<{
     search?: string | string[];
@@ -38,129 +51,136 @@ export default async function SellersPage({ searchParams }: SellersPageProps) {
   await requirePageRole("admin");
   const filters = parseSellerListFilters(await searchParams);
   const sellerList = await sellerRepository.list(filters);
+  const hasFilters = filters.search.length > 0 || filters.status !== "all";
+
+  const emptyState = hasFilters ? (
+    <EmptyState
+      icon={SearchX}
+      title="Nenhum vendedor encontrado"
+      description="Revise a busca ou a situação selecionada."
+      action={
+        <ButtonLink href="/admin/sellers" variant="secondary">
+          Limpar filtros
+        </ButtonLink>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={UsersRound}
+      title="Nenhum vendedor cadastrado"
+      description="Use o formulário acima para cadastrar o primeiro vendedor."
+    />
+  );
 
   return (
-    <main className="admin-shell">
-      <div className="admin-content">
-        <header className="admin-header">
-          <div>
-            <p className="eyebrow">Área administrativa</p>
-            <h1>Vendedores</h1>
-            <p className="subtitle">
-              Cadastre, encontre e consulte vendedores e suas comissões.
-            </p>
-          </div>
-          <Link href="/admin">Voltar</Link>
-        </header>
+    <>
+      <PageHeader
+        eyebrow="Cadastros internos"
+        title="Vendedores"
+        subtitle="Cadastre, encontre e consulte vendedores e suas comissões."
+      />
 
-        <section className="admin-card">
-          <h2>Novo vendedor</h2>
+      <PageBody>
+        <Card aria-labelledby="new-seller-title">
+          <CardHeading
+            titleId="new-seller-title"
+            kicker="Novo cadastro"
+            title="Novo vendedor"
+            description="O percentual inicial abre o histórico de vigências do vendedor."
+          />
           <SellerForm />
-        </section>
+        </Card>
 
-        <section className="admin-card">
-          <div className="section-heading">
-            <h2>Vendedores cadastrados</h2>
-            <span>{sellerList.length}</span>
-          </div>
+        <Card flush aria-labelledby="sellers-title">
+          <CardHeading
+            titleId="sellers-title"
+            kicker={formatSellerCount(sellerList.length)}
+            title="Vendedores cadastrados"
+          />
 
-          <form className="seller-filters" method="get">
-            <label>
-              Buscar
-              <input
-                type="search"
+          <DataToolbar>
+            <form className={styles.filters} method="get" role="search">
+              <SearchBox
+                className={styles.search}
                 name="search"
                 defaultValue={filters.search}
                 placeholder="Nome, CPF ou e-mail"
                 maxLength={160}
+                aria-label="Buscar por nome, CPF ou e-mail"
               />
-            </label>
-
-            <label>
-              Situação
-              <select name="status" defaultValue={filters.status}>
+              <Select
+                className={styles.status}
+                name="status"
+                defaultValue={filters.status}
+                aria-label="Situação"
+              >
                 <option value="all">Todos</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
-              </select>
-            </label>
-
-            <div className="filter-actions">
-              <button type="submit">Filtrar</button>
-              <Link href="/admin/sellers">Limpar</Link>
-            </div>
-          </form>
+              </Select>
+              <Button type="submit" variant="secondary" size="sm" icon={Filter}>
+                Filtrar
+              </Button>
+              {hasFilters ? <Link href="/admin/sellers">Limpar</Link> : null}
+            </form>
+          </DataToolbar>
 
           {sellerList.length === 0 ? (
-            <p className="empty-state">
-              Nenhum vendedor encontrado com os filtros informados.
-            </p>
+            emptyState
           ) : (
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>CPF</th>
-                    <th>E-mail</th>
-                    <th>Percentual</th>
-                    <th>Vigência</th>
-                    <th>Situação</th>
-                    <th>
-                      <span className="visually-hidden">Ações</span>
-                    </th>
+            <DataTable>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>E-mail</th>
+                  <th>Percentual</th>
+                  <th>Vigência</th>
+                  <th>Situação</th>
+                  <th>
+                    <span className="visually-hidden">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sellerList.map((seller) => (
+                  <tr key={seller.id}>
+                    <td>
+                      <Link href={`/admin/sellers/${seller.id}`}>
+                        {seller.name}
+                      </Link>
+                    </td>
+                    <td className="num">{formatDocument(seller.document)}</td>
+                    <td>{seller.email}</td>
+                    <td className="num">
+                      {seller.rateBasisPoints === null
+                        ? "Não informado"
+                        : formatRate(seller.rateBasisPoints)}
+                    </td>
+                    <td className="num">
+                      {seller.effectiveFrom === null
+                        ? "Não informado"
+                        : formatDate(seller.effectiveFrom)}
+                    </td>
+                    <td>
+                      <StatusBadge
+                        tone={seller.active ? "reconciled" : "neutral"}
+                      >
+                        {seller.active ? "Ativo" : "Inativo"}
+                      </StatusBadge>
+                    </td>
+                    <td>
+                      <Link href={`/admin/sellers/${seller.id}`}>
+                        Consultar
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {sellerList.map((seller) => (
-                    <tr key={seller.id}>
-                      <td>
-                        <Link
-                          className="table-primary-link"
-                          href={`/admin/sellers/${seller.id}`}
-                        >
-                          {seller.name}
-                        </Link>
-                      </td>
-                      <td>{formatDocument(seller.document)}</td>
-                      <td>{seller.email}</td>
-                      <td>
-                        {seller.rateBasisPoints === null
-                          ? "Não informado"
-                          : formatRate(seller.rateBasisPoints)}
-                      </td>
-                      <td>
-                        {seller.effectiveFrom === null
-                          ? "Não informado"
-                          : formatDate(seller.effectiveFrom)}
-                      </td>
-                      <td>
-                        <span
-                          className={
-                            seller.active
-                              ? "status-badge status-active"
-                              : "status-badge status-inactive"
-                          }
-                        >
-                          {seller.active ? "Ativo" : "Inativo"}
-                        </span>
-                      </td>
-                      <td>
-                        <Link
-                          className="table-action-link"
-                          href={`/admin/sellers/${seller.id}`}
-                        >
-                          Consultar
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </DataTable>
           )}
-        </section>
-      </div>
-    </main>
+        </Card>
+      </PageBody>
+    </>
   );
 }

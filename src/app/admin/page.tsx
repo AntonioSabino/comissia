@@ -1,26 +1,43 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { ButtonLink } from "@/app/_components/ui/button";
+import { Card, CardHeading } from "@/app/_components/ui/card";
+import { PageBody, PageHeader } from "@/app/_components/ui/page-layout";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 
 export const metadata: Metadata = {
-  title: "Administração | Comissia",
+  title: "Visão geral | Comissia",
 };
 
 export default async function AdminPage() {
   await requirePageRole("admin");
 
   return (
-    <main className="page-shell">
-      <section className="hero">
-        <p className="eyebrow">Área administrativa</p>
-        <h1>Administração</h1>
-        <p className="subtitle">
-          Acesso confirmado aos módulos administrativos da Comissia.
-        </p>
-        <Link className="primary-link" href="/admin/sellers">
-          Gerenciar vendedores
-        </Link>
-      </section>
-    </main>
+    <>
+      <PageHeader
+        eyebrow="Área administrativa"
+        title="Visão geral"
+        subtitle="Acesso confirmado aos módulos administrativos da Comissia."
+      />
+
+      <PageBody>
+        <Card>
+          <CardHeading
+            kicker="Cadastros"
+            title="Vendedores"
+            description="Cadastre vendedores, acompanhe a situação de cada um e mantenha o histórico de percentuais de comissão."
+            action={
+              <ButtonLink
+                href="/admin/sellers"
+                variant="secondary"
+                iconAfter={ArrowRight}
+              >
+                Gerenciar vendedores
+              </ButtonLink>
+            }
+          />
+        </Card>
+      </PageBody>
+    </>
   );
 }

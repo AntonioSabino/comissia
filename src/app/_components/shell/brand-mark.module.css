@@ -1,0 +1,31 @@
+.mark {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.sm {
+  width: 32px;
+  height: 32px;
+}
+
+.md {
+  width: 44px;
+  height: 44px;
+}
+
+.lg {
+  width: 52px;
+  height: 52px;
+}
+
+.surface {
+  fill: var(--navy-heading);
+}
+
+.letter {
+  stroke: var(--white);
+}
+
+.accent {
+  fill: var(--cobalt-500);
+}

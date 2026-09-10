@@ -87,7 +87,12 @@ export function SellerProfileForm({
   return (
     <Form onSubmit={handleSubmit} noValidate>
       <FormGrid>
-        <Field label="Nome" wide error={fieldErrors.name}>
+        <Field
+          controlId="seller-profile-name"
+          label="Nome"
+          wide
+          error={fieldErrors.name}
+        >
           <Input
             name="name"
             defaultValue={name}
@@ -97,7 +102,11 @@ export function SellerProfileForm({
           />
         </Field>
 
-        <Field label="CPF" error={fieldErrors.document}>
+        <Field
+          controlId="seller-profile-document"
+          label="CPF"
+          error={fieldErrors.document}
+        >
           <Input
             name="document"
             defaultValue={document}
@@ -110,7 +119,11 @@ export function SellerProfileForm({
           />
         </Field>
 
-        <Field label="E-mail" error={fieldErrors.email}>
+        <Field
+          controlId="seller-profile-email"
+          label="E-mail"
+          error={fieldErrors.email}
+        >
           <Input
             name="email"
             defaultValue={email}
@@ -121,7 +134,11 @@ export function SellerProfileForm({
           />
         </Field>
 
-        <Field label="Telefone" error={fieldErrors.phone}>
+        <Field
+          controlId="seller-profile-phone"
+          label="Telefone"
+          error={fieldErrors.phone}
+        >
           <Input
             name="phone"
             defaultValue={phone}

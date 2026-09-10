@@ -1,7 +1,9 @@
 import { Search } from "lucide-react";
+import { cloneElement } from "react";
 import type {
   FormHTMLAttributes,
   InputHTMLAttributes,
+  ReactElement,
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
@@ -27,16 +29,24 @@ export function FormActions({
   );
 }
 
+type FieldControlProps = {
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean | "false" | "true" | "grammar" | "spelling";
+};
+
 type FieldProps = {
+  controlId: string;
   label: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
   wide?: boolean;
-  children: ReactNode;
+  children: ReactElement<FieldControlProps>;
   className?: string;
 };
 
 export function Field({
+  controlId,
   label,
   hint,
   error,
@@ -44,14 +54,36 @@ export function Field({
   children,
   className,
 }: FieldProps) {
+  const messageId = error
+    ? `${controlId}-error`
+    : hint
+      ? `${controlId}-hint`
+      : undefined;
+  const describedBy = [children.props["aria-describedby"], messageId]
+    .filter(Boolean)
+    .join(" ");
+
+  const control = cloneElement(children, {
+    id: children.props.id ?? controlId,
+    "aria-describedby": describedBy || undefined,
+    "aria-invalid": error ? true : children.props["aria-invalid"],
+  });
+
   return (
-    <label className={classNames(styles.field, wide && styles.wide, className)}>
+    <label
+      htmlFor={children.props.id ?? controlId}
+      className={classNames(styles.field, wide && styles.wide, className)}
+    >
       <span className={styles.label}>{label}</span>
-      {children}
+      {control}
       {error ? (
-        <span className={styles.error}>{error}</span>
+        <span id={messageId} className={styles.error}>
+          {error}
+        </span>
       ) : hint ? (
-        <span className={styles.hint}>{hint}</span>
+        <span id={messageId} className={styles.hint}>
+          {hint}
+        </span>
       ) : null}
     </label>
   );

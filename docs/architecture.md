@@ -132,7 +132,8 @@ inline e são reescritos aqui.
 - Ícones vêm do `lucide-react`; Inter e JetBrains Mono vêm do `next/font`.
 - Valores, percentuais, datas e códigos usam a classe `num`, com algarismos
   tabulares.
-- Verde marca dinheiro e comissão; cobalto marca ação e navegação. Um controle
+- Verde marca dinheiro, comissão e situações positivas nos badges (como
+  vendedor ativo ou vigência atual); cobalto marca ação e navegação. Um controle
   nunca é verde.
 - Um componente do Design System entra quando uma história precisa dele, não por
   antecipação.

@@ -164,7 +164,7 @@ export default async function SellersPage({ searchParams }: SellersPageProps) {
                     </td>
                     <td>
                       <StatusBadge
-                        tone={seller.active ? "reconciled" : "neutral"}
+                        tone={seller.active ? "received" : "neutral"}
                       >
                         {seller.active ? "Ativo" : "Inativo"}
                       </StatusBadge>

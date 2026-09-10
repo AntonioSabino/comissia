@@ -71,7 +71,7 @@ function describeRate(
   today: string,
 ): { label: string; tone: StatusTone } {
   if (rate.id === currentRateId) {
-    return { label: "Vigente", tone: "reconciled" };
+    return { label: "Vigente", tone: "received" };
   }
 
   if (rate.effectiveFrom > today) {
@@ -117,7 +117,7 @@ export default async function SellerDetailsPage({
         title={seller.name}
         subtitle="Dados cadastrais e histórico de percentuais de comissão."
         actions={
-          <StatusBadge tone={seller.active ? "reconciled" : "neutral"}>
+          <StatusBadge tone={seller.active ? "received" : "neutral"}>
             {seller.active ? "Ativo" : "Inativo"}
           </StatusBadge>
         }

@@ -16,7 +16,7 @@ import {
   readApiResult,
   readFieldErrors,
   readMessage,
-} from "../_utils/api-result";
+} from "@/app/admin/_utils/api-result";
 
 const PROFILE_FIELDS = ["name", "document", "email", "phone"] as const;
 

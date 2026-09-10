@@ -16,7 +16,7 @@ import {
   readApiResult,
   readFieldErrors,
   readMessage,
-} from "../_utils/api-result";
+} from "@/app/admin/_utils/api-result";
 
 const RATE_FIELDS = ["ratePercentage", "effectiveFrom"] as const;
 

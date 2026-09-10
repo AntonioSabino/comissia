@@ -17,7 +17,7 @@ import {
   readApiResult,
   readFieldErrors,
   readMessage,
-} from "./_utils/api-result";
+} from "@/app/admin/_utils/api-result";
 
 const REGISTRATION_FIELDS = [
   "name",

@@ -15,6 +15,7 @@ function createRepository(
     setActive: vi.fn().mockResolvedValue(true),
     updateProfile: vi.fn().mockResolvedValue(true),
     addCommissionRate: vi.fn().mockResolvedValue({ id: "rate-1" }),
+    listCommissionRates: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }

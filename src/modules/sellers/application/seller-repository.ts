@@ -49,4 +49,7 @@ export interface SellerRepository {
     sellerId: string,
     rate: ValidSellerCommissionRate,
   ): Promise<{ id: string } | null>;
+  listCommissionRates(
+    sellerId: string,
+  ): Promise<SellerCommissionRateListItem[]>;
 }

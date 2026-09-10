@@ -26,6 +26,12 @@ anteriores não são atualizados nem removidos. O percentual válido em uma data
 o registro do vendedor com a maior `effective_from` que não ultrapasse a data
 consultada.
 
+A regra fica em `findRateValidOn` e chega ao módulo de vendas pela consulta
+`findCommissionRateOn`, exposta em `index.ts`. Ela devolve a vigência válida na
+data da venda, com identificador e percentual, que a venda grava como snapshot.
+Quando a data é anterior à primeira vigência do vendedor, a consulta falha com
+`MissingCommissionRateError` e a venda não pode ser calculada.
+
 O percentual é armazenado em pontos-base para evitar arredondamentos de ponto
 flutuante: `200` representa 2% e `250` representa 2,5%. São aceitos valores
 entre 1 e 10.000 pontos-base. Um vendedor pode ter somente uma regra iniciando

@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Alert } from "@/app/_components/ui/alert";
 import { Button } from "@/app/_components/ui/button";
 import { Card } from "@/app/_components/ui/card";
-import { readApiResult, readMessage } from "../_utils/api-result";
+import { readApiResult, readMessage } from "@/app/admin/_utils/api-result";
 import styles from "./seller-details.module.css";
 
 type SellerStatusFormProps = {

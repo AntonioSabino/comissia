@@ -1,12 +1,22 @@
 .header {
   display: flex;
+  align-items: center;
+  min-height: var(--topbar-min-height);
+  padding: 38px 0 26px;
+  border-bottom: 1px solid var(--slate-150);
+  background: var(--surface-card);
+}
+
+/* Mesma coluna do PageBody: título, ações e cards alinhados em telas largas. */
+.headerInner {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 28px;
-  min-height: var(--topbar-min-height);
-  padding: 38px var(--content-gutter) 26px;
-  border-bottom: 1px solid var(--slate-150);
-  background: var(--surface-card);
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--content-gutter);
 }
 
 .headerText {

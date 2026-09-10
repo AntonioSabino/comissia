@@ -69,7 +69,7 @@ export function LoginForm() {
 
   return (
     <Form onSubmit={handleSubmit}>
-      <Field label="E-mail">
+      <Field controlId="login-email" label="E-mail">
         <Input
           name="email"
           type="email"
@@ -79,7 +79,7 @@ export function LoginForm() {
         />
       </Field>
 
-      <Field label="Senha">
+      <Field controlId="login-password" label="Senha">
         <Input
           name="password"
           type="password"

@@ -87,7 +87,12 @@ export function SellerForm() {
   return (
     <Form onSubmit={handleSubmit} noValidate>
       <FormGrid>
-        <Field label="Nome" wide error={fieldErrors.name}>
+        <Field
+          controlId="new-seller-name"
+          label="Nome"
+          wide
+          error={fieldErrors.name}
+        >
           <Input
             name="name"
             maxLength={160}
@@ -96,7 +101,11 @@ export function SellerForm() {
           />
         </Field>
 
-        <Field label="CPF" error={fieldErrors.document}>
+        <Field
+          controlId="new-seller-document"
+          label="CPF"
+          error={fieldErrors.document}
+        >
           <Input
             name="document"
             numeric
@@ -108,7 +117,11 @@ export function SellerForm() {
           />
         </Field>
 
-        <Field label="E-mail" error={fieldErrors.email}>
+        <Field
+          controlId="new-seller-email"
+          label="E-mail"
+          error={fieldErrors.email}
+        >
           <Input
             name="email"
             type="email"
@@ -118,7 +131,11 @@ export function SellerForm() {
           />
         </Field>
 
-        <Field label="Telefone" error={fieldErrors.phone}>
+        <Field
+          controlId="new-seller-phone"
+          label="Telefone"
+          error={fieldErrors.phone}
+        >
           <Input
             name="phone"
             type="tel"
@@ -129,7 +146,11 @@ export function SellerForm() {
           />
         </Field>
 
-        <Field label="Percentual inicial" error={fieldErrors.ratePercentage}>
+        <Field
+          controlId="new-seller-rate"
+          label="Percentual inicial"
+          error={fieldErrors.ratePercentage}
+        >
           <Input
             name="ratePercentage"
             numeric
@@ -141,7 +162,11 @@ export function SellerForm() {
           />
         </Field>
 
-        <Field label="Início da vigência" error={fieldErrors.effectiveFrom}>
+        <Field
+          controlId="new-seller-effective-from"
+          label="Início da vigência"
+          error={fieldErrors.effectiveFrom}
+        >
           <Input
             name="effectiveFrom"
             type="date"

@@ -84,7 +84,11 @@ export function SellerRateForm({
   return (
     <Form onSubmit={handleSubmit} noValidate>
       <FormGrid>
-        <Field label="Novo percentual" error={fieldErrors.ratePercentage}>
+        <Field
+          controlId="seller-rate-percentage"
+          label="Novo percentual"
+          error={fieldErrors.ratePercentage}
+        >
           <Input
             name="ratePercentage"
             numeric
@@ -96,7 +100,11 @@ export function SellerRateForm({
           />
         </Field>
 
-        <Field label="Início da vigência" error={fieldErrors.effectiveFrom}>
+        <Field
+          controlId="seller-rate-effective-from"
+          label="Início da vigência"
+          error={fieldErrors.effectiveFrom}
+        >
           <Input
             name="effectiveFrom"
             type="date"

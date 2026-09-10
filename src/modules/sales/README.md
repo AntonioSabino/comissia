@@ -40,7 +40,30 @@ A venda guarda o percentual aplicado em duas colunas complementares:
 responde "quanto foi pago" sem depender de junção; a referência responde "por
 qual regra", que é o que torna o histórico auditável.
 
+As duas colunas não são fatos independentes. A chave estrangeira composta
+`sales_seller_commission_snapshot_fk` referencia
+`seller_commission_rates (id, seller_id, rate_basis_points)` e, com isso, o banco
+garante que o percentual gravado na venda é exatamente o da vigência citada e que
+essa vigência pertence ao vendedor da venda. Divergir é impossível, não apenas
+desaconselhado. Do lado dos vendedores, a restrição
+`seller_commission_rates_id_seller_rate_unique` existe apenas para sustentar essa
+referência.
+
+Não há chave estrangeira separada de `seller_commission_rate_id`: a composta já
+garante que a vigência existe.
+
 Cadastrar uma nova vigência para o vendedor não altera nenhuma venda existente.
+
+## Valores monetários
+
+O crédito é `bigint` no banco e `bigint` em TypeScript, nunca `number`. Isso
+elimina qualquer perda de precisão, mas tem uma consequência na borda:
+`JSON.stringify` não serializa `BigInt` e quebra com `TypeError`, o que inclui
+`NextResponse.json`.
+
+A regra do projeto é converter para string decimal nos DTOs das bordas HTTP,
+descrita em `docs/architecture.md`. A serialização em si entra no SCRUM-36, junto
+das primeiras rotas de venda.
 
 ## Não pertence a este módulo
 

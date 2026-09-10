@@ -105,6 +105,12 @@ Eles são registrados com contexto técnico e retornam uma mensagem segura.
 
 - Valores monetários são armazenados em centavos inteiros ou em `numeric` com
   escala explícita; nunca em ponto flutuante.
+- Centavos em colunas `bigint` chegam ao TypeScript como `BigInt` e permanecem
+  assim em todo o núcleo da aplicação. Converter para `number` é proibido: acima
+  de 2^53 o valor deixa de ser exato.
+- Como `JSON.stringify` não serializa `BigInt`, os DTOs das bordas HTTP
+  convertem esses valores para string decimal. A conversão acontece na borda, no
+  momento de montar a resposta, e nunca no domínio.
 - Datas de negócio e instantes devem ter significados distintos e explícitos.
 - Alterações que precisam ocorrer juntas usam uma única transação.
 - Migrações são geradas, revisadas e versionadas.

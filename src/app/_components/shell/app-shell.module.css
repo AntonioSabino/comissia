@@ -199,6 +199,10 @@
   font-size: var(--text-2xs);
 }
 
+.drawerClose {
+  display: none;
+}
+
 .scrim {
   display: none;
 }
@@ -263,6 +267,30 @@
     visibility: visible;
     transform: none;
     transition: transform var(--duration-panel) var(--ease-out);
+  }
+
+  .drawerClose {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    align-self: flex-end;
+    width: 40px;
+    height: 40px;
+    margin: -10px 0 4px;
+    border: 1px solid var(--sidebar-rule);
+    border-radius: var(--radius-md);
+    color: var(--text-on-inverse);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .drawerClose:hover {
+    color: var(--white);
+    background: var(--sidebar-item-hover);
+  }
+
+  .drawerClose:focus-visible {
+    outline-color: var(--sidebar-rule-active);
   }
 
   .scrim {

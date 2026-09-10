@@ -3,7 +3,7 @@
 import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { classNames } from "../ui/class-names";
 import styles from "./app-shell.module.css";
 import { BrandMark } from "./brand-mark";
@@ -28,23 +28,78 @@ export function ShellNavigation({
   const [open, setOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const mobileBarRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const items = navigationByArea[area];
+
+  const closeMenu = useCallback((restoreFocus = true) => {
+    setOpen(false);
+
+    if (restoreFocus) {
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    function closeOnEscape(event: KeyboardEvent) {
+    const sidebar = sidebarRef.current;
+    const main = document.getElementById("conteudo");
+    const mobileBar = mobileBarRef.current;
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    main?.setAttribute("inert", "");
+    mobileBar?.setAttribute("inert", "");
+    closeButtonRef.current?.focus();
+
+    function keepFocusInside(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setOpen(false);
+        event.preventDefault();
+        closeMenu();
+        return;
+      }
+
+      if (event.key !== "Tab" || !sidebar) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        sidebar.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
 
-    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("keydown", keepFocusInside);
 
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [open]);
+    return () => {
+      window.removeEventListener("keydown", keepFocusInside);
+      document.body.style.overflow = previousOverflow;
+      main?.removeAttribute("inert");
+      mobileBar?.removeAttribute("inert");
+    };
+  }, [closeMenu, open]);
 
   async function handleLogout() {
     setLogoutError(null);
@@ -69,12 +124,13 @@ export function ShellNavigation({
 
   return (
     <>
-      <div className={styles.mobileBar}>
+      <div ref={mobileBarRef} className={styles.mobileBar}>
         <Link href={items[0].href} className={styles.mobileBrand}>
           <BrandMark size="sm" />
           Comissia
         </Link>
         <button
+          ref={menuButtonRef}
           type="button"
           className={styles.menuButton}
           aria-expanded={open}
@@ -91,9 +147,23 @@ export function ShellNavigation({
       </div>
 
       <aside
+        ref={sidebarRef}
         id={NAVIGATION_ID}
         className={classNames(styles.sidebar, open && styles.sidebarOpen)}
+        role={open ? "dialog" : undefined}
+        aria-modal={open || undefined}
+        aria-label={open ? "Menu principal" : undefined}
       >
+        <button
+          ref={closeButtonRef}
+          type="button"
+          className={styles.drawerClose}
+          aria-label="Fechar menu"
+          onClick={() => closeMenu()}
+        >
+          <X size={20} strokeWidth={1.8} aria-hidden="true" />
+        </button>
+
         <div className={styles.brand}>
           <BrandMark className={styles.brandMark} />
           <div className={styles.brandText}>
@@ -156,7 +226,7 @@ export function ShellNavigation({
           className={styles.scrim}
           aria-label="Fechar menu"
           tabIndex={-1}
-          onClick={() => setOpen(false)}
+          onClick={() => closeMenu()}
         />
       ) : null}
     </>

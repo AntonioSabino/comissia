@@ -1,11 +1,31 @@
 import { Search } from "lucide-react";
 import type {
+  FormHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
 import { classNames } from "./class-names";
 import styles from "./field.module.css";
+
+export function Form({
+  className,
+  ...rest
+}: FormHTMLAttributes<HTMLFormElement>) {
+  return <form className={classNames(styles.form, className)} {...rest} />;
+}
+
+export function FormActions({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={classNames(styles.actions, className)}>{children}</div>
+  );
+}
 
 type FieldProps = {
   label: ReactNode;

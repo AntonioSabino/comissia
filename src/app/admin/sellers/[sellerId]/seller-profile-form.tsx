@@ -1,7 +1,17 @@
 "use client";
 
+import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Alert } from "@/app/_components/ui/alert";
+import { Button } from "@/app/_components/ui/button";
+import {
+  Field,
+  Form,
+  FormActions,
+  FormGrid,
+  Input,
+} from "@/app/_components/ui/field";
 import {
   readApiResult,
   readFieldErrors,
@@ -74,44 +84,34 @@ export function SellerProfileForm({
     }
   }
 
-  function fieldError(field: ProfileField) {
-    const error = fieldErrors[field];
-
-    return error ? <span className="field-error">{error}</span> : null;
-  }
-
   return (
-    <form className="seller-form" onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <label className="field-wide">
-          Nome
-          <input
+    <Form onSubmit={handleSubmit} noValidate>
+      <FormGrid>
+        <Field label="Nome" wide error={fieldErrors.name}>
+          <Input
             name="name"
             defaultValue={name}
             maxLength={160}
             required
             aria-invalid={Boolean(fieldErrors.name)}
           />
-          {fieldError("name")}
-        </label>
+        </Field>
 
-        <label>
-          CPF
-          <input
+        <Field label="CPF" error={fieldErrors.document}>
+          <Input
             name="document"
             defaultValue={document}
+            numeric
             inputMode="numeric"
             placeholder="000.000.000-00"
             maxLength={14}
             required
             aria-invalid={Boolean(fieldErrors.document)}
           />
-          {fieldError("document")}
-        </label>
+        </Field>
 
-        <label>
-          E-mail
-          <input
+        <Field label="E-mail" error={fieldErrors.email}>
+          <Input
             name="email"
             defaultValue={email}
             type="email"
@@ -119,37 +119,29 @@ export function SellerProfileForm({
             required
             aria-invalid={Boolean(fieldErrors.email)}
           />
-          {fieldError("email")}
-        </label>
+        </Field>
 
-        <label>
-          Telefone
-          <input
+        <Field label="Telefone" error={fieldErrors.phone}>
+          <Input
             name="phone"
             defaultValue={phone}
             type="tel"
+            numeric
             placeholder="(11) 99999-9999"
             maxLength={20}
             aria-invalid={Boolean(fieldErrors.phone)}
           />
-          {fieldError("phone")}
-        </label>
-      </div>
+        </Field>
+      </FormGrid>
 
-      {message ? (
-        <p className="form-error" role="alert">
-          {message}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="form-success" role="status">
-          {success}
-        </p>
-      ) : null}
+      {message ? <Alert tone="critical">{message}</Alert> : null}
+      {success ? <Alert tone="positive">{success}</Alert> : null}
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Salvar dados"}
-      </button>
-    </form>
+      <FormActions>
+        <Button type="submit" icon={Save} disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : "Salvar dados"}
+        </Button>
+      </FormActions>
+    </Form>
   );
 }

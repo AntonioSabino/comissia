@@ -1,10 +1,24 @@
+import { History } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Alert } from "@/app/_components/ui/alert";
+import { Card, CardHeading } from "@/app/_components/ui/card";
+import { DataTable } from "@/app/_components/ui/data-table";
+import {
+  PageBody,
+  PageHeader,
+  TwoColumn,
+} from "@/app/_components/ui/page-layout";
+import { EmptyState } from "@/app/_components/ui/state-block";
+import {
+  StatusBadge,
+  type StatusTone,
+} from "@/app/_components/ui/status-badge";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+import styles from "./seller-details.module.css";
 import { SellerProfileForm } from "./seller-profile-form";
 import { SellerRateForm } from "./seller-rate-form";
 import { SellerStatusForm } from "./seller-status-form";
@@ -47,6 +61,26 @@ function formatDate(date: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function formatRateCount(count: number): string {
+  return count === 1 ? "1 vigência" : `${count} vigências`;
+}
+
+function describeRate(
+  rate: { id: string; effectiveFrom: string },
+  currentRateId: string | undefined,
+  today: string,
+): { label: string; tone: StatusTone } {
+  if (rate.id === currentRateId) {
+    return { label: "Vigente", tone: "reconciled" };
+  }
+
+  if (rate.effectiveFrom > today) {
+    return { label: "Futura", tone: "pending" };
+  }
+
+  return { label: "Encerrada", tone: "neutral" };
+}
+
 type SellerDetailsPageProps = {
   params: Promise<{ sellerId: string }>;
 };
@@ -73,111 +107,126 @@ export default async function SellerDetailsPage({
   )?.id;
 
   return (
-    <main className="admin-shell">
-      <div className="admin-content">
-        <header className="admin-header">
-          <div>
-            <p className="eyebrow">Vendedor</p>
-            <h1>{seller.name}</h1>
-            <p className="subtitle">
-              Dados cadastrais e histórico de percentuais de comissão.
-            </p>
-          </div>
-          <Link href="/admin/sellers">Voltar para vendedores</Link>
-        </header>
+    <>
+      <PageHeader
+        breadcrumb={[
+          { label: "Vendedores", href: "/admin/sellers" },
+          { label: seller.name },
+        ]}
+        eyebrow="Vendedor"
+        title={seller.name}
+        subtitle="Dados cadastrais e histórico de percentuais de comissão."
+        actions={
+          <StatusBadge tone={seller.active ? "reconciled" : "neutral"}>
+            {seller.active ? "Ativo" : "Inativo"}
+          </StatusBadge>
+        }
+      />
 
-        <section className="admin-card">
-          <div className="section-heading">
-            <h2>Dados cadastrais</h2>
-            <span
-              className={
-                seller.active
-                  ? "status-badge status-active"
-                  : "status-badge status-inactive"
-              }
-            >
-              {seller.active ? "Ativo" : "Inativo"}
-            </span>
-          </div>
+      <PageBody>
+        <TwoColumn>
+          <Card aria-labelledby="profile-title">
+            <CardHeading
+              titleId="profile-title"
+              kicker="Cadastro"
+              title="Dados cadastrais"
+            />
+            <div className={styles.stack}>
+              <SellerProfileForm
+                sellerId={seller.id}
+                name={seller.name}
+                document={formatDocument(seller.document)}
+                email={seller.email}
+                phone={formatPhone(seller.phone)}
+              />
+              <SellerStatusForm sellerId={seller.id} active={seller.active} />
+            </div>
+          </Card>
 
-          <SellerProfileForm
-            sellerId={seller.id}
-            name={seller.name}
-            document={formatDocument(seller.document)}
-            email={seller.email}
-            phone={formatPhone(seller.phone)}
+          <Card aria-labelledby="rate-title">
+            <CardHeading
+              titleId="rate-title"
+              kicker="Comissão"
+              title="Percentual de comissão"
+            />
+            <div className={styles.stack}>
+              <Alert>
+                Um novo acordo entra como uma nova vigência. As vendas já
+                registradas mantêm o percentual aplicado na data.
+              </Alert>
+
+              <dl className={styles.summary}>
+                <div>
+                  <dt>Percentual vigente</dt>
+                  <dd className="num">
+                    {seller.rateBasisPoints === null
+                      ? "Não informado"
+                      : formatRate(seller.rateBasisPoints)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Início da vigência atual</dt>
+                  <dd className="num">
+                    {seller.effectiveFrom === null
+                      ? "Não informado"
+                      : formatDate(seller.effectiveFrom)}
+                  </dd>
+                </div>
+              </dl>
+
+              <SellerRateForm
+                sellerId={seller.id}
+                defaultEffectiveFrom={today}
+              />
+            </div>
+          </Card>
+        </TwoColumn>
+
+        <Card flush aria-labelledby="rates-title">
+          <CardHeading
+            titleId="rates-title"
+            kicker={formatRateCount(seller.commissionRates.length)}
+            title="Histórico de percentuais"
           />
 
-          <SellerStatusForm sellerId={seller.id} active={seller.active} />
-        </section>
-
-        <section className="admin-card">
-          <h2>Percentual de comissão</h2>
-          <p className="card-hint">
-            Um novo acordo entra como uma nova vigência. As vendas já
-            registradas mantêm o percentual aplicado na data.
-          </p>
-
-          <dl className="seller-details-grid">
-            <div>
-              <dt>Percentual vigente</dt>
-              <dd>
-                {seller.rateBasisPoints === null
-                  ? "Não informado"
-                  : formatRate(seller.rateBasisPoints)}
-              </dd>
-            </div>
-            <div>
-              <dt>Início da vigência atual</dt>
-              <dd>
-                {seller.effectiveFrom === null
-                  ? "Não informado"
-                  : formatDate(seller.effectiveFrom)}
-              </dd>
-            </div>
-          </dl>
-
-          <SellerRateForm sellerId={seller.id} defaultEffectiveFrom={today} />
-        </section>
-
-        <section className="admin-card">
-          <div className="section-heading">
-            <h2>Histórico de percentuais</h2>
-            <span>{seller.commissionRates.length}</span>
-          </div>
-
           {seller.commissionRates.length === 0 ? (
-            <p className="empty-state">Nenhuma regra de comissão cadastrada.</p>
+            <EmptyState
+              icon={History}
+              title="Nenhuma regra de comissão cadastrada"
+              description="Registre a primeira vigência no formulário de percentual de comissão."
+            />
           ) : (
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Percentual</th>
-                    <th>Início da vigência</th>
-                    <th>Condição</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {seller.commissionRates.map((rate) => (
+            <DataTable>
+              <thead>
+                <tr>
+                  <th>Percentual</th>
+                  <th>Início da vigência</th>
+                  <th>Condição</th>
+                </tr>
+              </thead>
+              <tbody>
+                {seller.commissionRates.map((rate) => {
+                  const condition = describeRate(rate, currentRateId, today);
+
+                  return (
                     <tr key={rate.id}>
-                      <td>{formatRate(rate.rateBasisPoints)}</td>
-                      <td>{formatDate(rate.effectiveFrom)}</td>
+                      <td className="num">
+                        {formatRate(rate.rateBasisPoints)}
+                      </td>
+                      <td className="num">{formatDate(rate.effectiveFrom)}</td>
                       <td>
-                        {rate.id === currentRateId
-                          ? "Vigente"
-                          : rate.effectiveFrom > today
-                            ? "Futura"
-                            : "Encerrada"}
+                        <StatusBadge tone={condition.tone}>
+                          {condition.label}
+                        </StatusBadge>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </DataTable>
           )}
-        </section>
-      </div>
-    </main>
+        </Card>
+      </PageBody>
+    </>
   );
 }

@@ -1,8 +1,13 @@
 "use client";
 
+import { UserCheck, UserX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Alert } from "@/app/_components/ui/alert";
+import { Button } from "@/app/_components/ui/button";
+import { Card } from "@/app/_components/ui/card";
 import { readApiResult, readMessage } from "../_utils/api-result";
+import styles from "./seller-details.module.css";
 
 type SellerStatusFormProps = {
   sellerId: string;
@@ -54,38 +59,43 @@ export function SellerStatusForm({ sellerId, active }: SellerStatusFormProps) {
   }
 
   return (
-    <form className="seller-status-form" onSubmit={handleSubmit}>
-      <div>
-        <h3>{active ? "Inativar vendedor" : "Reativar vendedor"}</h3>
-        <p>
-          {active
-            ? "O vendedor continuará consultável, mas não ficará disponível para novas vendas."
-            : "O vendedor voltará a ficar disponível para novas vendas."}
-        </p>
-      </div>
+    <Card tone="sunken">
+      <form className={styles.statusPanel} onSubmit={handleSubmit}>
+        <div>
+          <h3 className={styles.statusTitle}>
+            {active ? "Inativar vendedor" : "Reativar vendedor"}
+          </h3>
+          <p className={styles.statusText}>
+            {active
+              ? "O vendedor continuará consultável, mas não ficará disponível para novas vendas."
+              : "O vendedor voltará a ficar disponível para novas vendas."}
+          </p>
+        </div>
 
-      {message ? (
-        <p className="form-error" role="alert">
-          {message}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="form-success" role="status">
-          {success}
-        </p>
-      ) : null}
+        <Button
+          type="submit"
+          variant={active ? "danger" : "primary"}
+          icon={active ? UserX : UserCheck}
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? "Alterando..."
+            : active
+              ? "Inativar vendedor"
+              : "Reativar vendedor"}
+        </Button>
 
-      <button
-        type="submit"
-        className={active ? "danger-button" : "primary-button"}
-        disabled={isSubmitting}
-      >
-        {isSubmitting
-          ? "Alterando..."
-          : active
-            ? "Inativar vendedor"
-            : "Reativar vendedor"}
-      </button>
-    </form>
+        {message ? (
+          <Alert tone="critical" className={styles.statusFeedback}>
+            {message}
+          </Alert>
+        ) : null}
+        {success ? (
+          <Alert tone="positive" className={styles.statusFeedback}>
+            {success}
+          </Alert>
+        ) : null}
+      </form>
+    </Card>
   );
 }

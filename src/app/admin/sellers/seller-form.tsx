@@ -1,7 +1,18 @@
 "use client";
 
+import { UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Alert } from "@/app/_components/ui/alert";
+import { Button } from "@/app/_components/ui/button";
+import {
+  Checkbox,
+  Field,
+  Form,
+  FormActions,
+  FormGrid,
+  Input,
+} from "@/app/_components/ui/field";
 import {
   readApiResult,
   readFieldErrors,
@@ -73,109 +84,84 @@ export function SellerForm() {
     }
   }
 
-  function fieldError(field: RegistrationField) {
-    const error = fieldErrors[field];
-
-    return error ? <span className="field-error">{error}</span> : null;
-  }
-
   return (
-    <form className="seller-form" onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <label className="field-wide">
-          Nome
-          <input
+    <Form onSubmit={handleSubmit} noValidate>
+      <FormGrid>
+        <Field label="Nome" wide error={fieldErrors.name}>
+          <Input
             name="name"
             maxLength={160}
             required
             aria-invalid={Boolean(fieldErrors.name)}
           />
-          {fieldError("name")}
-        </label>
+        </Field>
 
-        <label>
-          CPF
-          <input
+        <Field label="CPF" error={fieldErrors.document}>
+          <Input
             name="document"
+            numeric
             inputMode="numeric"
             placeholder="000.000.000-00"
             maxLength={14}
             required
             aria-invalid={Boolean(fieldErrors.document)}
           />
-          {fieldError("document")}
-        </label>
+        </Field>
 
-        <label>
-          E-mail
-          <input
+        <Field label="E-mail" error={fieldErrors.email}>
+          <Input
             name="email"
             type="email"
             maxLength={254}
             required
             aria-invalid={Boolean(fieldErrors.email)}
           />
-          {fieldError("email")}
-        </label>
+        </Field>
 
-        <label>
-          Telefone
-          <input
+        <Field label="Telefone" error={fieldErrors.phone}>
+          <Input
             name="phone"
             type="tel"
+            numeric
             placeholder="(11) 99999-9999"
             maxLength={20}
             aria-invalid={Boolean(fieldErrors.phone)}
           />
-          {fieldError("phone")}
-        </label>
+        </Field>
 
-        <label>
-          Percentual inicial
-          <div className="input-suffix">
-            <input
-              name="ratePercentage"
-              inputMode="decimal"
-              placeholder="2,50"
-              required
-              aria-invalid={Boolean(fieldErrors.ratePercentage)}
-            />
-            <span>%</span>
-          </div>
-          {fieldError("ratePercentage")}
-        </label>
+        <Field label="Percentual inicial" error={fieldErrors.ratePercentage}>
+          <Input
+            name="ratePercentage"
+            numeric
+            inputMode="decimal"
+            placeholder="2,50"
+            suffix="%"
+            required
+            aria-invalid={Boolean(fieldErrors.ratePercentage)}
+          />
+        </Field>
 
-        <label>
-          Início da vigência
-          <input
+        <Field label="Início da vigência" error={fieldErrors.effectiveFrom}>
+          <Input
             name="effectiveFrom"
             type="date"
+            numeric
             required
             aria-invalid={Boolean(fieldErrors.effectiveFrom)}
           />
-          {fieldError("effectiveFrom")}
-        </label>
+        </Field>
+      </FormGrid>
 
-        <label className="checkbox-field">
-          <input name="active" type="checkbox" defaultChecked />
-          Vendedor ativo
-        </label>
-      </div>
+      <Checkbox name="active" defaultChecked label="Vendedor ativo" />
 
-      {message ? (
-        <p className="form-error" role="alert">
-          {message}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="form-success" role="status">
-          {success}
-        </p>
-      ) : null}
+      {message ? <Alert tone="critical">{message}</Alert> : null}
+      {success ? <Alert tone="positive">{success}</Alert> : null}
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Cadastrando..." : "Cadastrar vendedor"}
-      </button>
-    </form>
+      <FormActions>
+        <Button type="submit" icon={UserPlus} disabled={isSubmitting}>
+          {isSubmitting ? "Cadastrando..." : "Cadastrar vendedor"}
+        </Button>
+      </FormActions>
+    </Form>
   );
 }

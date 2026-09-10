@@ -1,5 +1,5 @@
 {
-  "id": "da2bbd5d-7d4f-4ef4-9ac4-29db2354d167",
+  "id": "cebe0363-5c9e-4c48-b560-022fc470273b",
   "prevId": "44bab9a5-c71c-4230-a59d-41ebf8cf2a32",
   "version": "7",
   "dialect": "postgresql",
@@ -232,15 +232,6 @@
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
-        "sales_seller_commission_rate_id_seller_commission_rates_id_fk": {
-          "name": "sales_seller_commission_rate_id_seller_commission_rates_id_fk",
-          "tableFrom": "sales",
-          "tableTo": "seller_commission_rates",
-          "columnsFrom": ["seller_commission_rate_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
         "sales_seller_commission_snapshot_fk": {
           "name": "sales_seller_commission_snapshot_fk",
           "tableFrom": "sales",
@@ -335,15 +326,15 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "seller_commission_rates_id_seller_rate_unique": {
+          "name": "seller_commission_rates_id_seller_rate_unique",
+          "nullsNotDistinct": false,
+          "columns": ["id", "seller_id", "rate_basis_points"]
+        },
         "seller_commission_rates_seller_effective_from_unique": {
           "name": "seller_commission_rates_seller_effective_from_unique",
           "nullsNotDistinct": false,
           "columns": ["seller_id", "effective_from"]
-        },
-        "seller_commission_rates_sale_snapshot_unique": {
-          "name": "seller_commission_rates_sale_snapshot_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "seller_id", "rate_basis_points"]
         }
       },
       "policies": {},

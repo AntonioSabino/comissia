@@ -44,7 +44,7 @@ describe("database schema", () => {
       table.uniqueConstraints.map((constraint) => constraint.name),
     ).toEqual(
       expect.arrayContaining([
-        "seller_commission_rates_sale_snapshot_unique",
+        "seller_commission_rates_id_seller_rate_unique",
         "seller_commission_rates_seller_effective_from_unique",
       ]),
     );
@@ -143,10 +143,14 @@ describe("database schema", () => {
       "created_at",
       "updated_at",
     ]);
-    expect(table.foreignKeys).toHaveLength(4);
-    expect(
-      table.foreignKeys.map((constraint) => constraint.getName()),
-    ).toContain("sales_seller_commission_snapshot_fk");
+    expect(table.foreignKeys.map((constraint) => constraint.getName())).toEqual(
+      expect.arrayContaining([
+        "sales_administrator_id_administrators_id_fk",
+        "sales_seller_id_sellers_id_fk",
+        "sales_seller_commission_snapshot_fk",
+      ]),
+    );
+    expect(table.foreignKeys).toHaveLength(3);
     expect(
       table.columns.find((column) => column.name === "code")?.isUnique,
     ).toBe(true);

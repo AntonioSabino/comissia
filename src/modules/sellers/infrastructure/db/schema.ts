@@ -40,7 +40,7 @@ export const sellerCommissionRates = pgTable(
       .defaultNow(),
   },
   (table) => [
-    unique("seller_commission_rates_sale_snapshot_unique").on(
+    unique("seller_commission_rates_id_seller_rate_unique").on(
       table.id,
       table.sellerId,
       table.rateBasisPoints,

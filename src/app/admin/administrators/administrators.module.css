@@ -1,0 +1,12 @@
+.statusAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusError {
+  color: var(--state-cancelled);
+  font-size: var(--text-2xs);
+  white-space: normal;
+}

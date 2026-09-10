@@ -32,6 +32,15 @@ flutuante. O banco recusa crédito não positivo, percentual fora de 1 a 10.000
 pontos-base, quantidade de parcelas fora de 1 a 120 e primeira previsão anterior
 à data da venda.
 
+## Administradoras
+
+A administração mantém as administradoras em `/admin/administrators`: cadastra
+pelo nome, inativa e reativa. O nome é único sem diferenciar maiúsculas de
+minúsculas, o que a aplicação confere antes de gravar; a restrição
+`administrators_name_unique` do banco protege contra nomes exatamente iguais.
+Não há exclusão, e somente administradoras ativas são oferecidas para novas
+vendas (`listActiveAdministrators`).
+
 ## Snapshot do percentual
 
 A venda guarda o percentual aplicado em duas colunas complementares:

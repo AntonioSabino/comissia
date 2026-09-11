@@ -17,7 +17,12 @@ export type {
   Seller,
   SellerCommissionRate,
 } from "../modules/sellers";
-export { administrators, quotaStatusEnum, sales } from "../modules/sales";
+export {
+  administrators,
+  quotaStatusEnum,
+  saleCodeSequence,
+  sales,
+} from "../modules/sales";
 export type {
   Administrator,
   NewAdministrator,

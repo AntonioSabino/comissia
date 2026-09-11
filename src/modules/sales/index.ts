@@ -1,6 +1,7 @@
 export {
   administrators,
   quotaStatusEnum,
+  saleCodeSequence,
   sales,
 } from "./infrastructure/db/schema";
 export type {

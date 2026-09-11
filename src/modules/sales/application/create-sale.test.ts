@@ -3,8 +3,11 @@ import {
   SaleValidationError,
   type SaleRegistrationInput,
 } from "../domain/sale-registration";
-import { createSale, type SaleParticipants } from "./create-sale";
-import type { SaleRepository } from "./sale-repository";
+import { createSale } from "./create-sale";
+import type {
+  SaleCreationResult,
+  SaleRepository,
+} from "./sale-repository";
 
 const TODAY = "2026-09-10";
 const ADMINISTRATOR_ID = "2f81455e-01cd-4b4f-8614-30fda79fd987";
@@ -23,20 +26,18 @@ const input: SaleRegistrationInput = {
   firstInstallmentDueOn: "2026-04-15",
 };
 
-function createDependencies(overrides: Partial<SaleParticipants> = {}) {
+function createDependencies(
+  result: SaleCreationResult = {
+    status: "created",
+    id: "sale-1",
+    code: "V-000001",
+  },
+) {
   const repository: SaleRepository = {
-    create: vi.fn().mockResolvedValue({ id: "sale-1", code: "V-000001" }),
-  };
-  const participants: SaleParticipants = {
-    isAdministratorActive: vi.fn().mockResolvedValue(true),
-    isSellerActive: vi.fn().mockResolvedValue(true),
-    findCommissionRateOn: vi
-      .fn()
-      .mockResolvedValue({ id: "rate-jan", rateBasisPoints: 250 }),
-    ...overrides,
+    createWithCommissionSnapshot: vi.fn().mockResolvedValue(result),
   };
 
-  return { repository, participants, today: TODAY };
+  return { repository, today: TODAY };
 }
 
 async function fieldErrorsOf(
@@ -56,7 +57,7 @@ async function fieldErrorsOf(
 }
 
 describe("createSale", () => {
-  it("grava a venda com o percentual vigente na data da venda", async () => {
+  it("delega a criação atômica da venda e devolve o código gerado", async () => {
     const dependencies = createDependencies();
 
     await expect(createSale(input, dependencies)).resolves.toEqual({
@@ -64,35 +65,34 @@ describe("createSale", () => {
       code: "V-000001",
       creditAmountInCents: BigInt("20000000"),
     });
-    expect(dependencies.participants.findCommissionRateOn).toHaveBeenCalledWith(
-      SELLER_ID,
-      "2026-03-15",
-    );
-    expect(dependencies.repository.create).toHaveBeenCalledWith(
+    expect(
+      dependencies.repository.createWithCommissionSnapshot,
+    ).toHaveBeenCalledWith(
       expect.objectContaining({
         sellerId: SELLER_ID,
         administratorId: ADMINISTRATOR_ID,
+        soldOn: "2026-03-15",
         creditAmountInCents: BigInt("20000000"),
-        sellerCommissionRateId: "rate-jan",
-        sellerRateBasisPoints: 250,
       }),
     );
   });
 
-  it("valida os campos antes de consultar vendedores e administradoras", async () => {
+  it("valida os campos antes de consultar o repositório", async () => {
     const dependencies = createDependencies();
 
     await expect(
       createSale({ ...input, customerName: "" }, dependencies),
     ).rejects.toBeInstanceOf(SaleValidationError);
-    expect(dependencies.participants.isSellerActive).not.toHaveBeenCalled();
-    expect(dependencies.repository.create).not.toHaveBeenCalled();
+    expect(
+      dependencies.repository.createWithCommissionSnapshot,
+    ).not.toHaveBeenCalled();
   });
 
   it("recusa vendedor e administradora inativos no mesmo envio", async () => {
     const dependencies = createDependencies({
-      isAdministratorActive: vi.fn().mockResolvedValue(false),
-      isSellerActive: vi.fn().mockResolvedValue(false),
+      status: "invalid-participants",
+      administratorActive: false,
+      sellerActive: false,
     });
 
     await expect(
@@ -101,15 +101,25 @@ describe("createSale", () => {
       administratorId: "Selecione uma administradora ativa",
       sellerId: "Selecione um vendedor ativo",
     });
-    expect(
-      dependencies.participants.findCommissionRateOn,
-    ).not.toHaveBeenCalled();
-    expect(dependencies.repository.create).not.toHaveBeenCalled();
+  });
+
+  it("preserva somente o erro do participante inativo", async () => {
+    const dependencies = createDependencies({
+      status: "invalid-participants",
+      administratorActive: true,
+      sellerActive: false,
+    });
+
+    await expect(
+      fieldErrorsOf(createSale(input, dependencies)),
+    ).resolves.toEqual({
+      sellerId: "Selecione um vendedor ativo",
+    });
   });
 
   it("impede a venda sem percentual vigente na data", async () => {
     const dependencies = createDependencies({
-      findCommissionRateOn: vi.fn().mockResolvedValue(null),
+      status: "missing-commission-rate",
     });
 
     await expect(
@@ -117,6 +127,5 @@ describe("createSale", () => {
     ).resolves.toEqual({
       soldOn: "O vendedor não tem percentual vigente nesta data",
     });
-    expect(dependencies.repository.create).not.toHaveBeenCalled();
   });
 });

@@ -9,7 +9,6 @@ import {
 } from "@/modules/sales/domain/sale-registration";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
 import { centsToDecimalString } from "@/shared/money";
-import { saleParticipants } from "./_utils/sale-participants";
 
 export const runtime = "nodejs";
 
@@ -67,7 +66,6 @@ export async function POST(request: Request) {
       },
       {
         repository: saleRepository,
-        participants: saleParticipants,
         today: getBusinessDate(),
       },
     );

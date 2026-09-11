@@ -157,6 +157,9 @@ describe("database schema", () => {
     expect(
       table.columns.find((column) => column.name === "code")?.isUnique,
     ).toBe(true);
+    expect(
+      table.columns.find((column) => column.name === "code")?.hasDefault,
+    ).toBe(true);
     expect(table.checks.map((constraint) => constraint.name).sort()).toEqual(
       [
         "sales_credit_amount_in_cents_check",

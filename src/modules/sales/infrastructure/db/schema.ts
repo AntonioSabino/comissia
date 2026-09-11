@@ -8,6 +8,7 @@ import {
   index,
   integer,
   pgEnum,
+  pgSequence,
   pgTable,
   timestamp,
   uniqueIndex,
@@ -44,11 +45,21 @@ export const administrators = pgTable(
   ],
 );
 
+/**
+ * Numeração das vendas. A função `next_sale_code()`, criada na migração
+ * `0007`, formata o próximo número como `V-000001` sem truncar acima de seis
+ * dígitos.
+ */
+export const saleCodeSequence = pgSequence("sale_code_seq");
+
 export const sales = pgTable(
   "sales",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    code: varchar("code", { length: 40 }).notNull().unique(),
+    code: varchar("code", { length: 40 })
+      .notNull()
+      .unique()
+      .default(sql`next_sale_code()`),
     administratorId: uuid("administrator_id")
       .notNull()
       .references(() => administrators.id, { onDelete: "restrict" }),

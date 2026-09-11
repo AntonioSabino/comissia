@@ -60,11 +60,12 @@ A administração registra vendas em `/admin/sales`. O caso de uso `createSale`:
 Falhas dessas regras voltam como `SaleValidationError`, apontando o campo
 responsável, para que o formulário mostre o erro no lugar certo.
 
-O contrato `SaleParticipants` descreve o que o cadastro precisa de vendedores e
-administradoras. A implementação fica na camada de entrada
-(`src/app/api/admin/sales/_utils/sale-participants.ts`), que usa a API pública do
-módulo de vendedores; o módulo de vendas não importa arquivos internos de outro
-módulo.
+O repositório executa a confirmação dos participantes, a seleção da vigência e
+a inserção da venda em uma única transação. As linhas da administradora e do
+vendedor são bloqueadas com `FOR UPDATE` até o fim da gravação. Assim, uma
+inativação ou uma nova vigência concorrente é serializada antes ou depois da
+venda, sem permitir um snapshot incoerente. A mesma operação faz uma única
+leitura do histórico de percentuais.
 
 ## Snapshot do percentual
 

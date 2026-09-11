@@ -1,12 +1,20 @@
 import type { ValidSaleRegistration } from "../domain/sale-registration";
 
-/** Venda validada com o snapshot do percentual vigente na data da venda. */
-export type SaleRecord = ValidSaleRegistration & {
-  sellerCommissionRateId: string;
-  sellerRateBasisPoints: number;
-};
+export type SaleCreationResult =
+  | { status: "created"; id: string; code: string }
+  | {
+      status: "invalid-participants";
+      administratorActive: boolean;
+      sellerActive: boolean;
+    }
+  | { status: "missing-commission-rate" };
 
 export interface SaleRepository {
-  /** Grava a venda; o código é gerado pelo banco. */
-  create(sale: SaleRecord): Promise<{ id: string; code: string }>;
+  /**
+   * Bloqueia os participantes, confirma suas situações, seleciona a vigência e
+   * grava a venda com o snapshot dentro da mesma transação.
+   */
+  createWithCommissionSnapshot(
+    sale: ValidSaleRegistration,
+  ): Promise<SaleCreationResult>;
 }

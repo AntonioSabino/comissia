@@ -95,7 +95,7 @@ describe("database schema", () => {
     );
   });
 
-  it("defines administrators with a unique name", () => {
+  it("defines administrators with a case-insensitive unique name", () => {
     const table = getTableConfig(administrators);
 
     expect(table.name).toBe("administrators");
@@ -107,8 +107,11 @@ describe("database schema", () => {
       "updated_at",
     ]);
     expect(
-      table.columns.find((column) => column.name === "name")?.isUnique,
-    ).toBe(true);
+      table.indexes.map((index) => ({
+        name: index.config.name,
+        unique: index.config.unique,
+      })),
+    ).toEqual([{ name: "administrators_name_lower_unique", unique: true }]);
   });
 
   it("persists the supported quota situations", () => {

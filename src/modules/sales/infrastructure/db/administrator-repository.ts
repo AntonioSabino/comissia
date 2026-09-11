@@ -10,7 +10,7 @@ function mapUniqueViolation(error: unknown): never {
 
   if (
     violation?.code === "23505" &&
-    violation.constraint === "administrators_name_unique"
+    violation.constraint === "administrators_name_lower_unique"
   ) {
     throw new DuplicateAdministratorError();
   }

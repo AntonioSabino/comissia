@@ -36,8 +36,9 @@ pontos-base, quantidade de parcelas fora de 1 a 120 e primeira previsão anterio
 
 A administração mantém as administradoras em `/admin/administrators`: cadastra
 pelo nome, inativa e reativa. O nome é único sem diferenciar maiúsculas de
-minúsculas, o que a aplicação confere antes de gravar; a restrição
-`administrators_name_unique` do banco protege contra nomes exatamente iguais.
+minúsculas: a aplicação confere antes de gravar, e o índice único
+`administrators_name_lower_unique`, sobre `lower(name)`, garante a regra no
+banco mesmo em cadastros simultâneos.
 Não há exclusão, e somente administradoras ativas são oferecidas para novas
 vendas (`listActiveAdministrators`).
 

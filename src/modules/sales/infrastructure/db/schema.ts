@@ -10,6 +10,7 @@ import {
   pgEnum,
   pgTable,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -22,17 +23,26 @@ export const quotaStatusEnum = pgEnum("quota_status", [
   "contemplado",
 ]);
 
-export const administrators = pgTable("administrators", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 160 }).notNull().unique(),
-  active: boolean("active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const administrators = pgTable(
+  "administrators",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: varchar("name", { length: 160 }).notNull(),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Único sem diferenciar maiúsculas de minúsculas, inclusive em cadastros simultâneos.
+    uniqueIndex("administrators_name_lower_unique").on(
+      sql`lower(${table.name})`,
+    ),
+  ],
+);
 
 export const sales = pgTable(
   "sales",

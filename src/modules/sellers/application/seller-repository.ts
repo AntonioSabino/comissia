@@ -32,6 +32,7 @@ export type SellerDetails = {
   active: boolean;
   rateBasisPoints: number | null;
   effectiveFrom: string | null;
+  currentRateId: string | null;
   commissionRates: SellerCommissionRateListItem[];
 };
 

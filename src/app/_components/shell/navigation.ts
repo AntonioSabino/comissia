@@ -1,6 +1,7 @@
 import {
   Building2,
   LayoutDashboard,
+  TrendingUp,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -23,6 +24,7 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
       icon: LayoutDashboard,
       exact: true,
     },
+    { href: "/admin/sales", label: "Vendas", icon: TrendingUp },
     { href: "/admin/sellers", label: "Vendedores", icon: UsersRound },
     {
       href: "/admin/administrators",

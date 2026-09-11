@@ -20,9 +20,12 @@ administradora, a um vendedor e à vigência de percentual usada no cálculo. As
 três referências usam `ON DELETE restrict`: nada que já sustenta uma venda pode
 ser removido.
 
-O código interno da venda é único. Grupo e cota são indexados junto com a
-administradora para consulta, mas sem restrição de unicidade: uma cota cancelada
-pode ser recomercializada e geraria uma segunda venda com o mesmo par.
+O código interno da venda é único e gerado pelo banco no formato `V-000001`: a
+sequência `sale_code_seq` numera e a função `next_sale_code()` formata. Acima de
+seis dígitos o código apenas cresce (`V-1000000`), sem truncar. Grupo e cota são
+indexados junto com a administradora para consulta, mas sem restrição de
+unicidade: uma cota cancelada pode ser recomercializada e geraria uma segunda
+venda com o mesmo par.
 
 A situação da cota usa os termos do negócio: `adimplente`, `inadimplente`,
 `cancelado` e `contemplado`. Toda venda nasce `adimplente`.
@@ -41,6 +44,27 @@ minúsculas: a aplicação confere antes de gravar, e o índice único
 banco mesmo em cadastros simultâneos.
 Não há exclusão, e somente administradoras ativas são oferecidas para novas
 vendas (`listActiveAdministrators`).
+
+## Cadastro de venda
+
+A administração registra vendas em `/admin/sales`. O caso de uso `createSale`:
+
+- valida cliente, produto, grupo e cota, datas, crédito e de 1 a 120 parcelas de
+  comissão;
+- recusa venda com data futura e primeira previsão anterior à data da venda;
+- confere se a administradora e o vendedor estão ativos no momento do cadastro;
+- busca o percentual vigente na data da venda com `findCommissionRateOn`, do
+  módulo de vendedores, e recusa a venda quando não há vigência nessa data;
+- grava a venda com o snapshot do percentual.
+
+Falhas dessas regras voltam como `SaleValidationError`, apontando o campo
+responsável, para que o formulário mostre o erro no lugar certo.
+
+O contrato `SaleParticipants` descreve o que o cadastro precisa de vendedores e
+administradoras. A implementação fica na camada de entrada
+(`src/app/api/admin/sales/_utils/sale-participants.ts`), que usa a API pública do
+módulo de vendedores; o módulo de vendas não importa arquivos internos de outro
+módulo.
 
 ## Snapshot do percentual
 
@@ -71,9 +95,11 @@ elimina qualquer perda de precisão, mas tem uma consequência na borda:
 `JSON.stringify` não serializa `BigInt` e quebra com `TypeError`, o que inclui
 `NextResponse.json`.
 
-A regra do projeto é converter para string decimal nos DTOs das bordas HTTP,
-descrita em `docs/architecture.md`. A serialização em si entra no SCRUM-36, junto
-das primeiras rotas de venda.
+O crédito digitado no padrão brasileiro (`R$ 200.000,00`) vira centavos em
+`BigInt` por `parseBrlToCents`, em `src/shared/money.ts`. Na saída, os DTOs das
+bordas HTTP convertem para string decimal com `centsToDecimalString`, regra
+descrita em `docs/architecture.md`: a resposta de `POST /api/admin/sales` devolve
+o crédito como `"200000.00"`.
 
 ## Não pertence a este módulo
 

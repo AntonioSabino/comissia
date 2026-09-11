@@ -8,7 +8,17 @@ FROM (
   SELECT substring("code" FROM '^V-([0-9]+)$')::bigint AS number
   FROM "sales"
   WHERE "code" ~ '^V-[0-9]{1,19}$'
-    AND substring("code" FROM '^V-([0-9]+)$')::numeric <= 9223372036854775807
+    AND substring("code" FROM '^V-([0-9]+)
+) AS existing;--> statement-breakpoint
+CREATE FUNCTION "next_sale_code"() RETURNS varchar
+LANGUAGE sql
+VOLATILE
+AS $$
+  SELECT 'V-' || lpad(n::text, greatest(6, length(n::text)), '0')
+  FROM nextval('public.sale_code_seq') AS n
+$$;--> statement-breakpoint
+ALTER TABLE "sales" ALTER COLUMN "code" SET DEFAULT next_sale_code();
+)::numeric BETWEEN 1 AND 9223372036854775807
 ) AS existing;--> statement-breakpoint
 CREATE FUNCTION "next_sale_code"() RETURNS varchar
 LANGUAGE sql

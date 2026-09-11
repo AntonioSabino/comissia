@@ -4,10 +4,7 @@ import {
   type SaleRegistrationInput,
 } from "../domain/sale-registration";
 import { createSale } from "./create-sale";
-import type {
-  SaleCreationResult,
-  SaleRepository,
-} from "./sale-repository";
+import type { SaleCreationResult, SaleRepository } from "./sale-repository";
 
 const TODAY = "2026-09-10";
 const ADMINISTRATOR_ID = "2f81455e-01cd-4b4f-8614-30fda79fd987";

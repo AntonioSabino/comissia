@@ -143,8 +143,10 @@ describe("validateSaleRegistration", () => {
         quotaCode: "1".repeat(21),
       }),
     ).toEqual({
-      groupCode: "Informe o grupo com até 20 letras, números, ponto, barra ou hífen",
-      quotaCode: "Informe a cota com até 20 letras, números, ponto, barra ou hífen",
+      groupCode:
+        "Informe o grupo com até 20 letras, números, ponto, barra ou hífen",
+      quotaCode:
+        "Informe a cota com até 20 letras, números, ponto, barra ou hífen",
     });
   });
 

@@ -41,6 +41,7 @@ export class SaleValidationError extends Error {
 
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9./-]{0,19}$/;
 const MAX_COMMISSION_INSTALLMENTS = 120;
+const POSTGRES_BIGINT_MAX = BigInt("9223372036854775807");
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
@@ -93,19 +94,21 @@ export function validateSaleRegistration(
   }
 
   if (customerName.length < 2 || customerName.length > 160) {
-    fieldErrors.customerName = "Informe o cliente com até 160 caracteres";
+    fieldErrors.customerName = "Informe o cliente com 2 a 160 caracteres";
   }
 
   if (product.length < 2 || product.length > 120) {
-    fieldErrors.product = "Informe o produto com até 120 caracteres";
+    fieldErrors.product = "Informe o produto com 2 a 120 caracteres";
   }
 
   if (!IDENTIFIER_PATTERN.test(groupCode)) {
-    fieldErrors.groupCode = "Informe o grupo com até 20 letras ou números";
+    fieldErrors.groupCode =
+      "Informe o grupo com até 20 letras, números, ponto, barra ou hífen";
   }
 
   if (!IDENTIFIER_PATTERN.test(quotaCode)) {
-    fieldErrors.quotaCode = "Informe a cota com até 20 letras ou números";
+    fieldErrors.quotaCode =
+      "Informe a cota com até 20 letras, números, ponto, barra ou hífen";
   }
 
   const hasValidSoldOn = isValidDateOnly(soldOn);
@@ -118,6 +121,8 @@ export function validateSaleRegistration(
 
   if (creditAmountInCents === null || creditAmountInCents <= BigInt(0)) {
     fieldErrors.creditAmount = "Informe o crédito vendido em reais";
+  } else if (creditAmountInCents > POSTGRES_BIGINT_MAX) {
+    fieldErrors.creditAmount = "O crédito informado excede o limite permitido";
   }
 
   if (commissionInstallments === null) {

@@ -91,6 +91,26 @@ describe("validateSaleRegistration", () => {
     });
   });
 
+  it("aceita o maior crédito representável pelo bigint do PostgreSQL", () => {
+    expect(
+      validateSaleRegistration(
+        { ...validInput, creditAmount: "92.233.720.368.547.758,07" },
+        TODAY,
+      ).creditAmountInCents,
+    ).toBe(BigInt("9223372036854775807"));
+  });
+
+  it("recusa crédito acima do bigint do PostgreSQL", () => {
+    expect(
+      fieldErrorsOf({
+        ...validInput,
+        creditAmount: "92.233.720.368.547.758,08",
+      }),
+    ).toEqual({
+      creditAmount: "O crédito informado excede o limite permitido",
+    });
+  });
+
   it.each(["0", "0,00", "abc", "-100"])("recusa o crédito %j", (credit) => {
     expect(fieldErrorsOf({ ...validInput, creditAmount: credit })).toEqual({
       creditAmount: "Informe o crédito vendido em reais",
@@ -123,8 +143,8 @@ describe("validateSaleRegistration", () => {
         quotaCode: "1".repeat(21),
       }),
     ).toEqual({
-      groupCode: "Informe o grupo com até 20 letras ou números",
-      quotaCode: "Informe a cota com até 20 letras ou números",
+      groupCode: "Informe o grupo com até 20 letras, números, ponto, barra ou hífen",
+      quotaCode: "Informe a cota com até 20 letras, números, ponto, barra ou hífen",
     });
   });
 

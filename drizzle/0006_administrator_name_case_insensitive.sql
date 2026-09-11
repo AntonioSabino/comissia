@@ -1,0 +1,2 @@
+ALTER TABLE "administrators" DROP CONSTRAINT "administrators_name_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "administrators_name_lower_unique" ON "administrators" USING btree (lower("name"));

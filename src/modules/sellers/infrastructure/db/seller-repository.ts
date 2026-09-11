@@ -306,6 +306,7 @@ export const sellerRepository: SellerRepository = {
       ...seller,
       rateBasisPoints: currentRate?.rateBasisPoints ?? null,
       effectiveFrom: currentRate?.effectiveFrom ?? null,
+      currentRateId: currentRate?.id ?? null,
       commissionRates,
     };
   },

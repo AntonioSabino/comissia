@@ -16,7 +16,6 @@ import {
 } from "@/app/_components/ui/status-badge";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
-import { findRateValidOn } from "@/modules/sellers/domain/commission-rate-on-date";
 import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 import styles from "./seller-details.module.css";
@@ -68,7 +67,7 @@ function formatRateCount(count: number): string {
 
 function describeRate(
   rate: { id: string; effectiveFrom: string },
-  currentRateId: string | undefined,
+  currentRateId: string | null,
   today: string,
 ): { label: string; tone: StatusTone } {
   if (rate.id === currentRateId) {
@@ -103,7 +102,7 @@ export default async function SellerDetailsPage({
   }
 
   const today = getBusinessDate();
-  const currentRateId = findRateValidOn(seller.commissionRates, today)?.id;
+  const currentRateId = seller.currentRateId;
 
   return (
     <>

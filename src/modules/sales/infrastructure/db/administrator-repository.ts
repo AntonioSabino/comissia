@@ -58,6 +58,20 @@ export const administratorRepository: AdministratorRepository = {
       .orderBy(asc(administrators.name));
   },
 
+  async findById(id) {
+    const [administrator] = await db
+      .select({
+        id: administrators.id,
+        name: administrators.name,
+        active: administrators.active,
+      })
+      .from(administrators)
+      .where(eq(administrators.id, id))
+      .limit(1);
+
+    return administrator ?? null;
+  },
+
   async setActive(id, active) {
     const [administrator] = await db
       .update(administrators)

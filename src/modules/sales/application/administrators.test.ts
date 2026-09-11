@@ -19,6 +19,7 @@ function createRepository(
     isNameInUse: vi.fn().mockResolvedValue(false),
     create: vi.fn().mockResolvedValue({ id: ADMINISTRATOR_ID }),
     list: vi.fn().mockResolvedValue([]),
+    findById: vi.fn().mockResolvedValue(null),
     setActive: vi.fn().mockResolvedValue(true),
     ...overrides,
   };

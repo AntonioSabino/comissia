@@ -13,5 +13,6 @@ export interface AdministratorRepository {
   isNameInUse(name: string): Promise<boolean>;
   create(name: string): Promise<{ id: string }>;
   list(filters?: AdministratorListFilters): Promise<AdministratorListItem[]>;
+  findById(id: string): Promise<AdministratorListItem | null>;
   setActive(id: string, active: boolean): Promise<boolean>;
 }

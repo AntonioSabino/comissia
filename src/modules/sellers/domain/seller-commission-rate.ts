@@ -1,3 +1,4 @@
+import { isValidDateOnly } from "@/shared/date-only";
 import {
   SellerValidationError,
   stringValue,
@@ -26,21 +27,6 @@ function parseRateBasisPoints(value: string): number | null {
     Number(integerPart) * 100 + Number(decimalPart.padEnd(2, "0"));
 
   return basisPoints >= 1 && basisPoints <= 10_000 ? basisPoints : null;
-}
-
-function isValidDateOnly(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
 }
 
 export function collectSellerCommissionRate(input: SellerCommissionRateInput): {

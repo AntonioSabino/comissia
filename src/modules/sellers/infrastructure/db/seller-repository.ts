@@ -10,6 +10,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import { db } from "@/db";
+import { findDatabaseViolation } from "@/db/database-violation";
 import { getBusinessDate } from "@/lib/business-date";
 import {
   DuplicateSellerCommissionRateError,
@@ -21,29 +22,6 @@ import type {
 } from "../../application/seller-repository";
 import { findRateValidOn } from "../../domain/commission-rate-on-date";
 import { sellerCommissionRates, sellers } from "./schema";
-
-type DatabaseViolation = {
-  code?: unknown;
-  constraint?: unknown;
-};
-
-/**
- * O Drizzle encapsula o erro do driver, então a violação real fica na cadeia de
- * `cause`.
- */
-function findDatabaseViolation(error: unknown): DatabaseViolation | null {
-  let current = error;
-
-  while (current && typeof current === "object") {
-    if ("code" in current) {
-      return current as DatabaseViolation;
-    }
-
-    current = (current as { cause?: unknown }).cause;
-  }
-
-  return null;
-}
 
 function mapUniqueViolation(error: unknown): never {
   const violation = findDatabaseViolation(error);

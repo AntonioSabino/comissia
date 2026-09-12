@@ -171,6 +171,22 @@ lista vazia. Assim uma URL editada à mão não derruba a página nem filtra por
 engano. Os selects de vendedor e de administradora mostram também os inativos,
 porque vendas antigas continuam apontando para eles.
 
+## Consulta da venda
+
+`/admin/sales/[saleId]` reúne, em uma única leitura (`findById`), o cadastro da
+venda, o snapshot do cálculo e as parcelas geradas. O percentual do vendedor e a
+régua aparecem com a vigência de onde vieram, então a regra histórica que
+produziu os valores é identificável sem consultar o banco.
+
+O card das parcelas mostra a soma ao lado da quantidade, enquanto a comissão
+exibida vem do percentual gravado na venda: as duas nascem iguais por
+construção, e é justamente por isso que aparecem juntas — uma divergência ficaria
+visível na tela.
+
+A situação de cada parcela é derivada do histórico gravado, nunca de um campo
+separado. Vendas registradas antes da régua aparecem sem régua e sem parcelas,
+que é o que elas são.
+
 ## Snapshot do percentual
 
 A venda guarda o percentual aplicado em duas colunas complementares:

@@ -28,7 +28,9 @@ unicidade: uma cota cancelada pode ser recomercializada e geraria uma segunda
 venda com o mesmo par.
 
 A situação da cota usa os termos do negócio: `adimplente`, `inadimplente`,
-`cancelado` e `contemplado`. Toda venda nasce `adimplente`.
+`cancelado` e `contemplado`. Toda venda nasce `adimplente`. A lista vive em
+`domain/quota-status.ts` e é ela que define o tipo `quota_status` no banco, para
+que as situações aceitas pelo domínio e pelo banco não possam divergir.
 
 O crédito vendido é armazenado em centavos inteiros (`bigint`), nunca em ponto
 flutuante. O banco recusa crédito não positivo, percentual fora de 1 a 10.000
@@ -66,6 +68,25 @@ vendedor são bloqueadas com `FOR UPDATE` até o fim da gravação. Assim, uma
 inativação ou uma nova vigência concorrente é serializada antes ou depois da
 venda, sem permitir um snapshot incoerente. A mesma operação faz uma única
 leitura do histórico de percentuais.
+
+## Listagem de vendas
+
+A mesma tela `/admin/sales` lista as vendas registradas, da mais recente para a
+mais antiga. A listagem exibe código, data, vendedor, administradora,
+grupo/cota, crédito e situação da cota; cliente e produto participam da busca e
+aparecerão na consulta detalhada.
+
+Os filtros são combináveis: busca livre, vendedor, administradora, situação da
+cota e período da venda, com os dois extremos inclusive. Eles viajam na query
+string, então uma listagem filtrada pode ser compartilhada por link e o botão
+voltar do navegador funciona.
+
+`parseSaleListFilters` lê essa query string descartando o que não faz sentido:
+identificador que não é UUID, situação desconhecida e data fora do calendário
+são ignorados, e um período informado ao contrário é ordenado em vez de devolver
+lista vazia. Assim uma URL editada à mão não derruba a página nem filtra por
+engano. Os selects de vendedor e de administradora mostram também os inativos,
+porque vendas antigas continuam apontando para eles.
 
 ## Snapshot do percentual
 

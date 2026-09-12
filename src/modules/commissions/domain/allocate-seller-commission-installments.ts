@@ -1,6 +1,5 @@
 import { calculateSellerCommissionTotal } from "./calculate-seller-commission";
 
-const BASIS_POINTS_SCALE = BigInt(10_000);
 const MAX_INSTALLMENTS = 120;
 
 export type SellerCommissionInstallmentAllocationInput = {
@@ -26,7 +25,11 @@ export class SellerCommissionInstallmentAllocationError extends Error {
 }
 
 /**
- * Distribui a comissão entre percentuais de parcelas previamente definidos.
+ * Distribui a comissão do vendedor entre as parcelas na proporção da régua da
+ * administradora. A régua diz o que a administradora paga à corretora em cada
+ * parcela, então a soma dela é o teto: o percentual do vendedor sai de dentro
+ * desse total e não pode excedê-lo.
+ *
  * As parcelas anteriores são truncadas em centavos e a última recebe todo o
  * resíduo necessário para preservar o valor total da comissão.
  */
@@ -76,9 +79,9 @@ export function allocateSellerCommissionInstallments({
     distributedRateBasisPoints += rateBasisPoints;
   }
 
-  if (distributedRateBasisPoints !== sellerRateBasisPoints) {
+  if (distributedRateBasisPoints < sellerRateBasisPoints) {
     throw new SellerCommissionInstallmentAllocationError(
-      "A soma dos percentuais das parcelas deve ser igual ao percentual total do vendedor",
+      "O percentual do vendedor não pode exceder o total da régua da administradora",
     );
   }
 
@@ -90,8 +93,8 @@ export function allocateSellerCommissionInstallments({
       const amountInCents =
         index === lastInstallmentIndex
           ? totalCommissionInCents - allocatedAmountInCents
-          : (creditAmountInCents * BigInt(rateBasisPoints)) /
-            BASIS_POINTS_SCALE;
+          : (totalCommissionInCents * BigInt(rateBasisPoints)) /
+            BigInt(distributedRateBasisPoints);
 
       allocatedAmountInCents += amountInCents;
 

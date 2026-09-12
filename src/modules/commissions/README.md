@@ -24,22 +24,36 @@ centavo mais próximo; exatamente meio centavo é arredondado para cima.
 
 ## Distribuição entre parcelas
 
-`allocateSellerCommissionInstallments` recebe o crédito, o percentual total do
-vendedor e a lista ordenada dos percentuais das parcelas em pontos-base. Cada
-parcela pode ter um percentual diferente, desde que todos sejam inteiros
-positivos e a soma seja exatamente igual ao percentual total do vendedor. São
-aceitas de 1 a 120 parcelas.
+`allocateSellerCommissionInstallments` recebe o crédito, o percentual do
+vendedor e a régua de parcelas da administradora: a lista ordenada, em
+pontos-base, do que a administradora paga à corretora em cada parcela. São
+aceitas de 1 a 120 parcelas, cada percentual inteiro entre 1 e 10.000
+pontos-base.
+
+A régua define a **proporção** de cada parcela, não o valor do vendedor. A
+comissão do vendedor continua sendo o percentual dele sobre o crédito
+(`calculateSellerCommissionTotal`) e é dividida entre as parcelas nessa
+proporção. Como o dinheiro do vendedor sai de dentro do que a corretora recebe,
+o total da régua é o teto: percentual do vendedor acima dele é recusado com
+`SellerCommissionInstallmentAllocationError`.
+
+Por exemplo, com a administradora pagando 4% à corretora em 2% + 1% + 1% e um
+crédito de R$ 200.000: um vendedor com 2% recebe R$ 4.000 em parcelas de
+R$ 2.000, R$ 1.000 e R$ 1.000; um vendedor com 2,5% recebe R$ 5.000 em
+R$ 2.500, R$ 1.250 e R$ 1.250. A diferença entre a régua e o percentual do
+vendedor fica com a corretora.
 
 Os valores anteriores à última parcela são calculados em centavos sem
 arredondamento para cima. A última parcela recebe toda a diferença necessária
 para que a soma seja igual à comissão total arredondada. Assim, nenhum centavo é
 criado ou perdido.
 
-Por exemplo, uma comissão total de 2% pode ser distribuída entre oito parcelas
-com os percentuais 0,15%, 0,15%, 0,20%, 0,20%, 0,25%, 0,25%, 0,30% e 0,50%.
-Este módulo recebe essa distribuição pronta. A origem dela é a régua de
-parcelas da administradora, modelada no módulo de vendas por produto ou plano e
-por vigência.
+Este módulo recebe a régua pronta. Ela é mantida pelo módulo de vendas, por
+administradora, produto ou plano e vigência, e a venda grava como snapshot a
+versão aplicada.
+
+Campanhas da administradora — percentual diferente em um período, condicionado a
+meta de volume — ainda não existem no modelo e não afetam este cálculo.
 
 ## Competências e datas previstas
 

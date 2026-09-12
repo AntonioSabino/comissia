@@ -33,6 +33,7 @@ function createDependencies(
   const repository: SaleRepository = {
     createWithCommissionSnapshot: vi.fn().mockResolvedValue(result),
     list: vi.fn().mockResolvedValue([]),
+    findById: vi.fn().mockResolvedValue(null),
   };
 
   return { repository, today: TODAY };

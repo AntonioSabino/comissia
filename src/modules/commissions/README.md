@@ -58,8 +58,22 @@ A competência acompanha o mês da data prevista mesmo quando o dia é encurtado
 Datas fora do calendário, quantidades fora de 1 a 120 parcelas e agendas que
 passariam do ano 9999 são recusadas com `CommissionInstallmentScheduleError`.
 
-A agenda não contém valores. A composição entre estas datas e a distribuição
-financeira ficará no SCRUM-45.
+A agenda continua responsável somente pelo calendário; ela não contém valores.
+
+## Geração das parcelas previstas
+
+`generateSellerCommissionInstallments` compõe a agenda com a distribuição
+financeira. Cada item contém o número sequencial, a identificação `1/N`, o
+percentual da parcela, a competência, a data prevista, o valor em centavos e o
+histórico de situação iniciado como `prevista`.
+
+A ordem dos percentuais recebidos é preservada e o resultado completo é
+imutável. A função recebe também o instante de criação para que o primeiro
+registro do histórico seja explícito e auditável.
+
+A origem da distribuição e a persistência não são definidas nesta etapa. Fazer
+isso agora exigiria assumir parcelas iguais ou introduzir uma configuração ainda
+não decidida pelo negócio.
 
 ## Situações da parcela
 

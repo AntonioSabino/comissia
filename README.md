@@ -101,8 +101,10 @@ repositório. Se você perder a senha, apague o usuário e rode o seed de novo.
 
 Nada ali é real: os nomes são inventados, os CPFs são calculados a partir de
 bases sequenciais e os e-mails usam o domínio reservado `.test`. Rodar o
-comando de novo não duplica nada, porque cada registro é procurado pela sua
-chave natural antes de ser inserido.
+comando novamente depois que ele terminar não duplica nada, porque cada registro
+é procurado pela sua chave natural antes de ser inserido. Uma segunda execução
+iniciada enquanto a primeira ainda estiver em andamento é recusada para que as
+duas não criem a mesma venda.
 
 O seed é para banco local: recusa rodar com `NODE_ENV=production` e recusa uma
 `DATABASE_URL` que não aponte para `localhost`, a menos que você confirme com

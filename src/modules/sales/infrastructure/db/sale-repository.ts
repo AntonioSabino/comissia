@@ -15,7 +15,6 @@ import {
   CommissionInstallmentScheduleError,
   currentCommissionInstallmentStatus,
   generateSellerCommissionInstallments,
-  INITIAL_COMMISSION_INSTALLMENT_STATUS,
   type CommissionInstallmentStatusHistoryEntry,
 } from "@/modules/commissions";
 import {
@@ -289,124 +288,137 @@ export const saleRepository: SaleRepository = {
   },
 
   async findById(id) {
-    const [sale] = await db
-      .select({
-        id: sales.id,
-        code: sales.code,
-        soldOn: sales.soldOn,
-        customerName: sales.customerName,
-        product: sales.product,
-        groupCode: sales.groupCode,
-        quotaCode: sales.quotaCode,
-        creditAmountInCents: sales.creditAmountInCents,
-        quotaStatus: sales.quotaStatus,
-        firstInstallmentDueOn: sales.firstInstallmentDueOn,
-        sellerId: sales.sellerId,
-        sellerName: sellers.name,
-        administratorId: sales.administratorId,
-        administratorName: administrators.name,
-        sellerRateBasisPoints: sales.sellerRateBasisPoints,
-        sellerCommissionRateId: sales.sellerCommissionRateId,
-        sellerRateEffectiveFrom: sellerCommissionRates.effectiveFrom,
-        installmentRuleId: sales.administratorInstallmentRuleId,
-        installmentRuleEffectiveFrom:
-          administratorInstallmentRules.effectiveFrom,
-        installmentRuleProduct: administratorInstallmentRules.product,
-        installmentRatesBasisPoints: sales.installmentRatesBasisPoints,
-      })
-      .from(sales)
-      .innerJoin(sellers, eq(sellers.id, sales.sellerId))
-      .innerJoin(administrators, eq(administrators.id, sales.administratorId))
-      .innerJoin(
-        sellerCommissionRates,
-        eq(sellerCommissionRates.id, sales.sellerCommissionRateId),
-      )
-      // A régua só existe nas vendas registradas depois dela.
-      .leftJoin(
-        administratorInstallmentRules,
-        eq(
-          administratorInstallmentRules.id,
-          sales.administratorInstallmentRuleId,
-        ),
-      )
-      .where(eq(sales.id, id))
-      .limit(1);
+    // Duas leituras, um instante: `repeatable read` garante que a venda e as
+    // parcelas venham do mesmo snapshot, mesmo que a situação de uma parcela
+    // mude entre elas. Transação somente de leitura, sem bloquear nada.
+    return db.transaction(
+      async (transaction) => {
+        const [sale] = await transaction
+          .select({
+            id: sales.id,
+            code: sales.code,
+            soldOn: sales.soldOn,
+            customerName: sales.customerName,
+            product: sales.product,
+            groupCode: sales.groupCode,
+            quotaCode: sales.quotaCode,
+            creditAmountInCents: sales.creditAmountInCents,
+            quotaStatus: sales.quotaStatus,
+            firstInstallmentDueOn: sales.firstInstallmentDueOn,
+            sellerId: sales.sellerId,
+            sellerName: sellers.name,
+            administratorId: sales.administratorId,
+            administratorName: administrators.name,
+            sellerRateBasisPoints: sales.sellerRateBasisPoints,
+            sellerCommissionRateId: sales.sellerCommissionRateId,
+            sellerRateEffectiveFrom: sellerCommissionRates.effectiveFrom,
+            installmentRuleId: sales.administratorInstallmentRuleId,
+            installmentRuleEffectiveFrom:
+              administratorInstallmentRules.effectiveFrom,
+            installmentRuleProduct: administratorInstallmentRules.product,
+            installmentRatesBasisPoints: sales.installmentRatesBasisPoints,
+          })
+          .from(sales)
+          .innerJoin(sellers, eq(sellers.id, sales.sellerId))
+          .innerJoin(
+            administrators,
+            eq(administrators.id, sales.administratorId),
+          )
+          .innerJoin(
+            sellerCommissionRates,
+            eq(sellerCommissionRates.id, sales.sellerCommissionRateId),
+          )
+          // A régua só existe nas vendas registradas depois dela.
+          .leftJoin(
+            administratorInstallmentRules,
+            eq(
+              administratorInstallmentRules.id,
+              sales.administratorInstallmentRuleId,
+            ),
+          )
+          .where(eq(sales.id, id))
+          .limit(1);
 
-    if (!sale) {
-      return null;
-    }
+        if (!sale) {
+          return null;
+        }
 
-    const rows = await db
-      .select({
-        id: commissionInstallments.id,
-        number: commissionInstallments.number,
-        competence: commissionInstallments.competence,
-        dueOn: commissionInstallments.dueOn,
-        ruleRateBasisPoints: commissionInstallments.ruleRateBasisPoints,
-        amountInCents: commissionInstallments.amountInCents,
-        previousStatus: commissionInstallmentStatusEvents.previousStatus,
-        status: commissionInstallmentStatusEvents.status,
-        changedAt: commissionInstallmentStatusEvents.changedAt,
-      })
-      .from(commissionInstallments)
-      .leftJoin(
-        commissionInstallmentStatusEvents,
-        eq(
-          commissionInstallmentStatusEvents.installmentId,
-          commissionInstallments.id,
-        ),
-      )
-      .where(eq(commissionInstallments.saleId, id))
-      .orderBy(
-        asc(commissionInstallments.number),
-        asc(commissionInstallmentStatusEvents.sequence),
-      );
+        const rows = await transaction
+          .select({
+            id: commissionInstallments.id,
+            number: commissionInstallments.number,
+            competence: commissionInstallments.competence,
+            dueOn: commissionInstallments.dueOn,
+            ruleRateBasisPoints: commissionInstallments.ruleRateBasisPoints,
+            amountInCents: commissionInstallments.amountInCents,
+            previousStatus: commissionInstallmentStatusEvents.previousStatus,
+            status: commissionInstallmentStatusEvents.status,
+            changedAt: commissionInstallmentStatusEvents.changedAt,
+          })
+          .from(commissionInstallments)
+          .leftJoin(
+            commissionInstallmentStatusEvents,
+            eq(
+              commissionInstallmentStatusEvents.installmentId,
+              commissionInstallments.id,
+            ),
+          )
+          .where(eq(commissionInstallments.saleId, id))
+          .orderBy(
+            asc(commissionInstallments.number),
+            asc(commissionInstallmentStatusEvents.sequence),
+          );
 
-    // Uma linha por evento: as parcelas são agrupadas preservando a ordem da
-    // consulta, e a situação sai do histórico, como o domínio define.
-    const grouped = new Map<
-      string,
-      {
-        installment: Omit<SaleInstallmentDetail, "status">;
-        history: CommissionInstallmentStatusHistoryEntry[];
-      }
-    >();
+        // Uma linha por evento: as parcelas são agrupadas preservando a ordem da
+        // consulta, e a situação sai do histórico, como o domínio define.
+        const grouped = new Map<
+          string,
+          {
+            installment: Omit<SaleInstallmentDetail, "status">;
+            history: CommissionInstallmentStatusHistoryEntry[];
+          }
+        >();
 
-    for (const row of rows) {
-      const entry = grouped.get(row.id) ?? {
-        installment: {
-          id: row.id,
-          number: row.number,
-          competence: row.competence,
-          dueOn: row.dueOn,
-          ruleRateBasisPoints: row.ruleRateBasisPoints,
-          amountInCents: row.amountInCents,
-        },
-        history: [],
-      };
+        for (const row of rows) {
+          const entry = grouped.get(row.id) ?? {
+            installment: {
+              id: row.id,
+              number: row.number,
+              competence: row.competence,
+              dueOn: row.dueOn,
+              ruleRateBasisPoints: row.ruleRateBasisPoints,
+              amountInCents: row.amountInCents,
+            },
+            history: [],
+          };
 
-      if (row.status && row.changedAt) {
-        entry.history.push({
-          previousStatus: row.previousStatus,
-          status: row.status,
-          changedAt: row.changedAt.toISOString(),
-        });
-      }
+          if (row.status && row.changedAt) {
+            entry.history.push({
+              previousStatus: row.previousStatus,
+              status: row.status,
+              changedAt: row.changedAt.toISOString(),
+            });
+          }
 
-      grouped.set(row.id, entry);
-    }
+          grouped.set(row.id, entry);
+        }
 
-    const details: SaleDetails = {
-      ...sale,
-      installments: [...grouped.values()].map(({ installment, history }) => ({
-        ...installment,
-        status:
-          history.length > 0
-            ? currentCommissionInstallmentStatus(history)
-            : INITIAL_COMMISSION_INSTALLMENT_STATUS,
-      })),
-    };
+        const details: SaleDetails = {
+          ...sale,
+          installments: [...grouped.values()].map(
+            ({ installment, history }) => ({
+              ...installment,
+              // Sem fallback: uma parcela sem histórico é inconsistência de
+              // persistência, e o domínio recusa histórico vazio em vez de
+              // apresentar uma situação que ninguém registrou.
+              status: currentCommissionInstallmentStatus(history),
+            }),
+          ),
+        };
 
-    return details;
+        return details;
+      },
+      { isolationLevel: "repeatable read", accessMode: "read only" },
+    );
   },
 };

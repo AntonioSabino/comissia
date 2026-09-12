@@ -96,7 +96,8 @@ export interface SaleRepository {
   list(filters?: SaleListFilters): Promise<SaleListItem[]>;
   /**
    * Dados cadastrais, snapshot do cálculo e parcelas da venda em uma única
-   * consulta, para que a tela não precise juntar leituras soltas.
+   * chamada, para que a tela não precise juntar leituras soltas. A venda e as
+   * parcelas são lidas no mesmo snapshot, então o detalhe é sempre coerente.
    */
   findById(id: string): Promise<SaleDetails | null>;
 }

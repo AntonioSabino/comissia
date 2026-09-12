@@ -69,6 +69,14 @@ Aceita somente recursos técnicos realmente compartilhados, como tipos de
 resultado, erros base e utilitários de validação. Regras de vendedores, vendas ou
 comissões nunca devem ser movidas para `shared`.
 
+A escolha da versão vigente em uma data (`findRuleValidOn`) é o limite desse
+critério: ela apenas ordena registros por `effectiveFrom` e não conhece
+percentual, venda nem comissão. O significado de negócio continua em cada
+módulo, em `findCommissionRateOn` e em `findAdministratorInstallmentRuleOn`, que
+decidem o que fazer quando não existe versão vigente. Um utilitário assim só é
+promovido para `shared` quando já tem dois usos reais e nenhum conceito de
+negócio no corpo.
+
 ## Dependências entre módulos
 
 1. `app` pode importar a API pública dos módulos.

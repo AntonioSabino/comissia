@@ -9,28 +9,14 @@ export type AdministratorInstallmentRuleVersion = {
   installmentRatesBasisPoints: number[];
 };
 
-export type AdministratorInstallmentRuleListItem =
-  AdministratorInstallmentRuleVersion & {
-    administratorName: string;
-  };
-
-export type AdministratorInstallmentRuleListFilters = {
-  administratorId?: string;
-};
-
-export type AdministratorInstallmentRuleCreationResult =
-  | { status: "created"; id: string }
-  | { status: "unknown-administrator" }
-  | { status: "inactive-administrator" };
-
 export interface AdministratorInstallmentRuleRepository {
   /**
-   * Grava uma nova vigência sem alterar as versões anteriores, depois de
-   * confirmar que a administradora existe e está ativa.
+   * Grava uma nova vigência sem alterar as versões anteriores. Devolve `null`
+   * quando a administradora informada não existe.
    */
   create(
     rule: ValidAdministratorInstallmentRule,
-  ): Promise<AdministratorInstallmentRuleCreationResult>;
+  ): Promise<{ id: string } | null>;
   /**
    * Versões da régua da administradora para o produto ou plano, comparado sem
    * diferenciar maiúsculas de minúsculas. A ordem da lista não é garantida.
@@ -39,11 +25,4 @@ export interface AdministratorInstallmentRuleRepository {
     administratorId: string,
     product: string,
   ): Promise<AdministratorInstallmentRuleVersion[]>;
-  /**
-   * Réguas cadastradas com o nome da administradora, por administradora e
-   * produto, da vigência mais recente para a mais antiga.
-   */
-  list(
-    filters?: AdministratorInstallmentRuleListFilters,
-  ): Promise<AdministratorInstallmentRuleListItem[]>;
 }

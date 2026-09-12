@@ -5,7 +5,6 @@ import type {
   AdministratorInstallmentRuleVersion,
 } from "./administrator-installment-rule-repository";
 import { createAdministratorInstallmentRule } from "./create-administrator-installment-rule";
-import { describeInstallmentRules } from "./current-installment-rules";
 import {
   AdministratorNotFoundError,
   DuplicateAdministratorInstallmentRuleError,
@@ -20,9 +19,8 @@ function createRepository(
   overrides: Partial<AdministratorInstallmentRuleRepository> = {},
 ): AdministratorInstallmentRuleRepository {
   return {
-    create: vi.fn().mockResolvedValue({ status: "created", id: RULE_ID }),
+    create: vi.fn().mockResolvedValue({ id: RULE_ID }),
     listVersions: vi.fn().mockResolvedValue([]),
-    list: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
@@ -72,7 +70,7 @@ describe("createAdministratorInstallmentRule", () => {
 
   it("recusa administradora inexistente", async () => {
     const repository = createRepository({
-      create: vi.fn().mockResolvedValue({ status: "unknown-administrator" }),
+      create: vi.fn().mockResolvedValue(null),
     });
 
     await expect(
@@ -86,27 +84,6 @@ describe("createAdministratorInstallmentRule", () => {
         { repository },
       ),
     ).rejects.toBeInstanceOf(AdministratorNotFoundError);
-  });
-
-  it("recusa administradora inativa apontando o campo", async () => {
-    const repository = createRepository({
-      create: vi.fn().mockResolvedValue({ status: "inactive-administrator" }),
-    });
-
-    await expect(
-      createAdministratorInstallmentRule(
-        {
-          administratorId: ADMINISTRATOR_ID,
-          product: "Auto Leve",
-          effectiveFrom: "2026-01-01",
-          installmentRatesBasisPoints: [150],
-        },
-        { repository },
-      ),
-    ).rejects.toMatchObject({
-      name: "AdministratorInstallmentRuleValidationError",
-      fieldErrors: { administratorId: expect.any(String) },
-    });
   });
 
   it("propaga a sobreposição de vigências recusada pelo banco", async () => {
@@ -253,112 +230,5 @@ describe("findAdministratorInstallmentRuleOn", () => {
         { repository },
       ),
     ).rejects.toBeInstanceOf(MissingAdministratorInstallmentRuleError);
-  });
-});
-
-describe("describeInstallmentRules", () => {
-  const TODAY = "2026-09-12";
-
-  function listed(
-    id: string,
-    product: string,
-    effectiveFrom: string,
-    installmentRatesBasisPoints: number[],
-    administratorId = ADMINISTRATOR_ID,
-  ) {
-    return {
-      id,
-      administratorId,
-      administratorName: "Aurora Consórcio",
-      product,
-      effectiveFrom,
-      installmentRatesBasisPoints,
-    };
-  }
-
-  it("marca a vigência válida hoje e soma a distribuição", () => {
-    const rules = [
-      listed("b", "Auto Leve", "2026-06-01", [100, 100]),
-      listed("a", "Auto Leve", "2026-01-01", [75, 50, 25]),
-    ];
-
-    expect(
-      describeInstallmentRules(rules, TODAY).map(
-        ({ id, current, totalBasisPoints }) => ({
-          id,
-          current,
-          totalBasisPoints,
-        }),
-      ),
-    ).toEqual([
-      { id: "b", current: true, totalBasisPoints: 200 },
-      { id: "a", current: false, totalBasisPoints: 150 },
-    ]);
-  });
-
-  it("preserva a ordem recebida e não depende dela", () => {
-    const rules = [
-      listed("a", "Auto Leve", "2026-01-01", [150]),
-      listed("b", "Auto Leve", "2026-06-01", [200]),
-    ];
-
-    expect(describeInstallmentRules(rules, TODAY).map(({ id }) => id)).toEqual([
-      "a",
-      "b",
-    ]);
-    expect(
-      describeInstallmentRules(rules, TODAY).find(({ current }) => current)?.id,
-    ).toBe("b");
-  });
-
-  it("marca uma vigência por produto", () => {
-    const rules = [
-      listed("auto", "Auto Leve", "2026-01-01", [150]),
-      listed("imovel", "Imóvel Premiado", "2026-02-01", [200]),
-    ];
-
-    expect(
-      describeInstallmentRules(rules, TODAY).every(({ current }) => current),
-    ).toBe(true);
-  });
-
-  it("trata o mesmo produto em outra caixa como o mesmo grupo", () => {
-    const rules = [
-      listed("antiga", "Auto Leve", "2026-01-01", [150]),
-      listed("atual", "AUTO leve", "2026-06-01", [200]),
-    ];
-
-    expect(
-      describeInstallmentRules(rules, TODAY).filter(({ current }) => current),
-    ).toHaveLength(1);
-  });
-
-  it("separa grupos de administradoras diferentes", () => {
-    const rules = [
-      listed("aurora", "Auto Leve", "2026-01-01", [150]),
-      listed(
-        "meridiano",
-        "Auto Leve",
-        "2026-02-01",
-        [200],
-        "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-      ),
-    ];
-
-    expect(
-      describeInstallmentRules(rules, TODAY).every(({ current }) => current),
-    ).toBe(true);
-  });
-
-  it("não marca nenhuma quando todas as vigências são futuras", () => {
-    const rules = [listed("futura", "Auto Leve", "2026-12-01", [150])];
-
-    expect(
-      describeInstallmentRules(rules, TODAY).some(({ current }) => current),
-    ).toBe(false);
-  });
-
-  it("aceita lista vazia", () => {
-    expect(describeInstallmentRules([], TODAY)).toEqual([]);
   });
 });

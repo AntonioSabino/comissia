@@ -27,8 +27,7 @@ import {
   calculateSellerCommissionTotal,
   type CommissionInstallmentStatus,
 } from "@/modules/commissions";
-import { type QuotaStatus } from "@/modules/sales";
-import type { SaleDetails } from "@/modules/sales/application/sale-repository";
+import { type QuotaStatus, type SaleDetails } from "@/modules/sales";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
 import { isUuid } from "@/shared/uuid";
 import styles from "./sale-details.module.css";

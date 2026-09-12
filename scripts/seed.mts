@@ -4,6 +4,11 @@ import {
   createInitialAdmin,
   InitialAdminAlreadyExistsError,
 } from "../src/modules/auth/application/create-initial-admin";
+import {
+  findExistingDemoSale,
+  findInstallmentIdsMissingInitialStatus,
+  validateSeedTarget,
+} from "./seed-support";
 
 config({ path: ".env.local", quiet: true });
 
@@ -18,7 +23,6 @@ const DEMO_ADMIN = {
   email: "admin@exemplo.test",
 };
 
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const SEED_LOCK_ID = 62_000_001;
 
 function generatePassword(): string {
@@ -400,23 +404,12 @@ function sameNumbers(
 }
 
 async function run() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("O seed de demonstração não deve rodar em produção");
-  }
-
   const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL não foi definida em .env.local");
-  }
-
-  const { hostname } = new URL(databaseUrl);
-
-  if (!LOCAL_HOSTS.has(hostname) && !process.argv.includes("--allow-remote")) {
-    throw new Error(
-      `O seed é destinado ao banco local, e a DATABASE_URL aponta para ${hostname}. Se isso é intencional, repita com --allow-remote.`,
-    );
-  }
+  const parsedDatabaseUrl = validateSeedTarget(
+    process.env.NODE_ENV,
+    databaseUrl,
+    process.argv.includes("--allow-remote"),
+  );
 
   const [
     { db, postgresPool },
@@ -440,7 +433,7 @@ async function run() {
     import("../src/modules/auth/infrastructure/db/initial-admin-repository"),
   ]);
 
-  console.log(`Banco: ${new URL(databaseUrl).pathname.slice(1)}`);
+  console.log(`Banco: ${parsedDatabaseUrl.pathname.slice(1)}`);
 
   const lockClient = await postgresPool.connect();
   let hasSeedLock = false;
@@ -502,7 +495,7 @@ async function run() {
         } else {
           const [created] = await db
             .insert(administrators)
-            .values({ name: administrator.name, active: true })
+            .values({ name: administrator.name, active: administrator.active })
             .returning({ id: administrators.id });
 
           administratorId = created.id;
@@ -512,7 +505,7 @@ async function run() {
         administratorIds.set(administrator.name, administratorId);
         await db
           .update(administrators)
-          .set({ active: true, updatedAt: new Date() })
+          .set({ active: administrator.active, updatedAt: new Date() })
           .where(eq(administrators.id, administratorId));
       }
 
@@ -536,7 +529,7 @@ async function run() {
               document,
               email: seller.email,
               phone: seller.phone,
-              active: true,
+              active: seller.active,
             })
             .returning({ id: sellers.id });
 
@@ -547,7 +540,7 @@ async function run() {
         sellerIds.set(seller.name, sellerId);
         await db
           .update(sellers)
-          .set({ active: true, updatedAt: new Date() })
+          .set({ active: seller.active, updatedAt: new Date() })
           .where(eq(sellers.id, sellerId));
 
         for (const rate of seller.rates) {
@@ -777,9 +770,17 @@ async function run() {
           createdAt: new Date(),
         });
 
-        const [existing] = await db
+        const existingCandidates = await db
           .select({
             id: sales.id,
+            sellerId: sales.sellerId,
+            sellerCommissionRateId: sales.sellerCommissionRateId,
+            sellerRateBasisPoints: sales.sellerRateBasisPoints,
+            customerName: sales.customerName,
+            product: sales.product,
+            soldOn: sales.soldOn,
+            creditAmountInCents: sales.creditAmountInCents,
+            firstInstallmentDueOn: sales.firstInstallmentDueOn,
             administratorInstallmentRuleId:
               sales.administratorInstallmentRuleId,
             installmentRatesBasisPoints: sales.installmentRatesBasisPoints,
@@ -792,8 +793,22 @@ async function run() {
               eq(sales.groupCode, sale.groupCode),
               eq(sales.quotaCode, sale.quotaCode),
             ),
-          )
-          .limit(1);
+          );
+
+        const existing = findExistingDemoSale(
+          existingCandidates,
+          {
+            sellerId,
+            sellerCommissionRateId: storedRate.id,
+            sellerRateBasisPoints: storedRate.rateBasisPoints,
+            customerName: sale.customerName,
+            product: sale.product,
+            soldOn: sale.soldOn,
+            creditAmountInCents: sale.creditAmountInCents,
+            firstInstallmentDueOn: sale.firstInstallmentDueOn,
+          },
+          `${sale.groupCode}/${sale.quotaCode}`,
+        );
 
         if (!existing) {
           await db.transaction(async (transaction) => {
@@ -881,7 +896,12 @@ async function run() {
         }
 
         const persistedEvents = await db
-          .select({ id: commissionInstallmentStatusEvents.id })
+          .select({
+            installmentId: commissionInstallmentStatusEvents.installmentId,
+            sequence: commissionInstallmentStatusEvents.sequence,
+            previousStatus: commissionInstallmentStatusEvents.previousStatus,
+            status: commissionInstallmentStatusEvents.status,
+          })
           .from(commissionInstallmentStatusEvents)
           .innerJoin(
             commissionInstallments,
@@ -892,7 +912,13 @@ async function run() {
           )
           .where(eq(commissionInstallments.saleId, existing.id));
 
-        if (persistedEvents.length < persistedInstallments.length) {
+        const installmentsWithoutInitialStatus =
+          findInstallmentIdsMissingInitialStatus(
+            persistedInstallments.map(({ id }) => id),
+            persistedEvents,
+          );
+
+        if (installmentsWithoutInitialStatus.length > 0) {
           throw new Error(
             `A venda fictícia ${sale.groupCode}/${sale.quotaCode} tem parcela sem situação inicial`,
           );

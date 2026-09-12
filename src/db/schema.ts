@@ -20,6 +20,9 @@ export type {
 export {
   administratorInstallmentRules,
   administrators,
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
   quotaStatusEnum,
   saleCodeSequence,
   sales,
@@ -27,20 +30,13 @@ export {
 export type {
   Administrator,
   AdministratorInstallmentRule,
+  CommissionInstallment,
+  CommissionInstallmentStatusEvent,
   NewAdministrator,
   NewAdministratorInstallmentRule,
+  NewCommissionInstallment,
+  NewCommissionInstallmentStatusEvent,
   NewSale,
   QuotaStatus,
   Sale,
 } from "../modules/sales";
-export {
-  commissionInstallments,
-  commissionInstallmentStatusEnum,
-  commissionInstallmentStatusEvents,
-} from "../modules/commissions";
-export type {
-  CommissionInstallment,
-  CommissionInstallmentStatusEvent,
-  NewCommissionInstallment,
-  NewCommissionInstallmentStatusEvent,
-} from "../modules/commissions";

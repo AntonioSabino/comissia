@@ -8,6 +8,8 @@ venda durante seu ciclo de vida.
 - administradora, produto, grupo e cota;
 - régua de parcelas definida pela administradora, por produto e vigência;
 - snapshot da régua e do percentual usados no cálculo da venda;
+- persistência das parcelas geradas com a venda, cujas regras são do módulo de
+  comissões;
 - cliente e vendedor associados;
 - data da venda e valor do crédito;
 - quantidade de parcelas e primeira data prevista informadas na venda;

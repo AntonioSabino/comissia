@@ -7,6 +7,9 @@ export {
 export {
   administratorInstallmentRules,
   administrators,
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
   quotaStatusEnum,
   saleCodeSequence,
   sales,
@@ -14,8 +17,12 @@ export {
 export type {
   Administrator,
   AdministratorInstallmentRule,
+  CommissionInstallment,
+  CommissionInstallmentStatusEvent,
   NewAdministrator,
   NewAdministratorInstallmentRule,
+  NewCommissionInstallment,
+  NewCommissionInstallmentStatusEvent,
   NewSale,
   Sale,
 } from "./infrastructure/db/schema";

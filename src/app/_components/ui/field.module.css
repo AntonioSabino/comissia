@@ -84,6 +84,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.textarea {
+  height: auto;
+  min-height: calc(var(--field-height) * 2);
+  padding: 9px 11px;
+  line-height: 1.5;
+  resize: vertical;
+}
 .select {
   cursor: pointer;
 }

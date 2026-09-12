@@ -45,7 +45,7 @@ minúsculas: a aplicação confere antes de gravar, e o índice único
 `administrators_name_lower_unique`, sobre `lower(name)`, garante a regra no
 banco mesmo em cadastros simultâneos.
 Não há exclusão, e somente administradoras ativas são oferecidas para novas
-vendas (`listActiveAdministrators`).
+vendas (`selectActiveAdministrators`).
 
 ## Cadastro de venda
 

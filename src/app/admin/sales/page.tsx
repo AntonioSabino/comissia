@@ -14,17 +14,16 @@ import {
 } from "@/app/_components/ui/status-badge";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
-import { listActiveAdministrators } from "@/modules/sales/application/list-active-administrators";
+import { QUOTA_STATUSES, type QuotaStatus } from "@/modules/sales";
+import { selectActiveAdministrators } from "@/modules/sales/application/active-administrators";
 import {
   hasSaleListFilters,
   parseSaleListFilters,
   type SaleListSearchParams,
 } from "@/modules/sales/application/sale-list-filters";
-import type { QuotaStatus } from "@/modules/sales/domain/quota-status";
-import { QUOTA_STATUSES } from "@/modules/sales/domain/quota-status";
+import { selectActiveSellersForSale } from "@/modules/sellers/application/active-sellers-for-sale";
 import { administratorRepository } from "@/modules/sales/infrastructure/db/administrator-repository";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
-import { listActiveSellersForSale } from "@/modules/sellers/application/list-active-sellers-for-sale";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 import { centsToDecimalString } from "@/shared/money";
 import styles from "./sales.module.css";
@@ -76,19 +75,15 @@ type SalesPageProps = {
 export default async function SalesPage({ searchParams }: SalesPageProps) {
   await requirePageRole("admin");
   const filters = parseSaleListFilters(await searchParams);
-  const [
-    activeSellerList,
-    activeAdministratorList,
-    sellerList,
-    administratorList,
-    saleList,
-  ] = await Promise.all([
-    listActiveSellersForSale({ repository: sellerRepository }),
-    listActiveAdministrators({ repository: administratorRepository }),
+  // Uma leitura por entidade: os filtros mostram todos, inclusive inativos, e o
+  // formulário usa o subconjunto ativo derivado da mesma lista.
+  const [sellerList, administratorList, saleList] = await Promise.all([
     sellerRepository.list(),
     administratorRepository.list(),
     saleRepository.list(filters),
   ]);
+  const activeSellerList = selectActiveSellersForSale(sellerList);
+  const activeAdministratorList = selectActiveAdministrators(administratorList);
   const canRegister =
     activeSellerList.length > 0 && activeAdministratorList.length > 0;
   const isFiltered = hasSaleListFilters(filters);

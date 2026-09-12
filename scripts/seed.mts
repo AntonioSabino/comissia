@@ -61,7 +61,7 @@ type DemoSale = {
   groupCode: string;
   quotaCode: string;
   soldOn: string;
-  creditAmountInReais: number;
+  creditAmountInCents: bigint;
   commissionInstallments: number;
   firstInstallmentDueOn: string;
   quotaStatus: "adimplente" | "inadimplente" | "cancelado" | "contemplado";
@@ -120,7 +120,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1001",
     quotaCode: "Q001",
     soldOn: "2026-01-15",
-    creditAmountInReais: 200_000,
+    creditAmountInCents: 20_000_000n,
     commissionInstallments: 12,
     firstInstallmentDueOn: "2026-02-15",
     quotaStatus: "adimplente",
@@ -133,7 +133,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1001",
     quotaCode: "Q002",
     soldOn: "2026-01-31",
-    creditAmountInReais: 90_000,
+    creditAmountInCents: 9_000_000n,
     commissionInstallments: 6,
     firstInstallmentDueOn: "2026-02-28",
     quotaStatus: "contemplado",
@@ -146,7 +146,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G2050",
     quotaCode: "Q014",
     soldOn: "2026-02-10",
-    creditAmountInReais: 350_000,
+    creditAmountInCents: 35_000_000n,
     commissionInstallments: 24,
     firstInstallmentDueOn: "2026-03-10",
     quotaStatus: "adimplente",
@@ -159,7 +159,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G2050",
     quotaCode: "Q015",
     soldOn: "2026-03-05",
-    creditAmountInReais: 45_000,
+    creditAmountInCents: 4_500_000n,
     commissionInstallments: 10,
     firstInstallmentDueOn: "2026-04-05",
     quotaStatus: "inadimplente",
@@ -172,7 +172,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1002",
     quotaCode: "Q003",
     soldOn: "2026-03-27",
-    creditAmountInReais: 120_000,
+    creditAmountInCents: 12_000_000n,
     commissionInstallments: 18,
     firstInstallmentDueOn: "2026-04-27",
     quotaStatus: "adimplente",
@@ -185,7 +185,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G3010",
     quotaCode: "Q007",
     soldOn: "2026-04-02",
-    creditAmountInReais: 280_000,
+    creditAmountInCents: 28_000_000n,
     commissionInstallments: 36,
     firstInstallmentDueOn: "2026-05-02",
     quotaStatus: "cancelado",
@@ -198,7 +198,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G2051",
     quotaCode: "Q021",
     soldOn: "2026-05-18",
-    creditAmountInReais: 75_500,
+    creditAmountInCents: 7_550_000n,
     commissionInstallments: 8,
     firstInstallmentDueOn: "2026-06-18",
     quotaStatus: "adimplente",
@@ -211,7 +211,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1002",
     quotaCode: "Q004",
     soldOn: "2026-06-30",
-    creditAmountInReais: 410_000,
+    creditAmountInCents: 41_000_000n,
     commissionInstallments: 48,
     firstInstallmentDueOn: "2026-07-30",
     quotaStatus: "adimplente",
@@ -224,7 +224,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1003",
     quotaCode: "Q005",
     soldOn: "2026-07-14",
-    creditAmountInReais: 65_000,
+    creditAmountInCents: 6_500_000n,
     commissionInstallments: 12,
     firstInstallmentDueOn: "2026-08-14",
     quotaStatus: "adimplente",
@@ -237,7 +237,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G2052",
     quotaCode: "Q030",
     soldOn: "2026-08-03",
-    creditAmountInReais: 32_750,
+    creditAmountInCents: 3_275_000n,
     commissionInstallments: 6,
     firstInstallmentDueOn: "2026-09-03",
     quotaStatus: "inadimplente",
@@ -250,7 +250,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G2052",
     quotaCode: "Q031",
     soldOn: "2026-08-21",
-    creditAmountInReais: 520_000,
+    creditAmountInCents: 52_000_000n,
     commissionInstallments: 60,
     firstInstallmentDueOn: "2026-09-21",
     quotaStatus: "contemplado",
@@ -263,7 +263,7 @@ const DEMO_SALES: DemoSale[] = [
     groupCode: "G1003",
     quotaCode: "Q006",
     soldOn: "2026-09-08",
-    creditAmountInReais: 98_900,
+    creditAmountInCents: 9_890_000n,
     commissionInstallments: 12,
     firstInstallmentDueOn: "2026-10-08",
     quotaStatus: "adimplente",
@@ -286,10 +286,6 @@ function buildCpf(base: string): string {
   }
 
   return digits.join("");
-}
-
-function toCents(reais: number): bigint {
-  return BigInt(Math.round(reais * 100));
 }
 
 /** Vigência aplicável na data da venda, como faz o cadastro de venda. */
@@ -545,7 +541,7 @@ async function run() {
         groupCode: sale.groupCode,
         quotaCode: sale.quotaCode,
         soldOn: sale.soldOn,
-        creditAmountInCents: toCents(sale.creditAmountInReais),
+        creditAmountInCents: sale.creditAmountInCents,
         commissionInstallments: sale.commissionInstallments,
         firstInstallmentDueOn: sale.firstInstallmentDueOn,
         quotaStatus: sale.quotaStatus,

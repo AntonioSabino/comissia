@@ -22,6 +22,24 @@ em `bigint` e devolve o total em centavos, sem converter valores monetários par
 Quando o percentual produz uma fração de centavo, o valor é arredondado para o
 centavo mais próximo; exatamente meio centavo é arredondado para cima.
 
+## Competências e datas previstas
+
+`buildCommissionInstallmentSchedule` recebe a data prevista da primeira parcela
+e a quantidade contratada e devolve a agenda das parcelas, com número,
+competência (`AAAA-MM`) e data prevista (`AAAA-MM-DD`), avançando um mês por
+parcela.
+
+O dia informado na primeira parcela é o dia de vencimento do contrato e vale
+para todas as competências. Meses mais curtos encurtam apenas a própria data
+prevista: uma primeira parcela em 31/01 vence em 28/02 e volta a vencer em
+31/03. Anos bissextos são respeitados e a virada de dezembro para janeiro avança
+o ano.
+
+A competência acompanha o mês da data prevista mesmo quando o dia é encurtado.
+Datas fora do calendário e quantidades fora de 1 a 120 parcelas são recusadas
+com `CommissionInstallmentScheduleError`. Os valores de cada parcela não são
+calculados aqui: ficam no SCRUM-45, que compõe esta agenda com a comissão total.
+
 ## Situações da parcela
 
 Uma parcela nasce como `prevista` e pode assumir as situações `programada`,

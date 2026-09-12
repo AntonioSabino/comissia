@@ -110,6 +110,27 @@ com dados próprios, como datas, valores e motivos, e deverão ser registrados p
 operações específicas. Com as situações deste incremento, uma parcela passa
 para `paga` somente quando estiver integralmente quitada.
 
+## Parcelas persistidas
+
+`commission_installments` guarda as parcelas geradas no cadastro da venda:
+número, competência (`AAAA-MM`), data prevista, o pedaço da régua que originou a
+parcela (`rule_rate_basis_points`) e o valor do vendedor em centavos inteiros. O
+par venda e número é único, e o banco recusa competência fora do formato, número
+fora de 1 a 120 e valor negativo. Zero centavos é aceito: com comissão de poucos
+centavos, as primeiras parcelas podem ser zero e a última leva o resto.
+
+A situação vive em `commission_installment_status_events`, uma linha por
+mudança, com a situação anterior, a nova e o instante. A situação atual é a do
+último evento, como o domínio define: não existe coluna de situação que possa
+divergir do histórico. A tabela é apenas de inclusão, garantida pelo gatilho
+`commission_installment_status_events_append_only`, e o banco recusa um evento
+cuja situação anterior seja igual à nova. Toda parcela nasce com um evento
+`prevista` de situação anterior nula.
+
+Mudar a situação pela interface, consultar as parcelas e conciliar pagamentos
+são incrementos posteriores; aqui elas apenas nascem previstas junto com a
+venda.
+
 ## Não pertence a este módulo
 
 - cadastro do vendedor;

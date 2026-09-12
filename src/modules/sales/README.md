@@ -7,6 +7,7 @@ venda durante seu ciclo de vida.
 
 - administradora, produto, grupo e cota;
 - régua de parcelas definida pela administradora, por produto e vigência;
+- snapshot da régua e do percentual usados no cálculo da venda;
 - cliente e vendedor associados;
 - data da venda e valor do crédito;
 - quantidade de parcelas e primeira data prevista informadas na venda;
@@ -121,23 +122,32 @@ gravado na venda. Esse é o incremento seguinte.
 
 A administração registra vendas em `/admin/sales`. O caso de uso `createSale`:
 
-- valida cliente, produto, grupo e cota, datas, crédito e de 1 a 120 parcelas de
-  comissão;
+- valida cliente, produto, grupo e cota, datas e crédito;
 - recusa venda com data futura e primeira previsão anterior à data da venda;
 - confere se a administradora e o vendedor estão ativos no momento do cadastro;
 - busca o percentual vigente na data da venda com `findCommissionRateOn`, do
   módulo de vendedores, e recusa a venda quando não há vigência nessa data;
-- grava a venda com o snapshot do percentual.
+- busca a régua da administradora vigente na data para o produto vendido e
+  recusa a venda quando não existe régua, apontando o campo do produto;
+- recusa a venda quando o percentual do vendedor excede o total da régua,
+  apontando o campo do vendedor;
+- grava a venda com o snapshot do percentual e da régua, e persiste as parcelas
+  previstas geradas pelo módulo de comissões.
+
+A quantidade de parcelas não é informada no formulário: ela é a da régua. Quem
+define quantas parcelas a comissão tem é a administradora, não quem digita a
+venda.
 
 Falhas dessas regras voltam como `SaleValidationError`, apontando o campo
 responsável, para que o formulário mostre o erro no lugar certo.
 
-O repositório executa a confirmação dos participantes, a seleção da vigência e
-a inserção da venda em uma única transação. As linhas da administradora e do
-vendedor são bloqueadas com `FOR UPDATE` até o fim da gravação. Assim, uma
-inativação ou uma nova vigência concorrente é serializada antes ou depois da
-venda, sem permitir um snapshot incoerente. A mesma operação faz uma única
-leitura do histórico de percentuais.
+O repositório executa a confirmação dos participantes, a seleção do percentual e
+da régua, a geração e a inserção da venda e das parcelas em uma única transação.
+As linhas da administradora e do vendedor são bloqueadas com `FOR UPDATE` até o
+fim da gravação. Assim, uma inativação ou uma nova vigência concorrente é
+serializada antes ou depois da venda, sem permitir um snapshot incoerente. A
+mesma operação faz uma única leitura do histórico de percentuais e uma única
+leitura das vigências da régua.
 
 ## Listagem de vendas
 
@@ -179,6 +189,26 @@ Não há chave estrangeira separada de `seller_commission_rate_id`: a composta j
 garante que a vigência existe.
 
 Cadastrar uma nova vigência para o vendedor não altera nenhuma venda existente.
+
+## Snapshot da régua
+
+A régua aplicada é gravada do mesmo jeito, em duas colunas que são um único
+fato: `administrator_installment_rule_id` aponta a versão usada e
+`installment_rates_basis_points` guarda a distribuição aplicada. A chave
+estrangeira composta `sales_installment_rule_snapshot_fk` referencia
+`administrator_installment_rules (id, administrator_id,
+installment_rates_basis_points)`, então o banco recusa uma distribuição
+diferente da régua citada e uma régua que pertença a outra administradora.
+
+`commission_installments` da venda é a quantidade da própria distribuição, e o
+banco confere isso em `sales_commission_installments_snapshot_check`.
+
+As duas colunas aceitam nulo somente em par, para as vendas registradas antes de
+a régua existir: elas não têm snapshot nem parcelas, e nenhuma régua foi
+inventada para elas na migração. Toda venda nova grava as duas.
+
+Uma nova vigência da régua não altera nenhuma venda existente nem as parcelas
+já geradas.
 
 ## Valores monetários
 

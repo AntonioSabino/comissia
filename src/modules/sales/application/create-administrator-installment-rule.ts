@@ -1,5 +1,4 @@
 import {
-  AdministratorInstallmentRuleValidationError,
   installmentRuleTotalBasisPoints,
   validateAdministratorInstallmentRule,
   type AdministratorInstallmentRuleInput,
@@ -31,14 +30,8 @@ export async function createAdministratorInstallmentRule(
   const rule = validateAdministratorInstallmentRule(input);
   const created = await repository.create(rule);
 
-  if (created.status === "unknown-administrator") {
+  if (!created) {
     throw new AdministratorNotFoundError();
-  }
-
-  if (created.status === "inactive-administrator") {
-    throw new AdministratorInstallmentRuleValidationError({
-      administratorId: "Selecione uma administradora ativa",
-    });
   }
 
   return {

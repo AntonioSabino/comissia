@@ -12,6 +12,16 @@ comissão e parcelas previstas.
 - situação e ajustes das parcelas;
 - consultas mensais de valores previstos.
 
+## Comissão total do vendedor
+
+`calculateSellerCommissionTotal` recebe o crédito em centavos e o percentual do
+vendedor em pontos-base que a venda preservou como snapshot. O cálculo permanece
+em `bigint` e devolve o total em centavos, sem converter valores monetários para
+`number`.
+
+Quando o percentual produz uma fração de centavo, o valor é arredondado para o
+centavo mais próximo; exatamente meio centavo é arredondado para cima.
+
 ## Não pertence a este módulo
 
 - cadastro do vendedor;

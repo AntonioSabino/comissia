@@ -3,6 +3,13 @@ export {
   type SellerCommissionCalculationInput,
 } from "./domain/calculate-seller-commission";
 export {
+  buildCommissionInstallmentSchedule,
+  CommissionInstallmentScheduleError,
+  type CommissionInstallmentSchedule,
+  type CommissionInstallmentScheduleInput,
+  type ScheduledCommissionInstallment,
+} from "./domain/commission-installment-schedule";
+export {
   changeCommissionInstallmentStatus,
   COMMISSION_INSTALLMENT_STATUSES,
   CommissionInstallmentStatusError,

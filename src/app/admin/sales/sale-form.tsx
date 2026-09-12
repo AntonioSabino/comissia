@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Alert } from "@/app/_components/ui/alert";
 import { Button } from "@/app/_components/ui/button";
@@ -45,6 +46,7 @@ type SaleFormProps = {
 };
 
 export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
+  const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<SaleField, string>>
   >({});
@@ -88,6 +90,9 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
           ? `Venda ${code} cadastrada com sucesso`
           : "Venda cadastrada com sucesso",
       );
+      // A listagem é renderizada no servidor: sem isto, a venda recém-cadastrada
+      // só apareceria depois de recarregar a página.
+      router.refresh();
     } catch {
       setMessage("Não foi possível conectar ao sistema");
     } finally {

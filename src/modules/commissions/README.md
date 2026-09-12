@@ -36,9 +36,13 @@ prevista: uma primeira parcela em 31/01 vence em 28/02 e volta a vencer em
 o ano.
 
 A competência acompanha o mês da data prevista mesmo quando o dia é encurtado.
-Datas fora do calendário e quantidades fora de 1 a 120 parcelas são recusadas
-com `CommissionInstallmentScheduleError`. Os valores de cada parcela não são
-calculados aqui: ficam no SCRUM-45, que compõe esta agenda com a comissão total.
+Datas fora do calendário, quantidades fora de 1 a 120 parcelas e agendas que
+passariam do ano 9999 são recusadas com `CommissionInstallmentScheduleError`.
+
+Os valores de cada parcela não são calculados aqui. A divisão da comissão total
+e a numeração exibida ficam no SCRUM-45, que compõe esta agenda com
+`calculateSellerCommissionTotal`, e a diferença de centavos na última parcela
+fica no SCRUM-44.
 
 ## Situações da parcela
 

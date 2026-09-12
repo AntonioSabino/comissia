@@ -128,6 +128,26 @@ describe("commission installment schedule", () => {
     );
   });
 
+  it("recusa uma agenda que passaria do ano 9999", () => {
+    expect(() =>
+      buildCommissionInstallmentSchedule({
+        firstInstallmentDueOn: "9999-12-31",
+        installments: 2,
+      }),
+    ).toThrow("A última parcela não pode passar do ano 9999");
+  });
+
+  it("aceita a agenda que termina exatamente no fim de 9999", () => {
+    const schedule = buildCommissionInstallmentSchedule({
+      firstInstallmentDueOn: "9999-12-31",
+      installments: 1,
+    });
+
+    expect(schedule).toEqual([
+      { number: 1, competence: "9999-12", dueOn: "9999-12-31" },
+    ]);
+  });
+
   it("recusa quantidade de parcelas fora de 1 a 120", () => {
     const invalidCounts = [0, -1, 121, 1.5, Number.NaN];
 

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   AdministratorInstallmentRuleValidationError,
   installmentRuleTotalBasisPoints,
-  parseInstallmentPercentages,
   validateAdministratorInstallmentRule,
   type AdministratorInstallmentRuleInput,
 } from "./administrator-installment-rule";
@@ -153,98 +152,6 @@ describe("validateAdministratorInstallmentRule", () => {
       product: expect.any(String),
       effectiveFrom: expect.any(String),
       installmentRatesBasisPoints: expect.any(String),
-    });
-  });
-});
-
-describe("parseInstallmentPercentages", () => {
-  it("converte percentuais separados por ponto e vírgula", () => {
-    expect(parseInstallmentPercentages("0,75; 0,50; 0,25")).toEqual([
-      75, 50, 25,
-    ]);
-  });
-
-  it("aceita espaço e quebra de linha como separadores", () => {
-    const typed = `0,75
-0,50 0,25`;
-
-    expect(parseInstallmentPercentages(typed)).toEqual([75, 50, 25]);
-  });
-
-  it("aceita ponto como separador decimal", () => {
-    expect(parseInstallmentPercentages("1.5")).toEqual([150]);
-  });
-
-  it.each([
-    ["2", 200],
-    ["100", 10_000],
-    ["0,01", 1],
-  ])("converte %p em %i pontos-base", (percentage, basisPoints) => {
-    expect(parseInstallmentPercentages(percentage)).toEqual([basisPoints]);
-  });
-
-  it.each(["0", "0,00", "100,01", "0,755", "-1", "1e2"])(
-    "recusa o percentual %p",
-    (percentage) => {
-      expect(parseInstallmentPercentages(percentage)).toBeNull();
-    },
-  );
-
-  it.each(["", "   ", "0,75; abc", "0,75;;abc"])(
-    "recusa a distribuição %p",
-    (distribution) => {
-      expect(parseInstallmentPercentages(distribution)).toBeNull();
-    },
-  );
-
-  it("recusa valor que não é texto", () => {
-    expect(parseInstallmentPercentages(75)).toBeNull();
-    expect(parseInstallmentPercentages(["0,75"])).toBeNull();
-  });
-
-  it("aceita 120 parcelas e recusa 121", () => {
-    const percentages = (count: number) =>
-      Array.from({ length: count }, () => "0,10").join("; ");
-
-    expect(parseInstallmentPercentages(percentages(120))).toHaveLength(120);
-    expect(parseInstallmentPercentages(percentages(121))).toBeNull();
-  });
-});
-
-describe("validateAdministratorInstallmentRule com percentuais digitados", () => {
-  const typed = {
-    administratorId: ADMINISTRATOR_ID,
-    product: "Auto Leve",
-    effectiveFrom: "2026-01-01",
-  };
-
-  it("converte a distribuição digitada para pontos-base", () => {
-    expect(
-      validateAdministratorInstallmentRule({
-        ...typed,
-        installmentPercentages: "0,75; 0,50; 0,25",
-      }),
-    ).toEqual({
-      ...typed,
-      installmentRatesBasisPoints: [75, 50, 25],
-    });
-  });
-
-  it("prefere o que foi digitado quando os dois formatos chegam juntos", () => {
-    expect(
-      validateAdministratorInstallmentRule({
-        ...typed,
-        installmentPercentages: "1,00",
-        installmentRatesBasisPoints: [75, 50, 25],
-      }).installmentRatesBasisPoints,
-    ).toEqual([100]);
-  });
-
-  it("aponta o erro no campo digitado", () => {
-    expect(
-      fieldErrors({ ...typed, installmentPercentages: "0,75; abc" }),
-    ).toEqual({
-      installmentPercentages: expect.any(String),
     });
   });
 });

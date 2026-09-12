@@ -137,7 +137,10 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
             <Alert tone="attention">
               Para registrar vendas, cadastre ao menos um{" "}
               <Link href="/admin/sellers">vendedor ativo</Link> e uma{" "}
-              <Link href="/admin/administrators">administradora ativa</Link>.
+              <Link href="/admin/administrators">administradora ativa</Link>. A
+              administradora também precisa de uma{" "}
+              <Link href="/admin/installment-rules">régua de parcelas</Link>{" "}
+              vigente para o produto vendido.
             </Alert>
           )}
         </Card>

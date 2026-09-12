@@ -126,7 +126,53 @@ export const sales = pgTable(
   ],
 );
 
+/**
+ * Régua de parcelas definida pela administradora para um produto ou plano.
+ * Cada linha é uma versão vigente a partir de `effective_from`, com a
+ * distribuição em pontos-base na ordem da primeira à última parcela. A tabela
+ * é apenas de inclusão (migração `0009`): uma nova vigência não altera as
+ * versões históricas.
+ */
+export const administratorInstallmentRules = pgTable(
+  "administrator_installment_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    administratorId: uuid("administrator_id")
+      .notNull()
+      .references(() => administrators.id, { onDelete: "restrict" }),
+    product: varchar("product", { length: 120 }).notNull(),
+    effectiveFrom: date("effective_from").notNull(),
+    installmentRatesBasisPoints: integer("installment_rates_basis_points")
+      .array()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Uma vigência por administradora e produto, sem diferenciar maiúsculas de minúsculas.
+    uniqueIndex("administrator_installment_rules_effective_from_unique").on(
+      table.administratorId,
+      sql`lower(${table.product})`,
+      table.effectiveFrom,
+    ),
+    check(
+      "administrator_installment_rules_installments_check",
+      sql`array_ndims(${table.installmentRatesBasisPoints}) = 1 AND coalesce(array_length(${table.installmentRatesBasisPoints}, 1), 0) BETWEEN 1 AND 120`,
+    ),
+    // Percentuais inteiros e positivos, sem nenhum elemento ausente.
+    check(
+      "administrator_installment_rules_rates_check",
+      sql`array_position(${table.installmentRatesBasisPoints}, NULL) IS NULL AND 1 <= ALL (${table.installmentRatesBasisPoints}) AND 10000 >= ALL (${table.installmentRatesBasisPoints})`,
+    ),
+  ],
+);
+
 export type Administrator = typeof administrators.$inferSelect;
 export type NewAdministrator = typeof administrators.$inferInsert;
 export type Sale = typeof sales.$inferSelect;
 export type NewSale = typeof sales.$inferInsert;
+export type AdministratorInstallmentRule =
+  typeof administratorInstallmentRules.$inferSelect;
+export type NewAdministratorInstallmentRule =
+  typeof administratorInstallmentRules.$inferInsert;

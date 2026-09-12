@@ -24,6 +24,7 @@ const DEMO_ADMIN = {
 
 /** Endereços aceitos sem confirmação explícita. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const SEED_LOCK_ID = 62_000_001;
 
 /**
  * Senha sorteada a cada execução. Nenhuma credencial fica no repositório, e a
@@ -344,7 +345,20 @@ async function run() {
 
   console.log(`Banco: ${new URL(databaseUrl).pathname.slice(1)}`);
 
+  const lockClient = await postgresPool.connect();
+  let hasSeedLock = false;
+
   try {
+    const { rows } = await lockClient.query<{ acquired: boolean }>(
+      "SELECT pg_try_advisory_lock($1) AS acquired",
+      [SEED_LOCK_ID],
+    );
+    hasSeedLock = rows[0]?.acquired ?? false;
+
+    if (!hasSeedLock) {
+      throw new Error("Outro seed de demonstração já está em execução");
+    }
+
     try {
       const password = generatePassword();
       const admin = await createInitialAdmin(
@@ -545,6 +559,11 @@ async function run() {
     );
     console.log("Seed concluído.");
   } finally {
+    if (hasSeedLock) {
+      await lockClient.query("SELECT pg_advisory_unlock($1)", [SEED_LOCK_ID]);
+    }
+
+    lockClient.release();
     await postgresPool.end();
   }
 }

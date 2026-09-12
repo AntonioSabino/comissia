@@ -6,7 +6,6 @@ import type {
   ReactElement,
   ReactNode,
   SelectHTMLAttributes,
-  TextareaHTMLAttributes,
 } from "react";
 import { classNames } from "./class-names";
 import styles from "./field.module.css";
@@ -120,25 +119,6 @@ export function Input({ numeric, suffix, className, ...rest }: InputProps) {
         {suffix}
       </span>
     </span>
-  );
-}
-
-type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  /** Usa a fonte monoespaçada com algarismos tabulares (listas de valores). */
-  numeric?: boolean;
-};
-
-export function Textarea({ numeric, className, ...rest }: TextareaProps) {
-  return (
-    <textarea
-      className={classNames(
-        styles.control,
-        styles.textarea,
-        numeric && styles.numeric,
-        className,
-      )}
-      {...rest}
-    />
   );
 }
 

@@ -1,7 +1,6 @@
 import {
   Building2,
   LayoutDashboard,
-  Ruler,
   TrendingUp,
   UsersRound,
   type LucideIcon,
@@ -31,11 +30,6 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
       href: "/admin/administrators",
       label: "Administradoras",
       icon: Building2,
-    },
-    {
-      href: "/admin/installment-rules",
-      label: "Réguas de parcelas",
-      icon: Ruler,
     },
   ],
   seller: [

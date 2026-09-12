@@ -1,4 +1,10 @@
 export {
+  INITIAL_QUOTA_STATUS,
+  isQuotaStatus,
+  QUOTA_STATUSES,
+  type QuotaStatus,
+} from "./domain/quota-status";
+export {
   administrators,
   quotaStatusEnum,
   saleCodeSequence,
@@ -8,6 +14,5 @@ export type {
   Administrator,
   NewAdministrator,
   NewSale,
-  QuotaStatus,
   Sale,
 } from "./infrastructure/db/schema";

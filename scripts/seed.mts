@@ -8,13 +8,9 @@ import {
 config({ path: ".env.local", quiet: true });
 
 /**
- * Popula o banco local com dados fictícios para demonstração. Todos os nomes,
- * documentos, e-mails e telefones são inventados: os CPFs são calculados a
- * partir de bases sequenciais e os e-mails usam o domínio reservado
- * `.test`, que nunca existe de verdade.
- *
- * O seed é repetível: cada registro é procurado pela sua chave natural antes
- * de ser inserido, então rodar duas vezes não duplica nada.
+ * Popula o banco local com um cenário fictício de demonstração. Os dados não
+ * representam clientes, vendedores ou administradoras reais e podem ser
+ * ajustados enquanto a SCRUM-62 estiver em validação.
  */
 
 const DEMO_ADMIN = {
@@ -22,14 +18,9 @@ const DEMO_ADMIN = {
   email: "admin@exemplo.test",
 };
 
-/** Endereços aceitos sem confirmação explícita. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const SEED_LOCK_ID = 62_000_001;
 
-/**
- * Senha sorteada a cada execução. Nenhuma credencial fica no repositório, e a
- * senha aparece uma única vez, no terminal de quem rodou o comando.
- */
 function generatePassword(): string {
   return randomBytes(18).toString("base64url");
 }
@@ -53,6 +44,13 @@ type DemoSeller = {
   rates: DemoRate[];
 };
 
+type DemoInstallmentRule = {
+  administrator: string;
+  product: string;
+  effectiveFrom: string;
+  installmentRatesBasisPoints: number[];
+};
+
 type DemoSale = {
   administrator: string;
   seller: string;
@@ -62,9 +60,18 @@ type DemoSale = {
   quotaCode: string;
   soldOn: string;
   creditAmountInCents: bigint;
-  commissionInstallments: number;
   firstInstallmentDueOn: string;
   quotaStatus: "adimplente" | "inadimplente" | "cancelado" | "contemplado";
+};
+
+type StoredRate = {
+  id: string;
+  rateBasisPoints: number;
+};
+
+type StoredInstallmentRule = {
+  id: string;
+  installmentRatesBasisPoints: number[];
 };
 
 const DEMO_ADMINISTRATORS: DemoAdministrator[] = [
@@ -111,6 +118,57 @@ const DEMO_SELLERS: DemoSeller[] = [
   },
 ];
 
+/**
+ * A distribuição representa o que a administradora paga à corretora. O
+ * percentual do vendedor sai de dentro desse total e é repartido na mesma
+ * proporção. A segunda vigência de Automóvel/Aurora exercita o snapshot: vendas
+ * anteriores e posteriores a julho ficam ligadas a versões diferentes.
+ */
+const DEMO_INSTALLMENT_RULES: DemoInstallmentRule[] = [
+  {
+    administrator: "Consórcio Aurora",
+    product: "Imóvel",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [75, 75, 50, 50, 50, 50, 25, 25],
+  },
+  {
+    administrator: "Consórcio Aurora",
+    product: "Automóvel",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [100, 100, 75, 50, 25],
+  },
+  {
+    administrator: "Consórcio Aurora",
+    product: "Automóvel",
+    effectiveFrom: "2026-07-01",
+    installmentRatesBasisPoints: [75, 75, 75, 50, 50, 25],
+  },
+  {
+    administrator: "Vega Administradora",
+    product: "Imóvel",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [100, 75, 75, 50, 50],
+  },
+  {
+    administrator: "Vega Administradora",
+    product: "Automóvel",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [100, 100, 75, 50, 25],
+  },
+  {
+    administrator: "Vega Administradora",
+    product: "Serviços",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [125, 100, 75],
+  },
+  {
+    administrator: "Meridiano Consórcios",
+    product: "Imóvel",
+    effectiveFrom: "2026-01-01",
+    installmentRatesBasisPoints: [60, 60, 60, 60, 60],
+  },
+];
+
 const DEMO_SALES: DemoSale[] = [
   {
     administrator: "Consórcio Aurora",
@@ -121,7 +179,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q001",
     soldOn: "2026-01-15",
     creditAmountInCents: 20_000_000n,
-    commissionInstallments: 12,
     firstInstallmentDueOn: "2026-02-15",
     quotaStatus: "adimplente",
   },
@@ -134,7 +191,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q002",
     soldOn: "2026-01-31",
     creditAmountInCents: 9_000_000n,
-    commissionInstallments: 6,
     firstInstallmentDueOn: "2026-02-28",
     quotaStatus: "contemplado",
   },
@@ -147,7 +203,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q014",
     soldOn: "2026-02-10",
     creditAmountInCents: 35_000_000n,
-    commissionInstallments: 24,
     firstInstallmentDueOn: "2026-03-10",
     quotaStatus: "adimplente",
   },
@@ -160,7 +215,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q015",
     soldOn: "2026-03-05",
     creditAmountInCents: 4_500_000n,
-    commissionInstallments: 10,
     firstInstallmentDueOn: "2026-04-05",
     quotaStatus: "inadimplente",
   },
@@ -173,7 +227,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q003",
     soldOn: "2026-03-27",
     creditAmountInCents: 12_000_000n,
-    commissionInstallments: 18,
     firstInstallmentDueOn: "2026-04-27",
     quotaStatus: "adimplente",
   },
@@ -186,7 +239,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q007",
     soldOn: "2026-04-02",
     creditAmountInCents: 28_000_000n,
-    commissionInstallments: 36,
     firstInstallmentDueOn: "2026-05-02",
     quotaStatus: "cancelado",
   },
@@ -199,7 +251,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q021",
     soldOn: "2026-05-18",
     creditAmountInCents: 7_550_000n,
-    commissionInstallments: 8,
     firstInstallmentDueOn: "2026-06-18",
     quotaStatus: "adimplente",
   },
@@ -212,7 +263,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q004",
     soldOn: "2026-06-30",
     creditAmountInCents: 41_000_000n,
-    commissionInstallments: 48,
     firstInstallmentDueOn: "2026-07-30",
     quotaStatus: "adimplente",
   },
@@ -225,7 +275,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q005",
     soldOn: "2026-07-14",
     creditAmountInCents: 6_500_000n,
-    commissionInstallments: 12,
     firstInstallmentDueOn: "2026-08-14",
     quotaStatus: "adimplente",
   },
@@ -238,7 +287,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q030",
     soldOn: "2026-08-03",
     creditAmountInCents: 3_275_000n,
-    commissionInstallments: 6,
     firstInstallmentDueOn: "2026-09-03",
     quotaStatus: "inadimplente",
   },
@@ -251,7 +299,6 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q031",
     soldOn: "2026-08-21",
     creditAmountInCents: 52_000_000n,
-    commissionInstallments: 60,
     firstInstallmentDueOn: "2026-09-21",
     quotaStatus: "contemplado",
   },
@@ -264,13 +311,11 @@ const DEMO_SALES: DemoSale[] = [
     quotaCode: "Q006",
     soldOn: "2026-09-08",
     creditAmountInCents: 9_890_000n,
-    commissionInstallments: 12,
     firstInstallmentDueOn: "2026-10-08",
     quotaStatus: "adimplente",
   },
 ];
 
-/** Calcula os dois dígitos verificadores de um CPF a partir dos nove primeiros. */
 function buildCpf(base: string): string {
   const digits = base.split("").map(Number);
 
@@ -288,21 +333,70 @@ function buildCpf(base: string): string {
   return digits.join("");
 }
 
-/** Vigência aplicável na data da venda, como faz o cadastro de venda. */
+function normalizedProduct(product: string): string {
+  return product.toLocaleLowerCase("pt-BR");
+}
+
+function rateKey(seller: string, effectiveFrom: string): string {
+  return `${seller}:${effectiveFrom}`;
+}
+
+function ruleKey(
+  administrator: string,
+  product: string,
+  effectiveFrom: string,
+): string {
+  return `${administrator}:${normalizedProduct(product)}:${effectiveFrom}`;
+}
+
 function rateValidOn(seller: DemoSeller, date: string): DemoRate {
-  const applicable = seller.rates
-    .filter((rate) => rate.effectiveFrom <= date)
+  const rate = seller.rates
+    .filter((item) => item.effectiveFrom <= date)
     .sort((first, second) =>
       first.effectiveFrom < second.effectiveFrom ? 1 : -1,
-    );
+    )[0];
 
-  if (applicable.length === 0) {
+  if (!rate) {
     throw new Error(
       `O vendedor ${seller.name} não tem percentual vigente em ${date}`,
     );
   }
 
-  return applicable[0];
+  return rate;
+}
+
+function ruleValidOn(
+  administrator: string,
+  product: string,
+  date: string,
+): DemoInstallmentRule {
+  const rule = DEMO_INSTALLMENT_RULES.filter(
+    (item) =>
+      item.administrator === administrator &&
+      normalizedProduct(item.product) === normalizedProduct(product) &&
+      item.effectiveFrom <= date,
+  ).sort((first, second) =>
+    first.effectiveFrom < second.effectiveFrom ? 1 : -1,
+  )[0];
+
+  if (!rule) {
+    throw new Error(
+      `A administradora ${administrator} não tem régua de ${product} vigente em ${date}`,
+    );
+  }
+
+  return rule;
+}
+
+function sameNumbers(
+  first: readonly number[] | null,
+  second: readonly number[],
+): boolean {
+  return (
+    first !== null &&
+    first.length === second.length &&
+    first.every((value, index) => value === second[index])
+  );
 }
 
 async function run() {
@@ -316,7 +410,6 @@ async function run() {
     throw new Error("DATABASE_URL não foi definida em .env.local");
   }
 
-  // `NODE_ENV` sozinho não protege um banco remoto mal configurado.
   const { hostname } = new URL(databaseUrl);
 
   if (!LOCAL_HOSTS.has(hostname) && !process.argv.includes("--allow-remote")) {
@@ -328,14 +421,22 @@ async function run() {
   const [
     { db, postgresPool },
     { and, eq, sql },
-    { administrators, sales },
+    {
+      administratorInstallmentRules,
+      administrators,
+      commissionInstallments,
+      commissionInstallmentStatusEvents,
+      sales,
+    },
     { sellerCommissionRates, sellers },
+    { generateSellerCommissionInstallments },
     { PostgresInitialAdminRepository },
   ] = await Promise.all([
     import("../src/db/index"),
     import("drizzle-orm"),
     import("../src/modules/sales/index"),
     import("../src/modules/sellers/index"),
+    import("../src/modules/commissions/index"),
     import("../src/modules/auth/infrastructure/db/initial-admin-repository"),
   ]);
 
@@ -373,187 +474,472 @@ async function run() {
     }
 
     const administratorIds = new Map<string, string>();
-    let createdAdministrators = 0;
-
-    for (const administrator of DEMO_ADMINISTRATORS) {
-      const [existing] = await db
-        .select({ id: administrators.id })
-        .from(administrators)
-        .where(
-          sql`lower(${administrators.name}) = lower(${administrator.name})`,
-        )
-        .limit(1);
-
-      if (existing) {
-        administratorIds.set(administrator.name, existing.id);
-        continue;
-      }
-
-      const [created] = await db
-        .insert(administrators)
-        .values({ name: administrator.name, active: administrator.active })
-        .returning({ id: administrators.id });
-
-      administratorIds.set(administrator.name, created.id);
-      createdAdministrators += 1;
-    }
-
-    console.log(
-      `Administradoras: ${createdAdministrators} criadas, ${DEMO_ADMINISTRATORS.length - createdAdministrators} já existiam.`,
-    );
-
     const sellerIds = new Map<string, string>();
-    const storedRates = new Map<
-      string,
-      { id: string; rateBasisPoints: number }
-    >();
+    const storedRates = new Map<string, StoredRate>();
+    const storedRules = new Map<string, StoredInstallmentRule>();
+    let createdAdministrators = 0;
     let createdSellers = 0;
     let createdRates = 0;
+    let createdRules = 0;
+    let createdSales = 0;
+    let backfilledSales = 0;
+    let createdInstallments = 0;
 
-    for (const seller of DEMO_SELLERS) {
-      const document = buildCpf(seller.cpfBase);
-      const [existing] = await db
-        .select({ id: sellers.id })
-        .from(sellers)
-        .where(eq(sellers.document, document))
-        .limit(1);
+    try {
+      for (const administrator of DEMO_ADMINISTRATORS) {
+        const [existing] = await db
+          .select({ id: administrators.id })
+          .from(administrators)
+          .where(
+            sql`lower(${administrators.name}) = lower(${administrator.name})`,
+          )
+          .limit(1);
 
-      let sellerId: string;
+        let administratorId: string;
 
-      if (existing) {
-        sellerId = existing.id;
-      } else {
-        const [created] = await db
-          .insert(sellers)
-          .values({
-            name: seller.name,
-            document,
-            email: seller.email,
-            phone: seller.phone,
-            active: seller.active,
-          })
-          .returning({ id: sellers.id });
+        if (existing) {
+          administratorId = existing.id;
+        } else {
+          const [created] = await db
+            .insert(administrators)
+            .values({ name: administrator.name, active: true })
+            .returning({ id: administrators.id });
 
-        sellerId = created.id;
-        createdSellers += 1;
+          administratorId = created.id;
+          createdAdministrators += 1;
+        }
+
+        administratorIds.set(administrator.name, administratorId);
+        await db
+          .update(administrators)
+          .set({ active: true, updatedAt: new Date() })
+          .where(eq(administrators.id, administratorId));
       }
 
-      sellerIds.set(seller.name, sellerId);
+      for (const seller of DEMO_SELLERS) {
+        const document = buildCpf(seller.cpfBase);
+        const [existing] = await db
+          .select({ id: sellers.id })
+          .from(sellers)
+          .where(eq(sellers.document, document))
+          .limit(1);
 
-      for (const rate of seller.rates) {
-        const [existingRate] = await db
+        let sellerId: string;
+
+        if (existing) {
+          sellerId = existing.id;
+        } else {
+          const [created] = await db
+            .insert(sellers)
+            .values({
+              name: seller.name,
+              document,
+              email: seller.email,
+              phone: seller.phone,
+              active: true,
+            })
+            .returning({ id: sellers.id });
+
+          sellerId = created.id;
+          createdSellers += 1;
+        }
+
+        sellerIds.set(seller.name, sellerId);
+        await db
+          .update(sellers)
+          .set({ active: true, updatedAt: new Date() })
+          .where(eq(sellers.id, sellerId));
+
+        for (const rate of seller.rates) {
+          const [existingRate] = await db
+            .select({
+              id: sellerCommissionRates.id,
+              rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+            })
+            .from(sellerCommissionRates)
+            .where(
+              and(
+                eq(sellerCommissionRates.sellerId, sellerId),
+                eq(sellerCommissionRates.effectiveFrom, rate.effectiveFrom),
+              ),
+            )
+            .limit(1);
+
+          if (existingRate) {
+            storedRates.set(
+              rateKey(seller.name, rate.effectiveFrom),
+              existingRate,
+            );
+
+            if (existingRate.rateBasisPoints !== rate.rateBasisPoints) {
+              console.log(
+                `Vigência de ${seller.name} em ${rate.effectiveFrom}: mantido o percentual já gravado (${existingRate.rateBasisPoints} pontos-base).`,
+              );
+            }
+
+            continue;
+          }
+
+          const [createdRate] = await db
+            .insert(sellerCommissionRates)
+            .values({
+              sellerId,
+              rateBasisPoints: rate.rateBasisPoints,
+              effectiveFrom: rate.effectiveFrom,
+            })
+            .returning({
+              id: sellerCommissionRates.id,
+              rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+            });
+
+          storedRates.set(
+            rateKey(seller.name, rate.effectiveFrom),
+            createdRate,
+          );
+          createdRates += 1;
+        }
+      }
+
+      for (const rule of DEMO_INSTALLMENT_RULES) {
+        const administratorId = administratorIds.get(rule.administrator);
+
+        if (!administratorId) {
+          throw new Error(
+            `Administradora da régua não encontrada: ${rule.administrator}`,
+          );
+        }
+
+        const [existingRule] = await db
           .select({
-            id: sellerCommissionRates.id,
-            rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+            id: administratorInstallmentRules.id,
+            installmentRatesBasisPoints:
+              administratorInstallmentRules.installmentRatesBasisPoints,
           })
-          .from(sellerCommissionRates)
+          .from(administratorInstallmentRules)
           .where(
             and(
-              eq(sellerCommissionRates.sellerId, sellerId),
-              eq(sellerCommissionRates.effectiveFrom, rate.effectiveFrom),
+              eq(
+                administratorInstallmentRules.administratorId,
+                administratorId,
+              ),
+              sql`lower(${administratorInstallmentRules.product}) = lower(${rule.product})`,
+              eq(
+                administratorInstallmentRules.effectiveFrom,
+                rule.effectiveFrom,
+              ),
             ),
           )
           .limit(1);
 
-        // O percentual gravado é o da linha que existe, não o do script: o
-        // snapshot da venda precisa bater com a vigência referenciada.
-        if (existingRate) {
-          storedRates.set(`${seller.name}:${rate.effectiveFrom}`, existingRate);
+        const key = ruleKey(
+          rule.administrator,
+          rule.product,
+          rule.effectiveFrom,
+        );
 
-          if (existingRate.rateBasisPoints !== rate.rateBasisPoints) {
+        if (existingRule) {
+          storedRules.set(key, existingRule);
+
+          if (
+            !sameNumbers(
+              existingRule.installmentRatesBasisPoints,
+              rule.installmentRatesBasisPoints,
+            )
+          ) {
             console.log(
-              `Vigência de ${seller.name} em ${rate.effectiveFrom}: mantido o percentual já gravado (${existingRate.rateBasisPoints} pontos-base).`,
+              `Régua de ${rule.administrator}/${rule.product} em ${rule.effectiveFrom}: mantida a distribuição já gravada.`,
             );
           }
 
           continue;
         }
 
-        const [createdRate] = await db
-          .insert(sellerCommissionRates)
+        const [createdRule] = await db
+          .insert(administratorInstallmentRules)
           .values({
-            sellerId,
-            rateBasisPoints: rate.rateBasisPoints,
-            effectiveFrom: rate.effectiveFrom,
+            administratorId,
+            product: rule.product,
+            effectiveFrom: rule.effectiveFrom,
+            installmentRatesBasisPoints: [...rule.installmentRatesBasisPoints],
           })
           .returning({
-            id: sellerCommissionRates.id,
-            rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+            id: administratorInstallmentRules.id,
+            installmentRatesBasisPoints:
+              administratorInstallmentRules.installmentRatesBasisPoints,
           });
 
-        storedRates.set(`${seller.name}:${rate.effectiveFrom}`, createdRate);
-        createdRates += 1;
+        storedRules.set(key, createdRule);
+        createdRules += 1;
       }
-    }
 
-    console.log(
-      `Vendedores: ${createdSellers} criados, ${DEMO_SELLERS.length - createdSellers} já existiam.`,
-    );
-    console.log(`Vigências de percentual: ${createdRates} criadas.`);
+      const persistInstallments = async (
+        transaction: Pick<typeof db, "insert">,
+        saleId: string,
+        installments: ReturnType<typeof generateSellerCommissionInstallments>,
+      ) => {
+        const persistedInstallments = await transaction
+          .insert(commissionInstallments)
+          .values(
+            installments.map((installment) => ({
+              saleId,
+              number: installment.number,
+              competence: installment.competence,
+              dueOn: installment.dueOn,
+              ruleRateBasisPoints: installment.rateBasisPoints,
+              amountInCents: installment.amountInCents,
+            })),
+          )
+          .returning({
+            id: commissionInstallments.id,
+            number: commissionInstallments.number,
+          });
 
-    let createdSales = 0;
-
-    for (const sale of DEMO_SALES) {
-      const administratorId = administratorIds.get(sale.administrator);
-      const sellerId = sellerIds.get(sale.seller);
-      const seller = DEMO_SELLERS.find((item) => item.name === sale.seller);
-
-      if (!administratorId || !sellerId || !seller) {
-        throw new Error(
-          `Venda ${sale.groupCode}/${sale.quotaCode} inconsistente`,
+        const installmentIdByNumber = new Map(
+          persistedInstallments.map(({ id, number }) => [number, id]),
         );
-      }
 
-      const [existing] = await db
-        .select({ id: sales.id })
-        .from(sales)
-        .where(
-          and(
-            eq(sales.administratorId, administratorId),
-            eq(sales.groupCode, sale.groupCode),
-            eq(sales.quotaCode, sale.quotaCode),
+        await transaction.insert(commissionInstallmentStatusEvents).values(
+          installments.flatMap((installment) =>
+            installment.statusHistory.map((entry, index) => {
+              const installmentId = installmentIdByNumber.get(
+                installment.number,
+              );
+
+              if (!installmentId) {
+                throw new Error(
+                  `Parcela ${installment.number} da venda ${saleId} não foi persistida`,
+                );
+              }
+
+              return {
+                installmentId,
+                sequence: index + 1,
+                previousStatus: entry.previousStatus,
+                status: entry.status,
+                changedAt: new Date(entry.changedAt),
+              };
+            }),
           ),
-        )
-        .limit(1);
-
-      if (existing) {
-        continue;
-      }
-
-      const rate = rateValidOn(seller, sale.soldOn);
-      const storedRate = storedRates.get(
-        `${seller.name}:${rate.effectiveFrom}`,
-      );
-
-      if (!storedRate) {
-        throw new Error(
-          `Vigência de ${seller.name} em ${rate.effectiveFrom} não foi encontrada`,
         );
+      };
+
+      for (const sale of DEMO_SALES) {
+        const administratorId = administratorIds.get(sale.administrator);
+        const sellerId = sellerIds.get(sale.seller);
+        const seller = DEMO_SELLERS.find((item) => item.name === sale.seller);
+
+        if (!administratorId || !sellerId || !seller) {
+          throw new Error(
+            `Venda ${sale.groupCode}/${sale.quotaCode} inconsistente`,
+          );
+        }
+
+        const configuredRate = rateValidOn(seller, sale.soldOn);
+        const storedRate = storedRates.get(
+          rateKey(seller.name, configuredRate.effectiveFrom),
+        );
+        const configuredRule = ruleValidOn(
+          sale.administrator,
+          sale.product,
+          sale.soldOn,
+        );
+        const storedRule = storedRules.get(
+          ruleKey(
+            configuredRule.administrator,
+            configuredRule.product,
+            configuredRule.effectiveFrom,
+          ),
+        );
+
+        if (!storedRate || !storedRule) {
+          throw new Error(
+            `Percentual ou régua da venda ${sale.groupCode}/${sale.quotaCode} não foi encontrado`,
+          );
+        }
+
+        const ruleTotalBasisPoints =
+          storedRule.installmentRatesBasisPoints.reduce(
+            (total, rate) => total + rate,
+            0,
+          );
+
+        if (storedRate.rateBasisPoints > ruleTotalBasisPoints) {
+          throw new Error(
+            `O percentual de ${sale.seller} excede a régua de ${sale.administrator}/${sale.product}`,
+          );
+        }
+
+        const generatedInstallments = generateSellerCommissionInstallments({
+          creditAmountInCents: sale.creditAmountInCents,
+          sellerRateBasisPoints: storedRate.rateBasisPoints,
+          installmentRatesBasisPoints: storedRule.installmentRatesBasisPoints,
+          firstInstallmentDueOn: sale.firstInstallmentDueOn,
+          createdAt: new Date(),
+        });
+
+        const [existing] = await db
+          .select({
+            id: sales.id,
+            administratorInstallmentRuleId:
+              sales.administratorInstallmentRuleId,
+            installmentRatesBasisPoints: sales.installmentRatesBasisPoints,
+            commissionInstallments: sales.commissionInstallments,
+          })
+          .from(sales)
+          .where(
+            and(
+              eq(sales.administratorId, administratorId),
+              eq(sales.groupCode, sale.groupCode),
+              eq(sales.quotaCode, sale.quotaCode),
+            ),
+          )
+          .limit(1);
+
+        if (!existing) {
+          await db.transaction(async (transaction) => {
+            const [created] = await transaction
+              .insert(sales)
+              .values({
+                administratorId,
+                administratorInstallmentRuleId: storedRule.id,
+                sellerId,
+                sellerCommissionRateId: storedRate.id,
+                sellerRateBasisPoints: storedRate.rateBasisPoints,
+                installmentRatesBasisPoints: [
+                  ...storedRule.installmentRatesBasisPoints,
+                ],
+                customerName: sale.customerName,
+                product: sale.product,
+                groupCode: sale.groupCode,
+                quotaCode: sale.quotaCode,
+                soldOn: sale.soldOn,
+                creditAmountInCents: sale.creditAmountInCents,
+                commissionInstallments: generatedInstallments.length,
+                firstInstallmentDueOn: sale.firstInstallmentDueOn,
+                quotaStatus: sale.quotaStatus,
+              })
+              .returning({ id: sales.id });
+
+            await persistInstallments(
+              transaction,
+              created.id,
+              generatedInstallments,
+            );
+          });
+
+          createdSales += 1;
+          createdInstallments += generatedInstallments.length;
+          continue;
+        }
+
+        const persistedInstallments = await db
+          .select({ id: commissionInstallments.id })
+          .from(commissionInstallments)
+          .where(eq(commissionInstallments.saleId, existing.id));
+
+        if (
+          existing.administratorInstallmentRuleId === null &&
+          existing.installmentRatesBasisPoints === null &&
+          persistedInstallments.length === 0
+        ) {
+          await db.transaction(async (transaction) => {
+            await transaction
+              .update(sales)
+              .set({
+                administratorInstallmentRuleId: storedRule.id,
+                sellerCommissionRateId: storedRate.id,
+                sellerRateBasisPoints: storedRate.rateBasisPoints,
+                installmentRatesBasisPoints: [
+                  ...storedRule.installmentRatesBasisPoints,
+                ],
+                commissionInstallments: generatedInstallments.length,
+                quotaStatus: sale.quotaStatus,
+                updatedAt: new Date(),
+              })
+              .where(eq(sales.id, existing.id));
+
+            await persistInstallments(
+              transaction,
+              existing.id,
+              generatedInstallments,
+            );
+          });
+
+          backfilledSales += 1;
+          createdInstallments += generatedInstallments.length;
+          continue;
+        }
+
+        if (
+          existing.administratorInstallmentRuleId === null ||
+          existing.installmentRatesBasisPoints === null ||
+          persistedInstallments.length !== existing.commissionInstallments
+        ) {
+          throw new Error(
+            `A venda fictícia ${sale.groupCode}/${sale.quotaCode} está parcialmente preenchida; recrie o banco local antes de repetir o seed`,
+          );
+        }
+
+        const persistedEvents = await db
+          .select({ id: commissionInstallmentStatusEvents.id })
+          .from(commissionInstallmentStatusEvents)
+          .innerJoin(
+            commissionInstallments,
+            eq(
+              commissionInstallmentStatusEvents.installmentId,
+              commissionInstallments.id,
+            ),
+          )
+          .where(eq(commissionInstallments.saleId, existing.id));
+
+        if (persistedEvents.length < persistedInstallments.length) {
+          throw new Error(
+            `A venda fictícia ${sale.groupCode}/${sale.quotaCode} tem parcela sem situação inicial`,
+          );
+        }
+
+        await db
+          .update(sales)
+          .set({ quotaStatus: sale.quotaStatus, updatedAt: new Date() })
+          .where(eq(sales.id, existing.id));
       }
 
-      await db.insert(sales).values({
-        administratorId,
-        sellerId,
-        sellerCommissionRateId: storedRate.id,
-        sellerRateBasisPoints: storedRate.rateBasisPoints,
-        customerName: sale.customerName,
-        product: sale.product,
-        groupCode: sale.groupCode,
-        quotaCode: sale.quotaCode,
-        soldOn: sale.soldOn,
-        creditAmountInCents: sale.creditAmountInCents,
-        commissionInstallments: sale.commissionInstallments,
-        firstInstallmentDueOn: sale.firstInstallmentDueOn,
-        quotaStatus: sale.quotaStatus,
-      });
+      console.log(
+        `Administradoras: ${createdAdministrators} criadas, ${DEMO_ADMINISTRATORS.length - createdAdministrators} já existiam.`,
+      );
+      console.log(
+        `Vendedores: ${createdSellers} criados, ${DEMO_SELLERS.length - createdSellers} já existiam.`,
+      );
+      console.log(`Vigências de vendedor: ${createdRates} criadas.`);
+      console.log(`Réguas de parcelas: ${createdRules} criadas.`);
+      console.log(
+        `Vendas: ${createdSales} criadas, ${backfilledSales} complementadas, ${DEMO_SALES.length - createdSales - backfilledSales} já existiam.`,
+      );
+      console.log(`Parcelas previstas: ${createdInstallments} criadas.`);
+      console.log("Seed concluído.");
+    } finally {
+      for (const administrator of DEMO_ADMINISTRATORS) {
+        const administratorId = administratorIds.get(administrator.name);
 
-      createdSales += 1;
+        if (administratorId) {
+          await db
+            .update(administrators)
+            .set({ active: administrator.active, updatedAt: new Date() })
+            .where(eq(administrators.id, administratorId));
+        }
+      }
+
+      for (const seller of DEMO_SELLERS) {
+        const sellerId = sellerIds.get(seller.name);
+
+        if (sellerId) {
+          await db
+            .update(sellers)
+            .set({ active: seller.active, updatedAt: new Date() })
+            .where(eq(sellers.id, sellerId));
+        }
+      }
     }
-
-    console.log(
-      `Vendas: ${createdSales} criadas, ${DEMO_SALES.length - createdSales} já existiam.`,
-    );
-    console.log("Seed concluído.");
   } finally {
     if (hasSeedLock) {
       await lockClient.query("SELECT pg_advisory_unlock($1)", [SEED_LOCK_ID]);

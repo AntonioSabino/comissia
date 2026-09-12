@@ -37,6 +37,12 @@ restrições entre situações poderão ser adicionadas quando o fluxo operacion
 for definido; neste incremento, qualquer mudança entre situações distintas é
 aceita e rastreada.
 
+Repetir a situação atual não representa uma transição e é recusado.
+Reagendamentos, pagamentos parciais e ajustes sucessivos são eventos de negócio
+com dados próprios, como datas, valores e motivos, e deverão ser registrados por
+operações específicas. Com as situações deste incremento, uma parcela passa
+para `paga` somente quando estiver integralmente quitada.
+
 ## Não pertence a este módulo
 
 - cadastro do vendedor;

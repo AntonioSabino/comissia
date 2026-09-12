@@ -48,8 +48,22 @@ export const authRepository: AuthRepository = {
     return user ?? null;
   },
 
-  async createSession(session: SessionRecord) {
-    await db.insert(sessions).values(session);
+  async createSessionForActiveUser(session: SessionRecord) {
+    return db.transaction(async (transaction) => {
+      const [user] = await transaction
+        .select({ active: users.active })
+        .from(users)
+        .where(eq(users.id, session.userId))
+        .for("update")
+        .limit(1);
+
+      if (!user?.active) {
+        return false;
+      }
+
+      await transaction.insert(sessions).values(session);
+      return true;
+    });
   },
 
   async deleteSessionByTokenHash(tokenHash) {

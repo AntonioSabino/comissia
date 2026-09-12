@@ -25,6 +25,37 @@ O fluxo normaliza nome e e-mail, exige ao menos 12 caracteres na senha, impede
 e-mail duplicado e recusa a criação se já houver um administrador. Nenhuma senha
 padrão existe no código ou na configuração.
 
+## Acesso do vendedor
+
+A administração cria e controla o acesso de cada vendedor na página do próprio
+cadastro, em `/admin/sellers/{id}`. O acesso reaproveita o que já existe: o
+e-mail do cadastro vira o e-mail de login, e a conta nasce com perfil `seller`
+vinculada àquele vendedor.
+
+A senha do primeiro acesso é sorteada por `generateTemporaryPassword` e
+devolvida uma única vez, na resposta que cria o acesso, para o administrador
+repassar ao vendedor. A interface a mantém visível, inclusive depois de atualizar
+os dados da página, até o administrador confirmar que a copiou. Depois dessa
+confirmação ela não pode ser recuperada: não é gravada em lugar nenhum além do
+hash e não vai para log. Nenhum administrador escolhe a senha de outra pessoa.
+
+Criar o acesso duas vezes é recusado pelo banco antes de qualquer duplicação:
+`users_seller_id_unique` impede o segundo vínculo e `users_email_unique` impede
+o e-mail repetido. Como o e-mail vem do próprio cadastro, a segunda tentativa
+esbarra primeiro na unicidade do e-mail; o repositório distingue os dois casos
+para que a mensagem aponte o vínculo existente, e não um e-mail de terceiros.
+
+Alterações posteriores no nome ou no e-mail cadastral também atualizam a conta
+vinculada. As duas tabelas são gravadas na mesma transação; se o novo e-mail já
+pertencer a outro usuário, nenhuma das alterações é mantida.
+
+`changeSellerAccess` libera e bloqueia. Bloquear não apaga nada: a conta
+continua vinculada e as vendas, vigências e histórico seguem intactos. O
+bloqueio encerra as sessões abertas do vendedor na mesma transação. A criação de
+sessão bloqueia a linha do usuário e confere novamente `users.active`, de modo
+que login e bloqueio concorrentes são serializados: nenhuma sessão sobrevive e
+nenhum login novo é aceito.
+
 ## Senhas
 
 A tabela armazena somente `password_hash`. Senhas usam `scrypt` com salt

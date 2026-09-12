@@ -25,6 +25,6 @@ export interface AuthRepository {
     tokenHash: string,
     now: Date,
   ): Promise<AuthenticatedUser | null>;
-  createSession(session: SessionRecord): Promise<void>;
+  createSessionForActiveUser(session: SessionRecord): Promise<boolean>;
   deleteSessionByTokenHash(tokenHash: string): Promise<void>;
 }

@@ -53,8 +53,16 @@ Contém o comportamento do negócio. Cada módulo controla seus próprios concei
 casos de uso e persistência.
 
 - `sellers`: cadastro, situação e histórico de percentuais dos vendedores.
-- `sales`: registro e situação das vendas de consórcio.
-- `commissions`: snapshot da regra aplicada, cálculo e geração de parcelas.
+- `sales`: registro e situação das vendas de consórcio, administradoras, a régua
+  de parcelas que cada uma define por produto e vigência e a persistência das
+  parcelas geradas junto com a venda.
+- `commissions`: cálculo, distribuição, agenda e situações das parcelas.
+
+As parcelas são geradas e gravadas dentro da transação da venda, e a tabela
+referencia a venda. Manter a definição dela em `sales` é o que impede a
+dependência circular: `sales` usa as regras de `commissions`, e `commissions`
+não conhece `sales`. As regras continuam inteiras em `commissions` — quem
+calcula, distribui e decide situação é ele, sem saber onde os dados moram.
 
 ### `src/db`
 
@@ -67,6 +75,14 @@ definição de uma tabela pertence ao módulo responsável e é reexportada por
 Aceita somente recursos técnicos realmente compartilhados, como tipos de
 resultado, erros base e utilitários de validação. Regras de vendedores, vendas ou
 comissões nunca devem ser movidas para `shared`.
+
+A escolha da versão vigente em uma data (`findRuleValidOn`) é o limite desse
+critério: ela apenas ordena registros por `effectiveFrom` e não conhece
+percentual, venda nem comissão. O significado de negócio continua em cada
+módulo, em `findCommissionRateOn` e em `findAdministratorInstallmentRuleOn`, que
+decidem o que fazer quando não existe versão vigente. Um utilitário assim só é
+promovido para `shared` quando já tem dois usos reais e nenhum conceito de
+negócio no corpo.
 
 ## Dependências entre módulos
 

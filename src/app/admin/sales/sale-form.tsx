@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Alert } from "@/app/_components/ui/alert";
 import { Button } from "@/app/_components/ui/button";
@@ -27,7 +28,6 @@ const SALE_FIELDS = [
   "quotaCode",
   "soldOn",
   "creditAmount",
-  "commissionInstallments",
   "firstInstallmentDueOn",
 ] as const;
 
@@ -38,6 +38,16 @@ type Option = {
   name: string;
 };
 
+function formatInstallments(installments: unknown): string {
+  if (typeof installments !== "number" || !Number.isInteger(installments)) {
+    return "sucesso";
+  }
+
+  return installments === 1
+    ? "1 parcela prevista"
+    : `${installments} parcelas previstas`;
+}
+
 type SaleFormProps = {
   administrators: Option[];
   sellers: Option[];
@@ -45,6 +55,7 @@ type SaleFormProps = {
 };
 
 export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
+  const router = useRouter();
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<SaleField, string>>
   >({});
@@ -80,14 +91,20 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
         return;
       }
 
-      const code = (result as { code?: unknown }).code;
+      const { code, installments } = result as {
+        code?: unknown;
+        installments?: unknown;
+      };
 
       formElement.reset();
       setSuccess(
         typeof code === "string"
-          ? `Venda ${code} cadastrada com sucesso`
+          ? `Venda ${code} cadastrada com ${formatInstallments(installments)}`
           : "Venda cadastrada com sucesso",
       );
+      // A listagem é renderizada no servidor: sem isto, a venda recém-cadastrada
+      // só apareceria depois de recarregar a página.
+      router.refresh();
     } catch {
       setMessage("Não foi possível conectar ao sistema");
     } finally {
@@ -208,22 +225,6 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
         </Field>
 
         <Field
-          controlId="new-sale-installments"
-          label="Parcelas da comissão"
-          hint="De 1 a 120"
-          error={fieldErrors.commissionInstallments}
-        >
-          <Input
-            name="commissionInstallments"
-            numeric
-            inputMode="numeric"
-            maxLength={3}
-            placeholder="6"
-            required
-          />
-        </Field>
-
-        <Field
           controlId="new-sale-first-installment"
           label="Primeira previsão"
           hint="Data prevista da primeira parcela"
@@ -234,8 +235,9 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
       </FormGrid>
 
       <Alert>
-        O percentual do vendedor vigente na data da venda é gravado com ela.
-        Alterações posteriores no acordo não recalculam esta venda.
+        A quantidade de parcelas vem da régua da administradora vigente na data
+        da venda. O percentual do vendedor e a régua usados no cálculo são
+        gravados com a venda, e alterações posteriores não a recalculam.
       </Alert>
 
       {message ? <Alert tone="critical">{message}</Alert> : null}

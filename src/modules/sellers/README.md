@@ -26,7 +26,9 @@ anteriores não são atualizados nem removidos. O percentual válido em uma data
 o registro do vendedor com a maior `effective_from` que não ultrapasse a data
 consultada.
 
-A regra fica em `findRateValidOn` e chega ao módulo de vendas pela consulta
+A escolha da vigência fica em `findRuleValidOn`, em
+`src/shared/effective-dated-rule.ts`, compartilhada com a régua de parcelas das
+administradoras, e chega ao módulo de vendas pela consulta
 `findCommissionRateOn`, exposta em `index.ts`. Ela devolve a vigência válida na
 data da venda, com identificador e percentual, que a venda grava como snapshot.
 Quando a data é anterior à primeira vigência do vendedor, a consulta falha com

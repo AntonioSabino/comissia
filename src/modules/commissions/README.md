@@ -22,6 +22,73 @@ em `bigint` e devolve o total em centavos, sem converter valores monetários par
 Quando o percentual produz uma fração de centavo, o valor é arredondado para o
 centavo mais próximo; exatamente meio centavo é arredondado para cima.
 
+## Distribuição entre parcelas
+
+`allocateSellerCommissionInstallments` recebe o crédito, o percentual do
+vendedor e a régua de parcelas da administradora: a lista ordenada, em
+pontos-base, do que a administradora paga à corretora em cada parcela. São
+aceitas de 1 a 120 parcelas, cada percentual inteiro entre 1 e 10.000
+pontos-base.
+
+A régua define a **proporção** de cada parcela, não o valor do vendedor. A
+comissão do vendedor continua sendo o percentual dele sobre o crédito
+(`calculateSellerCommissionTotal`) e é dividida entre as parcelas nessa
+proporção. Como o dinheiro do vendedor sai de dentro do que a corretora recebe,
+o total da régua é o teto: percentual do vendedor acima dele é recusado com
+`SellerCommissionInstallmentAllocationError`.
+
+Por exemplo, com a administradora pagando 4% à corretora em 2% + 1% + 1% e um
+crédito de R$ 200.000: um vendedor com 2% recebe R$ 4.000 em parcelas de
+R$ 2.000, R$ 1.000 e R$ 1.000; um vendedor com 2,5% recebe R$ 5.000 em
+R$ 2.500, R$ 1.250 e R$ 1.250. A diferença entre a régua e o percentual do
+vendedor fica com a corretora.
+
+Os valores anteriores à última parcela são calculados em centavos sem
+arredondamento para cima. A última parcela recebe toda a diferença necessária
+para que a soma seja igual à comissão total arredondada. Assim, nenhum centavo é
+criado ou perdido.
+
+Este módulo recebe a régua pronta. Ela é mantida pelo módulo de vendas, por
+administradora, produto ou plano e vigência, e a venda grava como snapshot a
+versão aplicada.
+
+Campanhas da administradora — percentual diferente em um período, condicionado a
+meta de volume — ainda não existem no modelo e não afetam este cálculo.
+
+## Competências e datas previstas
+
+`buildCommissionInstallmentSchedule` recebe a data prevista da primeira parcela
+e a quantidade contratada e devolve a agenda das parcelas, com número,
+competência (`AAAA-MM`) e data prevista (`AAAA-MM-DD`), avançando um mês por
+parcela.
+
+O dia informado na primeira parcela é o dia de vencimento do contrato e vale
+para todas as competências. Meses mais curtos encurtam apenas a própria data
+prevista: uma primeira parcela em 31/01 vence em 28/02 e volta a vencer em
+31/03. Anos bissextos são respeitados e a virada de dezembro para janeiro avança
+o ano.
+
+A competência acompanha o mês da data prevista mesmo quando o dia é encurtado.
+Datas fora do calendário, quantidades fora de 1 a 120 parcelas e agendas que
+passariam do ano 9999 são recusadas com `CommissionInstallmentScheduleError`.
+
+A agenda continua responsável somente pelo calendário; ela não contém valores.
+
+## Geração das parcelas previstas
+
+`generateSellerCommissionInstallments` compõe a agenda com a distribuição
+financeira. Cada item contém o número sequencial, a identificação `1/N`, o
+percentual da parcela, a competência, a data prevista, o valor em centavos e o
+histórico de situação iniciado como `prevista`.
+
+A ordem dos percentuais recebidos é preservada e o resultado completo é
+imutável. A função recebe também o instante de criação para que o primeiro
+registro do histórico seja explícito e auditável.
+
+A distribuição vem da régua da administradora vigente na data da venda, que o
+cadastro seleciona e grava como snapshot. As parcelas geradas são persistidas na
+mesma transação da venda.
+
 ## Situações da parcela
 
 Uma parcela nasce como `prevista` e pode assumir as situações `programada`,
@@ -42,6 +109,32 @@ Reagendamentos, pagamentos parciais e ajustes sucessivos são eventos de negóci
 com dados próprios, como datas, valores e motivos, e deverão ser registrados por
 operações específicas. Com as situações deste incremento, uma parcela passa
 para `paga` somente quando estiver integralmente quitada.
+
+## Parcelas persistidas
+
+As tabelas das parcelas são definidas no módulo de vendas, porque a parcela
+referencia a venda e nasce dentro da transação dela; assim `sales` depende de
+`commissions` e não o contrário. As regras continuam aqui: quem calcula,
+distribui, agenda e define situação é este módulo.
+
+`commission_installments` guarda as parcelas geradas no cadastro da venda:
+número, competência (`AAAA-MM`), data prevista, o pedaço da régua que originou a
+parcela (`rule_rate_basis_points`) e o valor do vendedor em centavos inteiros. O
+par venda e número é único, e o banco recusa competência fora do formato, número
+fora de 1 a 120 e valor negativo. Zero centavos é aceito: com comissão de poucos
+centavos, as primeiras parcelas podem ser zero e a última leva o resto.
+
+A situação vive em `commission_installment_status_events`, uma linha por
+mudança, com a situação anterior, a nova e o instante. A situação atual é a do
+último evento, como o domínio define: não existe coluna de situação que possa
+divergir do histórico. A tabela é apenas de inclusão, garantida pelo gatilho
+`commission_installment_status_events_append_only`, e o banco recusa um evento
+cuja situação anterior seja igual à nova. Toda parcela nasce com um evento
+`prevista` de situação anterior nula.
+
+Mudar a situação pela interface, consultar as parcelas e conciliar pagamentos
+são incrementos posteriores; neste ponto elas apenas nascem previstas junto com
+a venda.
 
 ## Não pertence a este módulo
 

@@ -58,11 +58,15 @@ export async function login(
   const tokenHash = hashSessionToken(sessionToken);
   const expiresAt = calculateSessionExpiration(now());
 
-  await repository.createSession({
+  const sessionCreated = await repository.createSessionForActiveUser({
     userId: user.id,
     tokenHash,
     expiresAt,
   });
+
+  if (!sessionCreated) {
+    throw new InvalidCredentialsError();
+  }
 
   return {
     sessionToken,

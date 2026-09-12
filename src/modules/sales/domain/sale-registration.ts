@@ -11,7 +11,6 @@ export type SaleRegistrationInput = {
   quotaCode?: unknown;
   soldOn?: unknown;
   creditAmount?: unknown;
-  commissionInstallments?: unknown;
   firstInstallmentDueOn?: unknown;
 };
 
@@ -24,7 +23,6 @@ export type ValidSaleRegistration = {
   quotaCode: string;
   soldOn: string;
   creditAmountInCents: bigint;
-  commissionInstallments: number;
   firstInstallmentDueOn: string;
 };
 
@@ -40,30 +38,17 @@ export class SaleValidationError extends Error {
 }
 
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9./-]{0,19}$/;
-const MAX_COMMISSION_INSTALLMENTS = 120;
 const POSTGRES_BIGINT_MAX = BigInt("9223372036854775807");
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
 
-function parseInstallments(value: unknown): number | null {
-  const raw = typeof value === "number" ? String(value) : text(value);
-
-  if (!/^\d{1,3}$/.test(raw)) {
-    return null;
-  }
-
-  const installments = Number(raw);
-
-  return installments >= 1 && installments <= MAX_COMMISSION_INSTALLMENTS
-    ? installments
-    : null;
-}
-
 /**
  * Valida e normaliza os dados informados no cadastro de uma venda. `today` é a
- * data operacional, usada para recusar vendas com data futura.
+ * data operacional, usada para recusar vendas com data futura. A quantidade de
+ * parcelas não é informada: ela vem da régua da administradora vigente na data
+ * da venda.
  */
 export function validateSaleRegistration(
   input: SaleRegistrationInput,
@@ -80,9 +65,6 @@ export function validateSaleRegistration(
   const soldOn = text(input.soldOn);
   const firstInstallmentDueOn = text(input.firstInstallmentDueOn);
   const creditAmountInCents = parseBrlToCents(text(input.creditAmount));
-  const commissionInstallments = parseInstallments(
-    input.commissionInstallments,
-  );
   const fieldErrors: SaleFieldErrors = {};
 
   if (!administratorId) {
@@ -125,10 +107,6 @@ export function validateSaleRegistration(
     fieldErrors.creditAmount = "O crédito informado excede o limite permitido";
   }
 
-  if (commissionInstallments === null) {
-    fieldErrors.commissionInstallments = `Informe de 1 a ${MAX_COMMISSION_INSTALLMENTS} parcelas`;
-  }
-
   if (!isValidDateOnly(firstInstallmentDueOn)) {
     fieldErrors.firstInstallmentDueOn =
       "Informe uma data válida para a primeira previsão";
@@ -141,8 +119,7 @@ export function validateSaleRegistration(
     Object.keys(fieldErrors).length > 0 ||
     !administratorId ||
     !sellerId ||
-    creditAmountInCents === null ||
-    commissionInstallments === null
+    creditAmountInCents === null
   ) {
     throw new SaleValidationError(fieldErrors);
   }
@@ -156,7 +133,6 @@ export function validateSaleRegistration(
     quotaCode,
     soldOn,
     creditAmountInCents,
-    commissionInstallments,
     firstInstallmentDueOn,
   };
 }

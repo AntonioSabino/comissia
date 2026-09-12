@@ -16,6 +16,8 @@ export type CreatedSale = {
   id: string;
   code: string;
   creditAmountInCents: bigint;
+  /** Quantidade de parcelas geradas, definida pela régua da administradora. */
+  installments: number;
 };
 
 export async function createSale(
@@ -45,9 +47,31 @@ export async function createSale(
     });
   }
 
+  if (result.status === "missing-installment-rule") {
+    throw new SaleValidationError({
+      product:
+        "A administradora não tem régua de parcelas para este produto na data da venda",
+    });
+  }
+
+  if (result.status === "invalid-installment-schedule") {
+    throw new SaleValidationError({
+      firstInstallmentDueOn:
+        "A agenda das parcelas passaria do calendário suportado; revise a primeira previsão",
+    });
+  }
+
+  if (result.status === "seller-rate-above-rule") {
+    throw new SaleValidationError({
+      sellerId:
+        "O percentual do vendedor excede o que a administradora paga neste produto",
+    });
+  }
+
   return {
     id: result.id,
     code: result.code,
     creditAmountInCents: sale.creditAmountInCents,
+    installments: result.installments,
   };
 }

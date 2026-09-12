@@ -1,4 +1,4 @@
-import { findRateValidOn } from "../domain/commission-rate-on-date";
+import { findRuleValidOn } from "@/shared/effective-dated-rule";
 import { MissingCommissionRateError } from "./errors";
 import type {
   SellerCommissionRateListItem,
@@ -18,7 +18,7 @@ export async function findCommissionRateOn(
   { repository }: FindCommissionRateOnDependencies,
 ): Promise<SellerCommissionRateListItem> {
   const rates = await repository.listCommissionRates(sellerId);
-  const rate = findRateValidOn(rates, date);
+  const rate = findRuleValidOn(rates, date);
 
   if (!rate) {
     throw new MissingCommissionRateError();

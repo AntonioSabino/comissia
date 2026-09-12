@@ -18,14 +18,24 @@ export type {
   SellerCommissionRate,
 } from "../modules/sellers";
 export {
+  administratorInstallmentRules,
   administrators,
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
   quotaStatusEnum,
   saleCodeSequence,
   sales,
 } from "../modules/sales";
 export type {
   Administrator,
+  AdministratorInstallmentRule,
+  CommissionInstallment,
+  CommissionInstallmentStatusEvent,
   NewAdministrator,
+  NewAdministratorInstallmentRule,
+  NewCommissionInstallment,
+  NewCommissionInstallmentStatusEvent,
   NewSale,
   QuotaStatus,
   Sale,

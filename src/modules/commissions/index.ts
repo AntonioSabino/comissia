@@ -3,6 +3,20 @@ export {
   type SellerCommissionCalculationInput,
 } from "./domain/calculate-seller-commission";
 export {
+  allocateSellerCommissionInstallments,
+  SellerCommissionInstallmentAllocationError,
+  type AllocatedSellerCommissionInstallment,
+  type SellerCommissionInstallmentAllocation,
+  type SellerCommissionInstallmentAllocationInput,
+} from "./domain/allocate-seller-commission-installments";
+export {
+  buildCommissionInstallmentSchedule,
+  CommissionInstallmentScheduleError,
+  type CommissionInstallmentSchedule,
+  type CommissionInstallmentScheduleInput,
+  type ScheduledCommissionInstallment,
+} from "./domain/commission-installment-schedule";
+export {
   changeCommissionInstallmentStatus,
   COMMISSION_INSTALLMENT_STATUSES,
   CommissionInstallmentStatusError,
@@ -14,3 +28,9 @@ export {
   type CommissionInstallmentStatusHistory,
   type CommissionInstallmentStatusHistoryEntry,
 } from "./domain/commission-installment-status";
+export {
+  generateSellerCommissionInstallments,
+  type GeneratedSellerCommissionInstallment,
+  type GeneratedSellerCommissionInstallments,
+  type GenerateSellerCommissionInstallmentsInput,
+} from "./domain/generate-seller-commission-installments";

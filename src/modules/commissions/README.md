@@ -22,6 +22,25 @@ em `bigint` e devolve o total em centavos, sem converter valores monetários par
 Quando o percentual produz uma fração de centavo, o valor é arredondado para o
 centavo mais próximo; exatamente meio centavo é arredondado para cima.
 
+## Distribuição entre parcelas
+
+`allocateSellerCommissionInstallments` recebe o crédito, o percentual total do
+vendedor e a lista ordenada dos percentuais das parcelas em pontos-base. Cada
+parcela pode ter um percentual diferente, desde que todos sejam inteiros
+positivos e a soma seja exatamente igual ao percentual total do vendedor. São
+aceitas de 1 a 120 parcelas.
+
+Os valores anteriores à última parcela são calculados em centavos sem
+arredondamento para cima. A última parcela recebe toda a diferença necessária
+para que a soma seja igual à comissão total arredondada. Assim, nenhum centavo é
+criado ou perdido.
+
+Por exemplo, uma comissão total de 2% pode ser distribuída entre oito parcelas
+com os percentuais 0,15%, 0,15%, 0,20%, 0,20%, 0,25%, 0,25%, 0,30% e 0,50%.
+Este módulo recebe essa distribuição pronta; definir se ela vem da
+administradora, do produto ou do preenchimento da venda não faz parte desta
+etapa.
+
 ## Competências e datas previstas
 
 `buildCommissionInstallmentSchedule` recebe a data prevista da primeira parcela
@@ -39,10 +58,8 @@ A competência acompanha o mês da data prevista mesmo quando o dia é encurtado
 Datas fora do calendário, quantidades fora de 1 a 120 parcelas e agendas que
 passariam do ano 9999 são recusadas com `CommissionInstallmentScheduleError`.
 
-Os valores de cada parcela não são calculados aqui. A divisão da comissão total
-e a numeração exibida ficam no SCRUM-45, que compõe esta agenda com
-`calculateSellerCommissionTotal`, e a diferença de centavos na última parcela
-fica no SCRUM-44.
+A agenda não contém valores. A composição entre estas datas e a distribuição
+financeira ficará no SCRUM-45.
 
 ## Situações da parcela
 

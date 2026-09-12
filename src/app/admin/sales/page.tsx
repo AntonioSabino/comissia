@@ -12,6 +12,7 @@ import {
   StatusBadge,
   type StatusTone,
 } from "@/app/_components/ui/status-badge";
+import { formatBusinessDate, formatCents } from "@/app/admin/_utils/format";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { QUOTA_STATUSES, type QuotaStatus } from "@/modules/sales";
@@ -25,7 +26,6 @@ import { selectActiveSellersForSale } from "@/modules/sellers/application/active
 import { administratorRepository } from "@/modules/sales/infrastructure/db/administrator-repository";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
-import { centsToDecimalString } from "@/shared/money";
 import styles from "./sales.module.css";
 import { SaleForm } from "./sale-form";
 
@@ -46,23 +46,6 @@ const QUOTA_STATUS_TONES: Record<QuotaStatus, StatusTone> = {
   cancelado: "cancelled",
   contemplado: "reconciled",
 };
-
-function formatDate(date: string): string {
-  const [year, month, day] = date.split("-");
-
-  return `${day}/${month}/${year}`;
-}
-
-/**
- * O crédito permanece em centavos e só vira texto aqui, na borda da tela. O
- * agrupamento é aplicado sobre a parte inteira em `bigint`, sem passar por
- * `number` em momento algum.
- */
-function formatCredit(cents: bigint): string {
-  const [reais, centavos] = centsToDecimalString(cents).split(".");
-
-  return `R$ ${new Intl.NumberFormat("pt-BR").format(BigInt(reais))},${centavos}`;
-}
 
 function formatSaleCount(count: number): string {
   return count === 1 ? "1 venda" : `${count} vendas`;
@@ -240,8 +223,10 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
               <tbody>
                 {saleList.map((sale) => (
                   <tr key={sale.id}>
-                    <td className="num">{sale.code}</td>
-                    <td className="num">{formatDate(sale.soldOn)}</td>
+                    <td className="num">
+                      <Link href={`/admin/sales/${sale.id}`}>{sale.code}</Link>
+                    </td>
+                    <td className="num">{formatBusinessDate(sale.soldOn)}</td>
                     <td>
                       <Link href={`/admin/sellers/${sale.sellerId}`}>
                         {sale.sellerName}
@@ -252,7 +237,7 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
                       {sale.groupCode}/{sale.quotaCode}
                     </td>
                     <td className="num">
-                      {formatCredit(sale.creditAmountInCents)}
+                      {formatCents(sale.creditAmountInCents)}
                     </td>
                     <td>
                       <StatusBadge tone={QUOTA_STATUS_TONES[sale.quotaStatus]}>

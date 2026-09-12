@@ -1,0 +1,965 @@
+{
+  "id": "9b1a29da-d8eb-49ec-915e-7d818d902164",
+  "prevId": "7de1c646-d4f4-4d02-9064-7c8c89c55826",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.administrator_installment_rules": {
+      "name": "administrator_installment_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "administrator_id": {
+          "name": "administrator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product": {
+          "name": "product",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "installment_rates_basis_points": {
+          "name": "installment_rates_basis_points",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "administrator_installment_rules_effective_from_unique": {
+          "name": "administrator_installment_rules_effective_from_unique",
+          "columns": [
+            {
+              "expression": "administrator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"product\")",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_from",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "administrator_installment_rules_administrator_id_administrators_id_fk": {
+          "name": "administrator_installment_rules_administrator_id_administrators_id_fk",
+          "tableFrom": "administrator_installment_rules",
+          "columnsFrom": ["administrator_id"],
+          "tableTo": "administrators",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "administrator_installment_rules_id_administrator_rates_unique": {
+          "name": "administrator_installment_rules_id_administrator_rates_unique",
+          "columns": [
+            "id",
+            "administrator_id",
+            "installment_rates_basis_points"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "administrator_installment_rules_installments_check": {
+          "name": "administrator_installment_rules_installments_check",
+          "value": "array_ndims(\"administrator_installment_rules\".\"installment_rates_basis_points\") = 1 AND coalesce(array_length(\"administrator_installment_rules\".\"installment_rates_basis_points\", 1), 0) BETWEEN 1 AND 120"
+        },
+        "administrator_installment_rules_rates_check": {
+          "name": "administrator_installment_rules_rates_check",
+          "value": "array_position(\"administrator_installment_rules\".\"installment_rates_basis_points\", NULL) IS NULL AND 1 <= ALL (\"administrator_installment_rules\".\"installment_rates_basis_points\") AND 10000 >= ALL (\"administrator_installment_rules\".\"installment_rates_basis_points\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.administrators": {
+      "name": "administrators",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "administrators_name_lower_unique": {
+          "name": "administrators_name_lower_unique",
+          "columns": [
+            {
+              "expression": "lower(\"name\")",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commission_installment_status_events": {
+      "name": "commission_installment_status_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "installment_id": {
+          "name": "installment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_status": {
+          "name": "previous_status",
+          "type": "commission_installment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "commission_installment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "commission_installment_status_events_installment_id_commission_installments_id_fk": {
+          "name": "commission_installment_status_events_installment_id_commission_installments_id_fk",
+          "tableFrom": "commission_installment_status_events",
+          "columnsFrom": ["installment_id"],
+          "tableTo": "commission_installments",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "commission_installment_status_events_installment_changed_unique": {
+          "name": "commission_installment_status_events_installment_changed_unique",
+          "columns": ["installment_id", "changed_at"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "commission_installment_status_events_transition_check": {
+          "name": "commission_installment_status_events_transition_check",
+          "value": "\"commission_installment_status_events\".\"previous_status\" IS NULL OR \"commission_installment_status_events\".\"previous_status\" <> \"commission_installment_status_events\".\"status\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.commission_installments": {
+      "name": "commission_installments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sale_id": {
+          "name": "sale_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "competence": {
+          "name": "competence",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_on": {
+          "name": "due_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule_rate_basis_points": {
+          "name": "rule_rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount_in_cents": {
+          "name": "amount_in_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "commission_installments_competence_index": {
+          "name": "commission_installments_competence_index",
+          "columns": [
+            {
+              "expression": "competence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "commission_installments_sale_id_sales_id_fk": {
+          "name": "commission_installments_sale_id_sales_id_fk",
+          "tableFrom": "commission_installments",
+          "columnsFrom": ["sale_id"],
+          "tableTo": "sales",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "commission_installments_sale_number_unique": {
+          "name": "commission_installments_sale_number_unique",
+          "columns": ["sale_id", "number"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "commission_installments_number_check": {
+          "name": "commission_installments_number_check",
+          "value": "\"commission_installments\".\"number\" > 0 AND \"commission_installments\".\"number\" <= 120"
+        },
+        "commission_installments_competence_check": {
+          "name": "commission_installments_competence_check",
+          "value": "\"commission_installments\".\"competence\" ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'"
+        },
+        "commission_installments_rule_rate_basis_points_check": {
+          "name": "commission_installments_rule_rate_basis_points_check",
+          "value": "\"commission_installments\".\"rule_rate_basis_points\" > 0 AND \"commission_installments\".\"rule_rate_basis_points\" <= 10000"
+        },
+        "commission_installments_amount_in_cents_check": {
+          "name": "commission_installments_amount_in_cents_check",
+          "value": "\"commission_installments\".\"amount_in_cents\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.sales": {
+      "name": "sales",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "next_sale_code()"
+        },
+        "administrator_id": {
+          "name": "administrator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "administrator_installment_rule_id": {
+          "name": "administrator_installment_rule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seller_id": {
+          "name": "seller_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seller_commission_rate_id": {
+          "name": "seller_commission_rate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product": {
+          "name": "product",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_code": {
+          "name": "group_code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quota_code": {
+          "name": "quota_code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sold_on": {
+          "name": "sold_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credit_amount_in_cents": {
+          "name": "credit_amount_in_cents",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seller_rate_basis_points": {
+          "name": "seller_rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "installment_rates_basis_points": {
+          "name": "installment_rates_basis_points",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commission_installments": {
+          "name": "commission_installments",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_installment_due_on": {
+          "name": "first_installment_due_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quota_status": {
+          "name": "quota_status",
+          "type": "quota_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'adimplente'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "sales_seller_id_index": {
+          "name": "sales_seller_id_index",
+          "columns": [
+            {
+              "expression": "seller_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "sales_quota_index": {
+          "name": "sales_quota_index",
+          "columns": [
+            {
+              "expression": "administrator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "group_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "quota_code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "sales_administrator_id_administrators_id_fk": {
+          "name": "sales_administrator_id_administrators_id_fk",
+          "tableFrom": "sales",
+          "columnsFrom": ["administrator_id"],
+          "tableTo": "administrators",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "sales_seller_id_sellers_id_fk": {
+          "name": "sales_seller_id_sellers_id_fk",
+          "tableFrom": "sales",
+          "columnsFrom": ["seller_id"],
+          "tableTo": "sellers",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "sales_seller_commission_snapshot_fk": {
+          "name": "sales_seller_commission_snapshot_fk",
+          "tableFrom": "sales",
+          "columnsFrom": [
+            "seller_commission_rate_id",
+            "seller_id",
+            "seller_rate_basis_points"
+          ],
+          "tableTo": "seller_commission_rates",
+          "columnsTo": ["id", "seller_id", "rate_basis_points"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "sales_installment_rule_snapshot_fk": {
+          "name": "sales_installment_rule_snapshot_fk",
+          "tableFrom": "sales",
+          "columnsFrom": [
+            "administrator_installment_rule_id",
+            "administrator_id",
+            "installment_rates_basis_points"
+          ],
+          "tableTo": "administrator_installment_rules",
+          "columnsTo": [
+            "id",
+            "administrator_id",
+            "installment_rates_basis_points"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sales_code_unique": {
+          "name": "sales_code_unique",
+          "columns": ["code"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "sales_credit_amount_in_cents_check": {
+          "name": "sales_credit_amount_in_cents_check",
+          "value": "\"sales\".\"credit_amount_in_cents\" > 0"
+        },
+        "sales_seller_rate_basis_points_check": {
+          "name": "sales_seller_rate_basis_points_check",
+          "value": "\"sales\".\"seller_rate_basis_points\" > 0 AND \"sales\".\"seller_rate_basis_points\" <= 10000"
+        },
+        "sales_commission_installments_check": {
+          "name": "sales_commission_installments_check",
+          "value": "\"sales\".\"commission_installments\" > 0 AND \"sales\".\"commission_installments\" <= 120"
+        },
+        "sales_first_installment_due_on_check": {
+          "name": "sales_first_installment_due_on_check",
+          "value": "\"sales\".\"first_installment_due_on\" >= \"sales\".\"sold_on\""
+        },
+        "sales_installment_rule_snapshot_check": {
+          "name": "sales_installment_rule_snapshot_check",
+          "value": "num_nulls(\"sales\".\"administrator_installment_rule_id\", \"sales\".\"installment_rates_basis_points\") IN (0, 2)"
+        },
+        "sales_commission_installments_snapshot_check": {
+          "name": "sales_commission_installments_snapshot_check",
+          "value": "\"sales\".\"installment_rates_basis_points\" IS NULL OR \"sales\".\"commission_installments\" = coalesce(array_length(\"sales\".\"installment_rates_basis_points\", 1), 0)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.seller_commission_rates": {
+      "name": "seller_commission_rates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "seller_id": {
+          "name": "seller_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate_basis_points": {
+          "name": "rate_basis_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "seller_commission_rates_seller_id_sellers_id_fk": {
+          "name": "seller_commission_rates_seller_id_sellers_id_fk",
+          "tableFrom": "seller_commission_rates",
+          "columnsFrom": ["seller_id"],
+          "tableTo": "sellers",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "seller_commission_rates_id_seller_rate_unique": {
+          "name": "seller_commission_rates_id_seller_rate_unique",
+          "columns": ["id", "seller_id", "rate_basis_points"],
+          "nullsNotDistinct": false
+        },
+        "seller_commission_rates_seller_effective_from_unique": {
+          "name": "seller_commission_rates_seller_effective_from_unique",
+          "columns": ["seller_id", "effective_from"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "seller_commission_rates_rate_basis_points_check": {
+          "name": "seller_commission_rates_rate_basis_points_check",
+          "value": "\"seller_commission_rates\".\"rate_basis_points\" > 0 AND \"seller_commission_rates\".\"rate_basis_points\" <= 10000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.sellers": {
+      "name": "sellers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document": {
+          "name": "document",
+          "type": "varchar(14)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(254)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sellers_document_unique": {
+          "name": "sellers_document_unique",
+          "columns": ["document"],
+          "nullsNotDistinct": false
+        },
+        "sellers_email_unique": {
+          "name": "sellers_email_unique",
+          "columns": ["email"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "columnsFrom": ["user_id"],
+          "tableTo": "users",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sessions_token_hash_unique": {
+          "name": "sessions_token_hash_unique",
+          "columns": ["token_hash"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(254)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seller_id": {
+          "name": "seller_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_seller_id_sellers_id_fk": {
+          "name": "users_seller_id_sellers_id_fk",
+          "tableFrom": "users",
+          "columnsFrom": ["seller_id"],
+          "tableTo": "sellers",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "columns": ["email"],
+          "nullsNotDistinct": false
+        },
+        "users_seller_id_unique": {
+          "name": "users_seller_id_unique",
+          "columns": ["seller_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "users_role_seller_link_check": {
+          "name": "users_role_seller_link_check",
+          "value": "(\"users\".\"role\" = 'seller' AND \"users\".\"seller_id\" IS NOT NULL)\n          OR (\"users\".\"role\" = 'admin' AND \"users\".\"seller_id\" IS NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.commission_installment_status": {
+      "name": "commission_installment_status",
+      "schema": "public",
+      "values": ["prevista", "programada", "paga", "cancelada", "ajustada"]
+    },
+    "public.quota_status": {
+      "name": "quota_status",
+      "schema": "public",
+      "values": ["adimplente", "inadimplente", "cancelado", "contemplado"]
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": ["admin", "seller"]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {
+    "public.sale_code_seq": {
+      "name": "sale_code_seq",
+      "increment": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "startWith": "1",
+      "cache": "1",
+      "cycle": false,
+      "schema": "public"
+    }
+  },
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

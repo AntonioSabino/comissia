@@ -33,3 +33,14 @@ export type {
   QuotaStatus,
   Sale,
 } from "../modules/sales";
+export {
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
+} from "../modules/commissions";
+export type {
+  CommissionInstallment,
+  CommissionInstallmentStatusEvent,
+  NewCommissionInstallment,
+  NewCommissionInstallmentStatusEvent,
+} from "../modules/commissions";

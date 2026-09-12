@@ -34,3 +34,14 @@ export {
   type GeneratedSellerCommissionInstallments,
   type GenerateSellerCommissionInstallmentsInput,
 } from "./domain/generate-seller-commission-installments";
+export {
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
+} from "./infrastructure/db/schema";
+export type {
+  CommissionInstallment,
+  CommissionInstallmentStatusEvent,
+  NewCommissionInstallment,
+  NewCommissionInstallmentStatusEvent,
+} from "./infrastructure/db/schema";

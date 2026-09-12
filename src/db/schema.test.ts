@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   administratorInstallmentRules,
   administrators,
+  commissionInstallments,
+  commissionInstallmentStatusEnum,
+  commissionInstallmentStatusEvents,
   quotaStatusEnum,
   sales,
   sellerCommissionRates,
@@ -143,6 +146,11 @@ describe("database schema", () => {
       "administrator_installment_rules_installments_check",
       "administrator_installment_rules_rates_check",
     ]);
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toEqual([
+      "administrator_installment_rules_id_administrator_rates_unique",
+    ]);
   });
 
   it("stores the installment distribution as ordered basis points", () => {
@@ -174,6 +182,7 @@ describe("database schema", () => {
       "id",
       "code",
       "administrator_id",
+      "administrator_installment_rule_id",
       "seller_id",
       "seller_commission_rate_id",
       "customer_name",
@@ -183,6 +192,7 @@ describe("database schema", () => {
       "sold_on",
       "credit_amount_in_cents",
       "seller_rate_basis_points",
+      "installment_rates_basis_points",
       "commission_installments",
       "first_installment_due_on",
       "quota_status",
@@ -194,9 +204,10 @@ describe("database schema", () => {
         "sales_administrator_id_administrators_id_fk",
         "sales_seller_id_sellers_id_fk",
         "sales_seller_commission_snapshot_fk",
+        "sales_installment_rule_snapshot_fk",
       ]),
     );
-    expect(table.foreignKeys).toHaveLength(3);
+    expect(table.foreignKeys).toHaveLength(4);
     expect(
       table.columns.find((column) => column.name === "code")?.isUnique,
     ).toBe(true);
@@ -209,11 +220,86 @@ describe("database schema", () => {
         "sales_seller_rate_basis_points_check",
         "sales_commission_installments_check",
         "sales_first_installment_due_on_check",
+        "sales_installment_rule_snapshot_check",
+        "sales_commission_installments_snapshot_check",
       ].sort(),
     );
     expect(
       table.indexes.map((constraint) => constraint.config.name).sort(),
     ).toEqual(["sales_seller_id_index", "sales_quota_index"].sort());
+  });
+
+  it("persists the supported installment situations", () => {
+    expect(commissionInstallmentStatusEnum.enumValues).toEqual([
+      "prevista",
+      "programada",
+      "paga",
+      "cancelada",
+      "ajustada",
+    ]);
+  });
+
+  it("stores the generated commission installments", () => {
+    const table = getTableConfig(commissionInstallments);
+
+    expect(table.name).toBe("commission_installments");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "sale_id",
+      "number",
+      "competence",
+      "due_on",
+      "rule_rate_basis_points",
+      "amount_in_cents",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toEqual(["commission_installments_sale_number_unique"]);
+    expect(table.checks.map((constraint) => constraint.name).sort()).toEqual(
+      [
+        "commission_installments_number_check",
+        "commission_installments_competence_check",
+        "commission_installments_rule_rate_basis_points_check",
+        "commission_installments_amount_in_cents_check",
+      ].sort(),
+    );
+  });
+
+  it("stores installment amounts in cents", () => {
+    const table = getTableConfig(commissionInstallments);
+    const amount = table.columns.find(
+      (column) => column.name === "amount_in_cents",
+    );
+
+    expect(amount?.getSQLType()).toBe("bigint");
+    expect(amount?.mapFromDriverValue("9007199254740992")).toBe(
+      BigInt("9007199254740992"),
+    );
+  });
+
+  it("keeps the installment situation as an append-only history", () => {
+    const table = getTableConfig(commissionInstallmentStatusEvents);
+
+    expect(table.name).toBe("commission_installment_status_events");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "installment_id",
+      "previous_status",
+      "status",
+      "changed_at",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toEqual([
+      "commission_installment_status_events_installment_changed_unique",
+    ]);
+    expect(table.checks.map((constraint) => constraint.name)).toContain(
+      "commission_installment_status_events_transition_check",
+    );
   });
 
   it("stores the sale credit in cents", () => {

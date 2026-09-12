@@ -11,6 +11,7 @@ import {
   pgSequence,
   pgTable,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
   varchar,
@@ -45,6 +46,54 @@ export const administrators = pgTable(
 );
 
 /**
+ * Régua de parcelas definida pela administradora para um produto ou plano.
+ * Cada linha é uma versão vigente a partir de `effective_from`, com a
+ * distribuição em pontos-base na ordem da primeira à última parcela. A tabela
+ * é apenas de inclusão (migração `0009`): uma nova vigência não altera as
+ * versões históricas.
+ */
+export const administratorInstallmentRules = pgTable(
+  "administrator_installment_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    administratorId: uuid("administrator_id")
+      .notNull()
+      .references(() => administrators.id, { onDelete: "restrict" }),
+    product: varchar("product", { length: 120 }).notNull(),
+    effectiveFrom: date("effective_from").notNull(),
+    installmentRatesBasisPoints: integer("installment_rates_basis_points")
+      .array()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Sustenta a chave estrangeira composta do snapshot gravado na venda.
+    unique("administrator_installment_rules_id_administrator_rates_unique").on(
+      table.id,
+      table.administratorId,
+      table.installmentRatesBasisPoints,
+    ),
+    // Uma vigência por administradora e produto, sem diferenciar maiúsculas de minúsculas.
+    uniqueIndex("administrator_installment_rules_effective_from_unique").on(
+      table.administratorId,
+      sql`lower(${table.product})`,
+      table.effectiveFrom,
+    ),
+    check(
+      "administrator_installment_rules_installments_check",
+      sql`array_ndims(${table.installmentRatesBasisPoints}) = 1 AND coalesce(array_length(${table.installmentRatesBasisPoints}, 1), 0) BETWEEN 1 AND 120`,
+    ),
+    // Percentuais inteiros e positivos, sem nenhum elemento ausente.
+    check(
+      "administrator_installment_rules_rates_check",
+      sql`array_position(${table.installmentRatesBasisPoints}, NULL) IS NULL AND 1 <= ALL (${table.installmentRatesBasisPoints}) AND 10000 >= ALL (${table.installmentRatesBasisPoints})`,
+    ),
+  ],
+);
+
+/**
  * Numeração das vendas. A função `next_sale_code()`, criada na migração
  * `0007`, formata o próximo número como `V-000001` sem truncar acima de seis
  * dígitos.
@@ -62,6 +111,11 @@ export const sales = pgTable(
     administratorId: uuid("administrator_id")
       .notNull()
       .references(() => administrators.id, { onDelete: "restrict" }),
+    /**
+     * Régua aplicada. Nula somente nas vendas registradas antes da régua
+     * existir; toda venda nova grava a versão e a distribuição juntas.
+     */
+    administratorInstallmentRuleId: uuid("administrator_installment_rule_id"),
     sellerId: uuid("seller_id")
       .notNull()
       .references(() => sellers.id, { onDelete: "restrict" }),
@@ -75,6 +129,9 @@ export const sales = pgTable(
       mode: "bigint",
     }).notNull(),
     sellerRateBasisPoints: integer("seller_rate_basis_points").notNull(),
+    installmentRatesBasisPoints: integer(
+      "installment_rates_basis_points",
+    ).array(),
     commissionInstallments: integer("commission_installments").notNull(),
     firstInstallmentDueOn: date("first_installment_due_on").notNull(),
     quotaStatus: quotaStatusEnum("quota_status")
@@ -101,6 +158,19 @@ export const sales = pgTable(
         sellerCommissionRates.rateBasisPoints,
       ],
     }).onDelete("restrict"),
+    foreignKey({
+      name: "sales_installment_rule_snapshot_fk",
+      columns: [
+        table.administratorInstallmentRuleId,
+        table.administratorId,
+        table.installmentRatesBasisPoints,
+      ],
+      foreignColumns: [
+        administratorInstallmentRules.id,
+        administratorInstallmentRules.administratorId,
+        administratorInstallmentRules.installmentRatesBasisPoints,
+      ],
+    }).onDelete("restrict"),
     index("sales_seller_id_index").on(table.sellerId),
     index("sales_quota_index").on(
       table.administratorId,
@@ -123,47 +193,15 @@ export const sales = pgTable(
       "sales_first_installment_due_on_check",
       sql`${table.firstInstallmentDueOn} >= ${table.soldOn}`,
     ),
-  ],
-);
-
-/**
- * Régua de parcelas definida pela administradora para um produto ou plano.
- * Cada linha é uma versão vigente a partir de `effective_from`, com a
- * distribuição em pontos-base na ordem da primeira à última parcela. A tabela
- * é apenas de inclusão (migração `0009`): uma nova vigência não altera as
- * versões históricas.
- */
-export const administratorInstallmentRules = pgTable(
-  "administrator_installment_rules",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    administratorId: uuid("administrator_id")
-      .notNull()
-      .references(() => administrators.id, { onDelete: "restrict" }),
-    product: varchar("product", { length: 120 }).notNull(),
-    effectiveFrom: date("effective_from").notNull(),
-    installmentRatesBasisPoints: integer("installment_rates_basis_points")
-      .array()
-      .notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    // Uma vigência por administradora e produto, sem diferenciar maiúsculas de minúsculas.
-    uniqueIndex("administrator_installment_rules_effective_from_unique").on(
-      table.administratorId,
-      sql`lower(${table.product})`,
-      table.effectiveFrom,
-    ),
+    // A versão da régua e a distribuição aplicada são um único fato.
     check(
-      "administrator_installment_rules_installments_check",
-      sql`array_ndims(${table.installmentRatesBasisPoints}) = 1 AND coalesce(array_length(${table.installmentRatesBasisPoints}, 1), 0) BETWEEN 1 AND 120`,
+      "sales_installment_rule_snapshot_check",
+      sql`num_nulls(${table.administratorInstallmentRuleId}, ${table.installmentRatesBasisPoints}) IN (0, 2)`,
     ),
-    // Percentuais inteiros e positivos, sem nenhum elemento ausente.
+    // Com régua gravada, a quantidade de parcelas é a da própria distribuição.
     check(
-      "administrator_installment_rules_rates_check",
-      sql`array_position(${table.installmentRatesBasisPoints}, NULL) IS NULL AND 1 <= ALL (${table.installmentRatesBasisPoints}) AND 10000 >= ALL (${table.installmentRatesBasisPoints})`,
+      "sales_commission_installments_snapshot_check",
+      sql`${table.installmentRatesBasisPoints} IS NULL OR ${table.commissionInstallments} = coalesce(array_length(${table.installmentRatesBasisPoints}, 1), 0)`,
     ),
   ],
 );

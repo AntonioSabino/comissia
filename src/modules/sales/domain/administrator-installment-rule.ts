@@ -41,7 +41,9 @@ function text(value: unknown): string {
 
 /**
  * A distribuição é uma lista de percentuais em pontos-base, sempre inteiros:
- * ponto flutuante não é aceito nem convertido.
+ * ponto flutuante não é aceito nem convertido. A lista é percorrida com
+ * `for...of`, que entrega `undefined` nas posições ausentes de uma lista
+ * esparsa, em vez de saltá-las como `map` e `every` fariam.
  */
 function parseInstallmentRates(value: unknown): number[] | null {
   if (
@@ -52,16 +54,22 @@ function parseInstallmentRates(value: unknown): number[] | null {
     return null;
   }
 
-  const rates = value.map((rate: unknown) =>
-    typeof rate === "number" &&
-    Number.isInteger(rate) &&
-    rate >= 1 &&
-    rate <= MAX_INSTALLMENT_RATE_BASIS_POINTS
-      ? rate
-      : null,
-  );
+  const rates: number[] = [];
 
-  return rates.every((rate): rate is number => rate !== null) ? rates : null;
+  for (const rate of value as readonly unknown[]) {
+    if (
+      typeof rate !== "number" ||
+      !Number.isInteger(rate) ||
+      rate < 1 ||
+      rate > MAX_INSTALLMENT_RATE_BASIS_POINTS
+    ) {
+      return null;
+    }
+
+    rates.push(rate);
+  }
+
+  return rates;
 }
 
 /** O percentual total da regra é a soma da distribuição. */

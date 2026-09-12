@@ -20,6 +20,14 @@ function ruleInput(
   };
 }
 
+/** Lista com uma posição ausente, que `map` e `every` saltariam. */
+function sparseDistribution(): number[] {
+  const rates = [75, 50, 25];
+  Reflect.deleteProperty(rates, 1);
+
+  return rates;
+}
+
 function fieldErrors(input: AdministratorInstallmentRuleInput) {
   try {
     validateAdministratorInstallmentRule(input);
@@ -122,6 +130,8 @@ describe("validateAdministratorInstallmentRule", () => {
     ["percentual fracionário", [75.5]],
     ["percentual não numérico", ["75"]],
     ["percentual ausente", [75, null]],
+    ["lista inteiramente ausente", new Array<number>(3)],
+    ["lista com posição ausente", sparseDistribution()],
     ["distribuição que não é lista", 75],
   ])("recusa %s", (_case, installmentRatesBasisPoints) => {
     expect(

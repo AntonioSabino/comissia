@@ -34,9 +34,10 @@ vinculada àquele vendedor.
 
 A senha do primeiro acesso é sorteada por `generateTemporaryPassword` e
 devolvida uma única vez, na resposta que cria o acesso, para o administrador
-repassar ao vendedor. Ela não é gravada em lugar nenhum além do hash, não vai
-para log e não aparece de novo em nenhuma tela. Nenhum administrador escolhe a
-senha de outra pessoa.
+repassar ao vendedor. A interface a mantém visível, inclusive depois de atualizar
+os dados da página, até o administrador confirmar que a copiou. Depois dessa
+confirmação ela não pode ser recuperada: não é gravada em lugar nenhum além do
+hash e não vai para log. Nenhum administrador escolhe a senha de outra pessoa.
 
 Criar o acesso duas vezes é recusado pelo banco antes de qualquer duplicação:
 `users_seller_id_unique` impede o segundo vínculo e `users_email_unique` impede
@@ -44,11 +45,16 @@ o e-mail repetido. Como o e-mail vem do próprio cadastro, a segunda tentativa
 esbarra primeiro na unicidade do e-mail; o repositório distingue os dois casos
 para que a mensagem aponte o vínculo existente, e não um e-mail de terceiros.
 
+Alterações posteriores no nome ou no e-mail cadastral também atualizam a conta
+vinculada. As duas tabelas são gravadas na mesma transação; se o novo e-mail já
+pertencer a outro usuário, nenhuma das alterações é mantida.
+
 `changeSellerAccess` libera e bloqueia. Bloquear não apaga nada: a conta
 continua vinculada e as vendas, vigências e histórico seguem intactos. O
-bloqueio encerra as sessões abertas do vendedor na mesma transação, e a consulta
-de sessão já exige `users.active`, então as duas defesas atuam juntas — nenhuma
-sessão sobrevive e nenhum login novo é aceito.
+bloqueio encerra as sessões abertas do vendedor na mesma transação. A criação de
+sessão bloqueia a linha do usuário e confere novamente `users.active`, de modo
+que login e bloqueio concorrentes são serializados: nenhuma sessão sobrevive e
+nenhum login novo é aceito.
 
 ## Senhas
 

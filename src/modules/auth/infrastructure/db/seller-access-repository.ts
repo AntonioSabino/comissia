@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { findDatabaseViolation } from "@/db/database-violation";
+import { sellers } from "@/modules/sellers/infrastructure/db/schema";
 import type {
   SellerAccessCreationResult,
   SellerAccessRepository,
@@ -51,6 +52,20 @@ async function mapCreationViolation(
 }
 
 export const sellerAccessRepository: SellerAccessRepository = {
+  async findSellerIdentityById(sellerId) {
+    const [seller] = await db
+      .select({
+        id: sellers.id,
+        name: sellers.name,
+        email: sellers.email,
+      })
+      .from(sellers)
+      .where(eq(sellers.id, sellerId))
+      .limit(1);
+
+    return seller ?? null;
+  },
+
   async findBySellerId(sellerId) {
     const [access] = await db
       .select(SELLER_ACCESS_COLUMNS)

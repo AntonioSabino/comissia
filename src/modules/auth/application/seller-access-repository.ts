@@ -5,6 +5,12 @@ export type SellerAccess = {
   active: boolean;
 };
 
+export type SellerAccessIdentity = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 export type NewSellerAccess = {
   sellerId: string;
   name: string;
@@ -19,6 +25,9 @@ export type SellerAccessCreationResult =
   | { status: "seller-not-found" };
 
 export interface SellerAccessRepository {
+  findSellerIdentityById(
+    sellerId: string,
+  ): Promise<SellerAccessIdentity | null>;
   findBySellerId(sellerId: string): Promise<SellerAccess | null>;
   createSellerAccess(
     access: NewSellerAccess,

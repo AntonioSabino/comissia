@@ -3,6 +3,13 @@ export {
   type SellerCommissionCalculationInput,
 } from "./domain/calculate-seller-commission";
 export {
+  allocateSellerCommissionInstallments,
+  SellerCommissionInstallmentAllocationError,
+  type AllocatedSellerCommissionInstallment,
+  type SellerCommissionInstallmentAllocation,
+  type SellerCommissionInstallmentAllocationInput,
+} from "./domain/allocate-seller-commission-installments";
+export {
   buildCommissionInstallmentSchedule,
   CommissionInstallmentScheduleError,
   type CommissionInstallmentSchedule,

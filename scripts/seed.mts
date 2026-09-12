@@ -23,7 +23,7 @@ const DEMO_ADMIN = {
 };
 
 /** Endereços aceitos sem confirmação explícita. */
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 /**
  * Senha sorteada a cada execução. Nenhuma credencial fica no repositório, e a

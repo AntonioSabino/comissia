@@ -4,6 +4,7 @@ import {
   COMMISSION_INSTALLMENT_STATUSES,
   CommissionInstallmentStatusError,
   createCommissionInstallmentStatusHistory,
+  currentCommissionInstallmentStatus,
   INITIAL_COMMISSION_INSTALLMENT_STATUS,
   isCommissionInstallmentStatus,
 } from "./commission-installment-status";
@@ -28,16 +29,18 @@ describe("commission installment statuses", () => {
   });
 
   it("inicia uma nova parcela como prevista e registra sua criação", () => {
-    expect(createCommissionInstallmentStatusHistory(CREATED_AT)).toEqual({
-      currentStatus: INITIAL_COMMISSION_INSTALLMENT_STATUS,
-      entries: [
-        {
-          previousStatus: null,
-          status: "prevista",
-          changedAt: "2026-09-12T10:00:00.000Z",
-        },
-      ],
-    });
+    const history = createCommissionInstallmentStatusHistory(CREATED_AT);
+
+    expect(history).toEqual([
+      {
+        previousStatus: null,
+        status: "prevista",
+        changedAt: "2026-09-12T10:00:00.000Z",
+      },
+    ]);
+    expect(currentCommissionInstallmentStatus(history)).toBe(
+      INITIAL_COMMISSION_INSTALLMENT_STATUS,
+    );
   });
 
   it("preserva todas as transições em ordem cronológica", () => {
@@ -53,26 +56,63 @@ describe("commission installment statuses", () => {
       new Date("2026-09-14T10:00:00.000Z"),
     );
 
-    expect(paid).toEqual({
-      currentStatus: "paga",
-      entries: [
-        {
-          previousStatus: null,
-          status: "prevista",
-          changedAt: "2026-09-12T10:00:00.000Z",
-        },
-        {
-          previousStatus: "prevista",
-          status: "programada",
-          changedAt: "2026-09-13T10:00:00.000Z",
-        },
-        {
-          previousStatus: "programada",
-          status: "paga",
-          changedAt: "2026-09-14T10:00:00.000Z",
-        },
-      ],
+    expect(paid).toEqual([
+      {
+        previousStatus: null,
+        status: "prevista",
+        changedAt: "2026-09-12T10:00:00.000Z",
+      },
+      {
+        previousStatus: "prevista",
+        status: "programada",
+        changedAt: "2026-09-13T10:00:00.000Z",
+      },
+      {
+        previousStatus: "programada",
+        status: "paga",
+        changedAt: "2026-09-14T10:00:00.000Z",
+      },
+    ]);
+    expect(currentCommissionInstallmentStatus(paid)).toBe("paga");
+  });
+
+  it("toma a situação atual da última entrada do histórico", () => {
+    const callerHistory = [
+      {
+        previousStatus: null,
+        status: "prevista" as const,
+        changedAt: "2026-09-12T10:00:00.000Z",
+      },
+      {
+        previousStatus: "prevista" as const,
+        status: "programada" as const,
+        changedAt: "2026-09-13T10:00:00.000Z",
+      },
+    ];
+
+    expect(currentCommissionInstallmentStatus(callerHistory)).toBe(
+      "programada",
+    );
+    expect(
+      changeCommissionInstallmentStatus(
+        callerHistory,
+        "paga",
+        new Date("2026-09-14T10:00:00.000Z"),
+      ).at(-1),
+    ).toEqual({
+      previousStatus: "programada",
+      status: "paga",
+      changedAt: "2026-09-14T10:00:00.000Z",
     });
+  });
+
+  it("recusa um histórico sem nenhuma situação registrada", () => {
+    expect(() => currentCommissionInstallmentStatus([])).toThrow(
+      "O histórico da parcela não tem nenhuma situação registrada",
+    );
+    expect(() =>
+      changeCommissionInstallmentStatus([], "paga", CREATED_AT),
+    ).toThrow(CommissionInstallmentStatusError);
   });
 
   it("não altera o histórico recebido ao registrar uma mudança", () => {
@@ -84,10 +124,9 @@ describe("commission installment statuses", () => {
       new Date("2026-09-13T10:00:00.000Z"),
     );
 
-    expect(initial.currentStatus).toBe("prevista");
-    expect(initial.entries).toHaveLength(1);
+    expect(initial).toHaveLength(1);
+    expect(currentCommissionInstallmentStatus(initial)).toBe("prevista");
     expect(Object.isFrozen(initial)).toBe(true);
-    expect(Object.isFrozen(initial.entries)).toBe(true);
   });
 
   it("não congela entradas pertencentes ao chamador", () => {
@@ -96,10 +135,7 @@ describe("commission installment statuses", () => {
       status: "prevista" as const,
       changedAt: "2026-09-12T10:00:00.000Z",
     };
-    const callerHistory = {
-      currentStatus: "prevista" as const,
-      entries: [callerEntry],
-    };
+    const callerHistory = [callerEntry];
 
     const changed = changeCommissionInstallmentStatus(
       callerHistory,
@@ -108,9 +144,9 @@ describe("commission installment statuses", () => {
     );
 
     expect(Object.isFrozen(callerEntry)).toBe(false);
-    expect(Object.isFrozen(callerHistory.entries)).toBe(false);
-    expect(changed.entries[0]).not.toBe(callerEntry);
-    expect(Object.isFrozen(changed.entries[0])).toBe(true);
+    expect(Object.isFrozen(callerHistory)).toBe(false);
+    expect(changed[0]).not.toBe(callerEntry);
+    expect(Object.isFrozen(changed[0])).toBe(true);
   });
 
   it("recusa uma situação não suportada", () => {

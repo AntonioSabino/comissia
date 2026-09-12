@@ -28,11 +28,14 @@ Uma parcela nasce como `prevista` e pode assumir as situações `programada`,
 `paga`, `cancelada` e `ajustada`. Cada mudança gera uma nova entrada de histórico
 com a situação anterior, a nova situação e o instante da alteração.
 
-O histórico é imutável e cronológico: registrar uma transição devolve um novo
-estado, sem alterar os registros anteriores, e mudanças retroativas são
-recusadas. As restrições entre situações poderão ser adicionadas quando o fluxo
-operacional for definido; neste incremento, qualquer mudança entre situações
-distintas é aceita e rastreada.
+O histórico é a própria sequência de mudanças, e a situação atual é sempre a da
+última entrada: `currentCommissionInstallmentStatus` a deriva, então não existe
+um campo separado que possa divergir do que foi registrado. Esse histórico é
+imutável e cronológico: registrar uma transição devolve um novo estado, sem
+alterar os registros anteriores, e mudanças retroativas são recusadas. As
+restrições entre situações poderão ser adicionadas quando o fluxo operacional
+for definido; neste incremento, qualquer mudança entre situações distintas é
+aceita e rastreada.
 
 ## Não pertence a este módulo
 

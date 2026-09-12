@@ -5,7 +5,8 @@ export function isValidDateOnly(value: string): boolean {
   }
 
   const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
 
   return (
     date.getUTCFullYear() === year &&

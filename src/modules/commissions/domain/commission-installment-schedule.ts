@@ -35,7 +35,9 @@ function pad(value: number, length: number): string {
 
 /** Último dia do mês, contando o ano bissexto. */
 function lastDayOfMonth(year: number, month: number): number {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const date = new Date(0);
+  date.setUTCFullYear(year, month, 0);
+  return date.getUTCDate();
 }
 
 /**

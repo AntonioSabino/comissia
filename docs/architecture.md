@@ -53,7 +53,8 @@ Contém o comportamento do negócio. Cada módulo controla seus próprios concei
 casos de uso e persistência.
 
 - `sellers`: cadastro, situação e histórico de percentuais dos vendedores.
-- `sales`: registro e situação das vendas de consórcio.
+- `sales`: registro e situação das vendas de consórcio, administradoras e a
+  régua de parcelas que cada uma define por produto e vigência.
 - `commissions`: snapshot da regra aplicada, cálculo e geração de parcelas.
 
 ### `src/db`

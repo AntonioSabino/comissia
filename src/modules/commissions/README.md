@@ -37,9 +37,9 @@ criado ou perdido.
 
 Por exemplo, uma comissão total de 2% pode ser distribuída entre oito parcelas
 com os percentuais 0,15%, 0,15%, 0,20%, 0,20%, 0,25%, 0,25%, 0,30% e 0,50%.
-Este módulo recebe essa distribuição pronta; definir se ela vem da
-administradora, do produto ou do preenchimento da venda não faz parte desta
-etapa.
+Este módulo recebe essa distribuição pronta. A origem dela é a régua de
+parcelas da administradora, modelada no módulo de vendas por produto ou plano e
+por vigência.
 
 ## Competências e datas previstas
 
@@ -71,9 +71,9 @@ A ordem dos percentuais recebidos é preservada e o resultado completo é
 imutável. A função recebe também o instante de criação para que o primeiro
 registro do histórico seja explícito e auditável.
 
-A origem da distribuição e a persistência não são definidas nesta etapa. Fazer
-isso agora exigiria assumir parcelas iguais ou introduzir uma configuração ainda
-não decidida pelo negócio.
+A distribuição vem da régua da administradora, guardada pelo módulo de vendas.
+Selecionar a régua ao cadastrar a venda, gravar o snapshot dela e persistir as
+parcelas geradas são incrementos posteriores.
 
 ## Situações da parcela
 

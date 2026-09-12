@@ -6,6 +6,7 @@ venda durante seu ciclo de vida.
 ## Pertence a este módulo
 
 - administradora, produto, grupo e cota;
+- régua de parcelas definida pela administradora, por produto e vigência;
 - cliente e vendedor associados;
 - data da venda e valor do crédito;
 - quantidade de parcelas e primeira data prevista informadas na venda;
@@ -46,6 +47,57 @@ minúsculas: a aplicação confere antes de gravar, e o índice único
 banco mesmo em cadastros simultâneos.
 Não há exclusão, e somente administradoras ativas são oferecidas para novas
 vendas (`selectActiveAdministrators`).
+
+## Régua de parcelas da administradora
+
+Cada administradora define como a comissão é distribuída entre as parcelas, e
+essa régua vale para um produto ou plano e a partir de uma data de vigência.
+`administrator_installment_rules` guarda uma linha por versão: administradora,
+produto, início da vigência e a distribuição em pontos-base.
+
+A distribuição é uma lista ordenada de inteiros, da primeira à última parcela,
+gravada em `integer[]` exatamente na ordem informada. São aceitas de 1 a 120
+parcelas, cada percentual entre 1 e 10.000 pontos-base, e o percentual total da
+regra é a soma da lista (`installmentRuleTotalBasisPoints`). Não há ponto
+flutuante em nenhuma etapa: o domínio recusa fracionários em vez de arredondar.
+
+As restrições valem também no banco, e não apenas na aplicação:
+`administrator_installment_rules_installments_check` limita a quantidade de
+parcelas, `administrator_installment_rules_rates_check` limita cada percentual e
+recusa elementos ausentes, e a chave estrangeira para `administrators` recusa
+administradora inexistente, que o caso de uso devolve como
+`AdministratorNotFoundError`.
+
+Duas versões não podem valer ao mesmo tempo. Como cada vigência é aberta e
+termina quando a próxima começa, a sobreposição seria sempre um mesmo início
+repetido: o índice único
+`administrator_installment_rules_effective_from_unique`, sobre administradora,
+`lower(product)` e vigência, impede isso mesmo em cadastros simultâneos e mesmo
+quando o produto é digitado em outra caixa. O caso de uso devolve a violação
+como `DuplicateAdministratorInstallmentRuleError`.
+
+A tabela é apenas de inclusão, como o histórico de percentuais dos vendedores:
+o gatilho `administrator_installment_rules_append_only` recusa `UPDATE` e
+`DELETE`. Uma nova vigência é uma nova linha, então versões históricas — e as
+vendas que as usaram — não mudam. Corrigir uma régua errada é criar a vigência
+seguinte.
+
+`findAdministratorInstallmentRuleOn` responde qual régua vale em uma data: a de
+maior início que não ultrapassa essa data, para a administradora e o produto
+informados. A escolha é determinística e não depende da ordem devolvida pelo
+banco. Sem vigência nessa data, a consulta recusa com
+`MissingAdministratorInstallmentRuleError` em vez de adivinhar uma
+distribuição. O produto é comparado sem diferenciar maiúsculas de minúsculas,
+como no índice.
+
+O percentual total não tem limite superior próprio: ele é o que a soma da
+distribuição disser. Quem compõe a régua com o percentual do vendedor é o
+módulo de comissões, que já recusa distribuição cuja soma não seja exatamente o
+percentual total usado no cálculo.
+
+Ainda não existe tela para cadastrar a régua, a venda não seleciona a regra
+automaticamente e nenhum snapshot da régua é gravado na venda. Estes são
+incrementos posteriores.
 
 ## Cadastro de venda
 

@@ -8,7 +8,7 @@ import {
   AdministratorStatusValidationError,
   DuplicateAdministratorError,
 } from "./errors";
-import { listActiveAdministrators } from "./list-active-administrators";
+import { selectActiveAdministrators } from "./active-administrators";
 
 const ADMINISTRATOR_ID = "2f81455e-01cd-4b4f-8614-30fda79fd987";
 
@@ -108,12 +108,23 @@ describe("changeAdministratorStatus", () => {
   });
 });
 
-describe("listActiveAdministrators", () => {
-  it("solicita somente administradoras ativas", async () => {
-    const repository = createRepository();
+describe("selectActiveAdministrators", () => {
+  it("mantém somente administradoras ativas", () => {
+    const administrators = [
+      { id: "1", name: "Aurora", active: true },
+      { id: "2", name: "Meridiano", active: false },
+      { id: "3", name: "Vega", active: true },
+    ];
 
-    await listActiveAdministrators({ repository });
+    expect(
+      selectActiveAdministrators(administrators).map(({ name }) => name),
+    ).toEqual(["Aurora", "Vega"]);
+  });
 
-    expect(repository.list).toHaveBeenCalledWith({ active: true });
+  it("preserva a lista recebida", () => {
+    const administrators = [{ id: "1", name: "Aurora", active: true }];
+
+    expect(selectActiveAdministrators(administrators)).not.toBe(administrators);
+    expect(administrators).toHaveLength(1);
   });
 });

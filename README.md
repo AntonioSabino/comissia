@@ -86,29 +86,28 @@ no arquivo de ambiente ou em logs.
 
 ## Dados de demonstração
 
-Para navegar pela aplicação com conteúdo, popule o banco local com dados
-fictícios:
+Para navegar pela aplicação com um cenário fictício, depois das migrações rode:
 
 ```bash
 npm run db:seed
 ```
 
-O seed cria três administradoras, quatro vendedores com vigências de
-percentual, doze vendas espalhadas pelo ano e, se ainda não existir nenhum
-administrador, o usuário `admin@exemplo.test`. A senha desse usuário é sorteada
-na hora e impressa uma única vez no terminal: nenhuma credencial fica no
-repositório. Se você perder a senha, apague o usuário e rode o seed de novo.
+O seed cria três administradoras, quatro vendedores, suas vigências de
+percentual, sete réguas por produto e doze vendas com snapshots, parcelas
+previstas e histórico inicial em `prevista`. Uma das réguas possui duas
+vigências para demonstrar que vendas antigas preservam a versão aplicada.
 
-Nada ali é real: os nomes são inventados, os CPFs são calculados a partir de
-bases sequenciais e os e-mails usam o domínio reservado `.test`. Rodar o
-comando novamente depois que ele terminar não duplica nada, porque cada registro
-é procurado pela sua chave natural antes de ser inserido. Uma segunda execução
-iniciada enquanto a primeira ainda estiver em andamento é recusada para que as
-duas não criem a mesma venda.
+Todos os nomes, documentos, telefones e e-mails são fictícios. Os e-mails usam
+o domínio reservado `.test`, e a senha do administrador inicial é sorteada e
+exibida somente quando a conta é criada. O seed recusa produção e bancos fora
+de loopback, salvo confirmação explícita com `--allow-remote`.
 
-O seed é para banco local: recusa rodar com `NODE_ENV=production` e recusa uma
-`DATABASE_URL` que não aponte para `localhost`, a menos que você confirme com
-`npm run db:seed -- --allow-remote`.
+O comando é repetível: registros completos são mantidos e vendas antigas do
+próprio seed, ainda sem snapshot, são complementadas. Como snapshots e
+históricos não devem ser reescritos, mudanças futuras nos dados da demonstração
+exigem recriar o banco local para aparecer em vendas que já foram geradas.
+Enquanto a SCRUM-62 estiver em validação, os valores e cenários continuam
+provisórios.
 
 ## Executar localmente
 

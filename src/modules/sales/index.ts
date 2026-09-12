@@ -1,3 +1,7 @@
+export type {
+  SaleDetails,
+  SaleInstallmentDetail,
+} from "./application/sale-repository";
 export {
   INITIAL_QUOTA_STATUS,
   isQuotaStatus,

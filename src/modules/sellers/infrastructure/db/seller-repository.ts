@@ -12,6 +12,7 @@ import {
 import { db } from "@/db";
 import { findDatabaseViolation } from "@/db/database-violation";
 import { getBusinessDate } from "@/lib/business-date";
+import { users } from "@/modules/auth/infrastructure/db/schema";
 import {
   DuplicateSellerCommissionRateError,
   DuplicateSellerError,
@@ -31,7 +32,10 @@ function mapUniqueViolation(error: unknown): never {
       throw new DuplicateSellerError("document");
     }
 
-    if (violation.constraint === "sellers_email_unique") {
+    if (
+      violation.constraint === "sellers_email_unique" ||
+      violation.constraint === "users_email_unique"
+    ) {
       throw new DuplicateSellerError("email");
     }
   }
@@ -210,19 +214,35 @@ export const sellerRepository: SellerRepository = {
 
   async updateProfile(id, profile) {
     try {
-      const [updatedSeller] = await db
-        .update(sellers)
-        .set({
-          name: profile.name,
-          document: profile.document,
-          email: profile.email,
-          phone: profile.phone,
-          updatedAt: new Date(),
-        })
-        .where(eq(sellers.id, id))
-        .returning({ id: sellers.id });
+      return await db.transaction(async (transaction) => {
+        const updatedAt = new Date();
+        const [updatedSeller] = await transaction
+          .update(sellers)
+          .set({
+            name: profile.name,
+            document: profile.document,
+            email: profile.email,
+            phone: profile.phone,
+            updatedAt,
+          })
+          .where(eq(sellers.id, id))
+          .returning({ id: sellers.id });
 
-      return Boolean(updatedSeller);
+        if (!updatedSeller) {
+          return false;
+        }
+
+        await transaction
+          .update(users)
+          .set({
+            name: profile.name,
+            email: profile.email,
+            updatedAt,
+          })
+          .where(and(eq(users.sellerId, id), eq(users.role, "seller")));
+
+        return true;
+      });
     } catch (error) {
       return mapUniqueViolation(error);
     }

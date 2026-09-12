@@ -45,6 +45,10 @@ export interface SellerRepository {
   list(filters?: SellerListFilters): Promise<SellerListItem[]>;
   findById(id: string): Promise<SellerDetails | null>;
   setActive(id: string, active: boolean): Promise<boolean>;
+  /**
+   * Atualiza o cadastro e, quando existir, a identidade da conta vinculada na
+   * mesma transação.
+   */
   updateProfile(id: string, profile: ValidSellerProfile): Promise<boolean>;
   addCommissionRate(
     sellerId: string,

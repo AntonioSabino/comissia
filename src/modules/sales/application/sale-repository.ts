@@ -28,18 +28,21 @@ export type SaleListItem = {
 };
 
 export type SaleCreationResult =
-  | { status: "created"; id: string; code: string }
+  | { status: "created"; id: string; code: string; installments: number }
   | {
       status: "invalid-participants";
       administratorActive: boolean;
       sellerActive: boolean;
     }
-  | { status: "missing-commission-rate" };
+  | { status: "missing-commission-rate" }
+  | { status: "missing-installment-rule" }
+  | { status: "seller-rate-above-rule" };
 
 export interface SaleRepository {
   /**
-   * Bloqueia os participantes, confirma suas situações, seleciona a vigência e
-   * grava a venda com o snapshot dentro da mesma transação.
+   * Bloqueia os participantes, confirma suas situações, seleciona o percentual
+   * do vendedor e a régua da administradora vigentes na data, gera as parcelas
+   * previstas e grava tudo dentro da mesma transação.
    */
   createWithCommissionSnapshot(
     sale: ValidSaleRegistration,

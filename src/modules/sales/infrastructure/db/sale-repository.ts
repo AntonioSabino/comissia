@@ -1,13 +1,20 @@
-import { and, desc, eq, gte, ilike, lte, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
+import {
+  commissionInstallments,
+  commissionInstallmentStatusEvents,
+  generateSellerCommissionInstallments,
+} from "@/modules/commissions";
 import {
   findCommissionRateOn,
   MissingCommissionRateError,
   sellerCommissionRates,
   sellers,
 } from "@/modules/sellers";
+import { MissingAdministratorInstallmentRuleError } from "../../application/errors";
+import { findAdministratorInstallmentRuleOn } from "../../application/find-administrator-installment-rule-on";
 import type { SaleRepository } from "../../application/sale-repository";
-import { administrators, sales } from "./schema";
+import { administratorInstallmentRules, administrators, sales } from "./schema";
 
 export const saleRepository: SaleRepository = {
   async createWithCommissionSnapshot(sale) {
@@ -66,25 +73,122 @@ export const saleRepository: SaleRepository = {
         throw error;
       }
 
+      let rule;
+
+      try {
+        rule = await findAdministratorInstallmentRuleOn(
+          {
+            administratorId: sale.administratorId,
+            product: sale.product,
+            date: sale.soldOn,
+          },
+          {
+            repository: {
+              listVersions(administratorId, product) {
+                return transaction
+                  .select({
+                    id: administratorInstallmentRules.id,
+                    administratorId:
+                      administratorInstallmentRules.administratorId,
+                    product: administratorInstallmentRules.product,
+                    effectiveFrom: administratorInstallmentRules.effectiveFrom,
+                    installmentRatesBasisPoints:
+                      administratorInstallmentRules.installmentRatesBasisPoints,
+                  })
+                  .from(administratorInstallmentRules)
+                  .where(
+                    and(
+                      eq(
+                        administratorInstallmentRules.administratorId,
+                        administratorId,
+                      ),
+                      sql`lower(${administratorInstallmentRules.product}) = lower(${product})`,
+                    ),
+                  )
+                  .orderBy(desc(administratorInstallmentRules.effectiveFrom));
+              },
+            },
+          },
+        );
+      } catch (error) {
+        if (error instanceof MissingAdministratorInstallmentRuleError) {
+          return { status: "missing-installment-rule" as const };
+        }
+
+        throw error;
+      }
+
+      // O dinheiro do vendedor sai de dentro do que a administradora paga à
+      // corretora, então o total da régua é o teto do percentual acordado.
+      if (rule.totalBasisPoints < rate.rateBasisPoints) {
+        return { status: "seller-rate-above-rule" as const };
+      }
+
+      const installments = generateSellerCommissionInstallments({
+        creditAmountInCents: sale.creditAmountInCents,
+        sellerRateBasisPoints: rate.rateBasisPoints,
+        installmentRatesBasisPoints: rule.installmentRatesBasisPoints,
+        firstInstallmentDueOn: sale.firstInstallmentDueOn,
+        createdAt: new Date(),
+      });
+
       const [created] = await transaction
         .insert(sales)
         .values({
           administratorId: sale.administratorId,
+          administratorInstallmentRuleId: rule.id,
           sellerId: sale.sellerId,
           sellerCommissionRateId: rate.id,
           sellerRateBasisPoints: rate.rateBasisPoints,
+          installmentRatesBasisPoints: [...rule.installmentRatesBasisPoints],
           customerName: sale.customerName,
           product: sale.product,
           groupCode: sale.groupCode,
           quotaCode: sale.quotaCode,
           soldOn: sale.soldOn,
           creditAmountInCents: sale.creditAmountInCents,
-          commissionInstallments: sale.commissionInstallments,
+          commissionInstallments: installments.length,
           firstInstallmentDueOn: sale.firstInstallmentDueOn,
         })
         .returning({ id: sales.id, code: sales.code });
 
-      return { status: "created" as const, ...created };
+      const persistedInstallments = await transaction
+        .insert(commissionInstallments)
+        .values(
+          installments.map((installment) => ({
+            saleId: created.id,
+            number: installment.number,
+            competence: installment.competence,
+            dueOn: installment.dueOn,
+            ruleRateBasisPoints: installment.rateBasisPoints,
+            amountInCents: installment.amountInCents,
+          })),
+        )
+        .returning({
+          id: commissionInstallments.id,
+          number: commissionInstallments.number,
+        });
+
+      const installmentIdByNumber = new Map(
+        persistedInstallments.map(({ id, number }) => [number, id]),
+      );
+
+      await transaction.insert(commissionInstallmentStatusEvents).values(
+        installments.flatMap((installment) =>
+          installment.statusHistory.map((entry) => ({
+            installmentId: installmentIdByNumber.get(installment.number) ?? "",
+            previousStatus: entry.previousStatus,
+            status: entry.status,
+            changedAt: new Date(entry.changedAt),
+          })),
+        ),
+      );
+
+      return {
+        status: "created" as const,
+        ...created,
+        installments: installments.length,
+      };
     });
   },
 

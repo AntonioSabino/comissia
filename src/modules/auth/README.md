@@ -25,6 +25,31 @@ O fluxo normaliza nome e e-mail, exige ao menos 12 caracteres na senha, impede
 e-mail duplicado e recusa a criação se já houver um administrador. Nenhuma senha
 padrão existe no código ou na configuração.
 
+## Acesso do vendedor
+
+A administração cria e controla o acesso de cada vendedor na página do próprio
+cadastro, em `/admin/sellers/{id}`. O acesso reaproveita o que já existe: o
+e-mail do cadastro vira o e-mail de login, e a conta nasce com perfil `seller`
+vinculada àquele vendedor.
+
+A senha do primeiro acesso é sorteada por `generateTemporaryPassword` e
+devolvida uma única vez, na resposta que cria o acesso, para o administrador
+repassar ao vendedor. Ela não é gravada em lugar nenhum além do hash, não vai
+para log e não aparece de novo em nenhuma tela. Nenhum administrador escolhe a
+senha de outra pessoa.
+
+Criar o acesso duas vezes é recusado pelo banco antes de qualquer duplicação:
+`users_seller_id_unique` impede o segundo vínculo e `users_email_unique` impede
+o e-mail repetido. Como o e-mail vem do próprio cadastro, a segunda tentativa
+esbarra primeiro na unicidade do e-mail; o repositório distingue os dois casos
+para que a mensagem aponte o vínculo existente, e não um e-mail de terceiros.
+
+`changeSellerAccess` libera e bloqueia. Bloquear não apaga nada: a conta
+continua vinculada e as vendas, vigências e histórico seguem intactos. O
+bloqueio encerra as sessões abertas do vendedor na mesma transação, e a consulta
+de sessão já exige `users.active`, então as duas defesas atuam juntas — nenhuma
+sessão sobrevive e nenhum login novo é aceito.
+
 ## Senhas
 
 A tabela armazena somente `password_hash`. Senhas usam `scrypt` com salt

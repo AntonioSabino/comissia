@@ -1,8 +1,22 @@
-import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { db } from "@/db";
 import {
   CommissionInstallmentScheduleError,
+  currentCommissionInstallmentStatus,
   generateSellerCommissionInstallments,
+  INITIAL_COMMISSION_INSTALLMENT_STATUS,
+  type CommissionInstallmentStatusHistoryEntry,
 } from "@/modules/commissions";
 import {
   findCommissionRateOn,
@@ -12,7 +26,11 @@ import {
 } from "@/modules/sellers";
 import { MissingAdministratorInstallmentRuleError } from "../../application/errors";
 import { findAdministratorInstallmentRuleOn } from "../../application/find-administrator-installment-rule-on";
-import type { SaleRepository } from "../../application/sale-repository";
+import type {
+  SaleDetails,
+  SaleInstallmentDetail,
+  SaleRepository,
+} from "../../application/sale-repository";
 import {
   administratorInstallmentRules,
   administrators,
@@ -268,5 +286,127 @@ export const saleRepository: SaleRepository = {
       .innerJoin(administrators, eq(administrators.id, sales.administratorId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(sales.soldOn), desc(sales.createdAt));
+  },
+
+  async findById(id) {
+    const [sale] = await db
+      .select({
+        id: sales.id,
+        code: sales.code,
+        soldOn: sales.soldOn,
+        customerName: sales.customerName,
+        product: sales.product,
+        groupCode: sales.groupCode,
+        quotaCode: sales.quotaCode,
+        creditAmountInCents: sales.creditAmountInCents,
+        quotaStatus: sales.quotaStatus,
+        firstInstallmentDueOn: sales.firstInstallmentDueOn,
+        sellerId: sales.sellerId,
+        sellerName: sellers.name,
+        administratorId: sales.administratorId,
+        administratorName: administrators.name,
+        sellerRateBasisPoints: sales.sellerRateBasisPoints,
+        sellerCommissionRateId: sales.sellerCommissionRateId,
+        sellerRateEffectiveFrom: sellerCommissionRates.effectiveFrom,
+        installmentRuleId: sales.administratorInstallmentRuleId,
+        installmentRuleEffectiveFrom:
+          administratorInstallmentRules.effectiveFrom,
+        installmentRuleProduct: administratorInstallmentRules.product,
+        installmentRatesBasisPoints: sales.installmentRatesBasisPoints,
+      })
+      .from(sales)
+      .innerJoin(sellers, eq(sellers.id, sales.sellerId))
+      .innerJoin(administrators, eq(administrators.id, sales.administratorId))
+      .innerJoin(
+        sellerCommissionRates,
+        eq(sellerCommissionRates.id, sales.sellerCommissionRateId),
+      )
+      // A régua só existe nas vendas registradas depois dela.
+      .leftJoin(
+        administratorInstallmentRules,
+        eq(
+          administratorInstallmentRules.id,
+          sales.administratorInstallmentRuleId,
+        ),
+      )
+      .where(eq(sales.id, id))
+      .limit(1);
+
+    if (!sale) {
+      return null;
+    }
+
+    const rows = await db
+      .select({
+        id: commissionInstallments.id,
+        number: commissionInstallments.number,
+        competence: commissionInstallments.competence,
+        dueOn: commissionInstallments.dueOn,
+        ruleRateBasisPoints: commissionInstallments.ruleRateBasisPoints,
+        amountInCents: commissionInstallments.amountInCents,
+        previousStatus: commissionInstallmentStatusEvents.previousStatus,
+        status: commissionInstallmentStatusEvents.status,
+        changedAt: commissionInstallmentStatusEvents.changedAt,
+      })
+      .from(commissionInstallments)
+      .leftJoin(
+        commissionInstallmentStatusEvents,
+        eq(
+          commissionInstallmentStatusEvents.installmentId,
+          commissionInstallments.id,
+        ),
+      )
+      .where(eq(commissionInstallments.saleId, id))
+      .orderBy(
+        asc(commissionInstallments.number),
+        asc(commissionInstallmentStatusEvents.sequence),
+      );
+
+    // Uma linha por evento: as parcelas são agrupadas preservando a ordem da
+    // consulta, e a situação sai do histórico, como o domínio define.
+    const grouped = new Map<
+      string,
+      {
+        installment: Omit<SaleInstallmentDetail, "status">;
+        history: CommissionInstallmentStatusHistoryEntry[];
+      }
+    >();
+
+    for (const row of rows) {
+      const entry = grouped.get(row.id) ?? {
+        installment: {
+          id: row.id,
+          number: row.number,
+          competence: row.competence,
+          dueOn: row.dueOn,
+          ruleRateBasisPoints: row.ruleRateBasisPoints,
+          amountInCents: row.amountInCents,
+        },
+        history: [],
+      };
+
+      if (row.status && row.changedAt) {
+        entry.history.push({
+          previousStatus: row.previousStatus,
+          status: row.status,
+          changedAt: row.changedAt.toISOString(),
+        });
+      }
+
+      grouped.set(row.id, entry);
+    }
+
+    const details: SaleDetails = {
+      ...sale,
+      installments: [...grouped.values()].map(({ installment, history }) => ({
+        ...installment,
+        status:
+          history.length > 0
+            ? currentCommissionInstallmentStatus(history)
+            : INITIAL_COMMISSION_INSTALLMENT_STATUS,
+      })),
+    };
+
+    return details;
   },
 };

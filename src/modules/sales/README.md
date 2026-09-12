@@ -95,9 +95,27 @@ distribuição disser. Quem compõe a régua com o percentual do vendedor é o
 módulo de comissões, que já recusa distribuição cuja soma não seja exatamente o
 percentual total usado no cálculo.
 
-Ainda não existe tela para cadastrar a régua, a venda não seleciona a regra
-automaticamente e nenhum snapshot da régua é gravado na venda. Estes são
-incrementos posteriores.
+A administração mantém as réguas em `/admin/installment-rules`: cadastra uma
+vigência escolhendo administradora ativa, produto ou plano, data de início e a
+distribuição, e vê as vigências existentes por administradora e produto, da mais
+recente para a mais antiga, com a quantidade de parcelas, o percentual total e
+qual delas vale hoje (`describeInstallmentRules`). Réguas longas mostram o começo
+da distribuição e quantas parcelas faltam.
+
+A distribuição é digitada em percentual — `0,75; 0,50; 0,25` — e
+`parseInstallmentPercentages` a converte para pontos-base inteiros, aceitando
+ponto e vírgula, espaço ou quebra de linha entre as parcelas e vírgula ou ponto
+como separador decimal. A entrada em pontos-base continua aceita entre camadas,
+e o erro aparece no campo que foi informado.
+
+Antes de gravar, o repositório bloqueia a linha da administradora com
+`FOR UPDATE` e confirma que ela existe e está ativa, para que uma inativação
+concorrente não caia entre a conferência e a inclusão. Administradora
+inexistente volta como `AdministratorNotFoundError` e inativa como erro no campo
+da administradora.
+
+A venda ainda não seleciona a régua automaticamente e nenhum snapshot da régua é
+gravado na venda. Esse é o incremento seguinte.
 
 ## Cadastro de venda
 

@@ -8,9 +8,6 @@ export type AdministratorInstallmentRuleInput = {
   administratorId?: unknown;
   product?: unknown;
   effectiveFrom?: unknown;
-  /** Percentuais digitados na tela, separados por ponto e vírgula ou espaço. */
-  installmentPercentages?: unknown;
-  /** Distribuição já em pontos-base inteiros, usada entre camadas. */
   installmentRatesBasisPoints?: unknown;
 };
 
@@ -75,54 +72,6 @@ function parseInstallmentRates(value: unknown): number[] | null {
   return rates;
 }
 
-const PERCENTAGE_PATTERN = /^\d{1,3}(?:[.,]\d{1,2})?$/;
-
-function parsePercentage(value: string): number | null {
-  if (!PERCENTAGE_PATTERN.test(value)) {
-    return null;
-  }
-
-  const [integerPart, decimalPart = ""] = value.replace(",", ".").split(".");
-  const basisPoints =
-    Number(integerPart) * 100 + Number(decimalPart.padEnd(2, "0"));
-
-  return basisPoints >= 1 && basisPoints <= MAX_INSTALLMENT_RATE_BASIS_POINTS
-    ? basisPoints
-    : null;
-}
-
-/**
- * Converte a distribuição digitada em percentual para pontos-base inteiros.
- * Aceita ponto e vírgula, espaço, tabulação ou quebra de linha entre as
- * parcelas, e vírgula ou ponto como separador decimal. A ordem digitada é
- * preservada e nenhum valor passa por ponto flutuante.
- */
-export function parseInstallmentPercentages(value: unknown): number[] | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const informed = value.split(/[;\s]+/).filter((item) => item.length > 0);
-
-  if (informed.length < 1 || informed.length > MAX_RULE_INSTALLMENTS) {
-    return null;
-  }
-
-  const rates: number[] = [];
-
-  for (const item of informed) {
-    const basisPoints = parsePercentage(item);
-
-    if (basisPoints === null) {
-      return null;
-    }
-
-    rates.push(basisPoints);
-  }
-
-  return rates;
-}
-
 /** O percentual total da regra é a soma da distribuição. */
 export function installmentRuleTotalBasisPoints(
   installmentRatesBasisPoints: readonly number[],
@@ -143,10 +92,9 @@ export function validateAdministratorInstallmentRule(
     : null;
   const product = text(input.product);
   const effectiveFrom = text(input.effectiveFrom);
-  const informedPercentages = input.installmentPercentages !== undefined;
-  const installmentRatesBasisPoints = informedPercentages
-    ? parseInstallmentPercentages(input.installmentPercentages)
-    : parseInstallmentRates(input.installmentRatesBasisPoints);
+  const installmentRatesBasisPoints = parseInstallmentRates(
+    input.installmentRatesBasisPoints,
+  );
   const fieldErrors: AdministratorInstallmentRuleFieldErrors = {};
 
   if (!administratorId) {
@@ -161,9 +109,7 @@ export function validateAdministratorInstallmentRule(
     fieldErrors.effectiveFrom = "Informe uma data de vigência válida";
   }
 
-  if (installmentRatesBasisPoints === null && informedPercentages) {
-    fieldErrors.installmentPercentages = `Informe de 1 a ${MAX_RULE_INSTALLMENTS} percentuais entre 0,01 e 100, separados por ponto e vírgula`;
-  } else if (installmentRatesBasisPoints === null) {
+  if (installmentRatesBasisPoints === null) {
     fieldErrors.installmentRatesBasisPoints = `Informe de 1 a ${MAX_RULE_INSTALLMENTS} percentuais inteiros entre 1 e ${MAX_INSTALLMENT_RATE_BASIS_POINTS} pontos-base`;
   }
 

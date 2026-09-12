@@ -85,9 +85,9 @@ A ordem dos percentuais recebidos é preservada e o resultado completo é
 imutável. A função recebe também o instante de criação para que o primeiro
 registro do histórico seja explícito e auditável.
 
-A distribuição vem da régua da administradora, guardada pelo módulo de vendas.
-Selecionar a régua ao cadastrar a venda, gravar o snapshot dela e persistir as
-parcelas geradas são incrementos posteriores.
+A distribuição vem da régua da administradora vigente na data da venda, que o
+cadastro seleciona e grava como snapshot. As parcelas geradas são persistidas na
+mesma transação da venda.
 
 ## Situações da parcela
 
@@ -133,8 +133,8 @@ cuja situação anterior seja igual à nova. Toda parcela nasce com um evento
 `prevista` de situação anterior nula.
 
 Mudar a situação pela interface, consultar as parcelas e conciliar pagamentos
-são incrementos posteriores; aqui elas apenas nascem previstas junto com a
-venda.
+são incrementos posteriores; neste ponto elas apenas nascem previstas junto com
+a venda.
 
 ## Não pertence a este módulo
 

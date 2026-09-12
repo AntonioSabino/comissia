@@ -12,7 +12,8 @@ venda durante seu ciclo de vida.
   comissões;
 - cliente e vendedor associados;
 - data da venda e valor do crédito;
-- quantidade de parcelas e primeira data prevista informadas na venda;
+- primeira data prevista informada na venda; a quantidade de parcelas vem da
+  régua da administradora;
 - situação da cota ou da venda;
 - dados imutáveis necessários para auditoria.
 
@@ -117,8 +118,8 @@ concorrente não caia entre a conferência e a inclusão. Administradora
 inexistente volta como `AdministratorNotFoundError` e inativa como erro no campo
 da administradora.
 
-A venda ainda não seleciona a régua automaticamente e nenhum snapshot da régua é
-gravado na venda. Esse é o incremento seguinte.
+A venda usa essa régua: ela seleciona a vigente na data para o produto vendido
+e grava o snapshot, como descrito em "Snapshot da régua".
 
 ## Cadastro de venda
 

@@ -7,6 +7,12 @@ describe("isValidDateOnly", () => {
     expect(isValidDateOnly("2028-02-29")).toBe(true);
   });
 
+  it("aceita anos de quatro dígitos anteriores a 100", () => {
+    expect(isValidDateOnly("0001-01-01")).toBe(true);
+    expect(isValidDateOnly("0096-02-29")).toBe(true);
+    expect(isValidDateOnly("0099-12-31")).toBe(true);
+  });
+
   it.each([
     "2026-02-30",
     "2027-02-29",
@@ -14,6 +20,7 @@ describe("isValidDateOnly", () => {
     "10/09/2026",
     "",
     "2026-9-1",
+    "0099-02-29",
   ])("recusa %j", (value) => {
     expect(isValidDateOnly(value)).toBe(false);
   });

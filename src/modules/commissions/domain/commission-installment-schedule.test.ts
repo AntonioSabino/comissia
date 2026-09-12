@@ -42,6 +42,18 @@ describe("commission installment schedule", () => {
     expect(schedule.at(-1)?.dueOn).toBe("2027-02-05");
   });
 
+  it("avança corretamente entre os anos 0099 e 0100", () => {
+    const schedule = buildCommissionInstallmentSchedule({
+      firstInstallmentDueOn: "0099-12-31",
+      installments: 2,
+    });
+
+    expect(schedule).toEqual([
+      { number: 1, competence: "0099-12", dueOn: "0099-12-31" },
+      { number: 2, competence: "0100-01", dueOn: "0100-01-31" },
+    ]);
+  });
+
   it("mantém o dia de vencimento e encurta apenas os meses mais curtos", () => {
     const schedule = buildCommissionInstallmentSchedule({
       firstInstallmentDueOn: "2026-01-31",

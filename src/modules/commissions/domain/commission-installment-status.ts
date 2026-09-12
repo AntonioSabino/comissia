@@ -18,10 +18,13 @@ export type CommissionInstallmentStatusHistoryEntry = Readonly<{
   changedAt: string;
 }>;
 
-export type CommissionInstallmentStatusHistory = Readonly<{
-  currentStatus: CommissionInstallmentStatus;
-  entries: readonly CommissionInstallmentStatusHistoryEntry[];
-}>;
+/**
+ * O histórico é a própria sequência de mudanças, em ordem cronológica. A
+ * situação atual é sempre a da última entrada, e não um campo à parte que
+ * poderia divergir do histórico gravado.
+ */
+export type CommissionInstallmentStatusHistory =
+  readonly CommissionInstallmentStatusHistoryEntry[];
 
 export class CommissionInstallmentStatusError extends Error {
   constructor(message: string) {
@@ -46,29 +49,38 @@ function toIsoInstant(changedAt: Date): string {
   return changedAt.toISOString();
 }
 
-function createHistory(
-  currentStatus: CommissionInstallmentStatus,
+function freezeHistory(
   entries: CommissionInstallmentStatusHistoryEntry[],
 ): CommissionInstallmentStatusHistory {
-  return Object.freeze({
-    currentStatus,
-    entries: Object.freeze(entries.map((entry) => Object.freeze({ ...entry }))),
-  });
+  return Object.freeze(entries.map((entry) => Object.freeze({ ...entry })));
 }
 
-/**
- * Inicia o histórico de uma nova parcela na situação Prevista.
- */
+/** Inicia o histórico de uma nova parcela na situação Prevista. */
 export function createCommissionInstallmentStatusHistory(
   createdAt: Date,
 ): CommissionInstallmentStatusHistory {
-  return createHistory(INITIAL_COMMISSION_INSTALLMENT_STATUS, [
+  return freezeHistory([
     {
       previousStatus: null,
       status: INITIAL_COMMISSION_INSTALLMENT_STATUS,
       changedAt: toIsoInstant(createdAt),
     },
   ]);
+}
+
+/** Situação atual da parcela: a da última mudança registrada. */
+export function currentCommissionInstallmentStatus(
+  history: CommissionInstallmentStatusHistory,
+): CommissionInstallmentStatus {
+  const lastEntry = history.at(-1);
+
+  if (!lastEntry) {
+    throw new CommissionInstallmentStatusError(
+      "O histórico da parcela não tem nenhuma situação registrada",
+    );
+  }
+
+  return lastEntry.status;
 }
 
 /**
@@ -80,20 +92,22 @@ export function changeCommissionInstallmentStatus(
   nextStatus: unknown,
   changedAt: Date,
 ): CommissionInstallmentStatusHistory {
+  const currentStatus = currentCommissionInstallmentStatus(history);
+
   if (!isCommissionInstallmentStatus(nextStatus)) {
     throw new CommissionInstallmentStatusError(
       "Informe uma situação de parcela válida",
     );
   }
 
-  if (nextStatus === history.currentStatus) {
+  if (nextStatus === currentStatus) {
     throw new CommissionInstallmentStatusError(
       "A nova situação deve ser diferente da situação atual",
     );
   }
 
   const changedAtIso = toIsoInstant(changedAt);
-  const lastEntry = history.entries.at(-1);
+  const lastEntry = history.at(-1);
 
   if (lastEntry && changedAtIso < lastEntry.changedAt) {
     throw new CommissionInstallmentStatusError(
@@ -101,10 +115,10 @@ export function changeCommissionInstallmentStatus(
     );
   }
 
-  return createHistory(nextStatus, [
-    ...history.entries,
+  return freezeHistory([
+    ...history,
     {
-      previousStatus: history.currentStatus,
+      previousStatus: currentStatus,
       status: nextStatus,
       changedAt: changedAtIso,
     },

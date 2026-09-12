@@ -7,6 +7,7 @@ export {
   COMMISSION_INSTALLMENT_STATUSES,
   CommissionInstallmentStatusError,
   createCommissionInstallmentStatusHistory,
+  currentCommissionInstallmentStatus,
   INITIAL_COMMISSION_INSTALLMENT_STATUS,
   isCommissionInstallmentStatus,
   type CommissionInstallmentStatus,

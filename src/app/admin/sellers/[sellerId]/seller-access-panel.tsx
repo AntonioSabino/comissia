@@ -96,6 +96,26 @@ export function SellerAccessPanel({
     );
   }
 
+  const temporaryPasswordAlert = temporaryPassword ? (
+    <Alert
+      tone="attention"
+      className={styles.statusFeedback}
+      action={
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setTemporaryPassword(null)}
+        >
+          Já copiei a senha
+        </Button>
+      }
+    >
+      Senha provisória: <strong>{temporaryPassword}</strong>. Ela não será
+      exibida de novo depois que você confirmar. Repasse ao vendedor por um
+      canal seguro.
+    </Alert>
+  ) : null;
+
   if (!access) {
     return (
       <Card tone="sunken">
@@ -113,12 +133,7 @@ export function SellerAccessPanel({
             {isSubmitting ? "Criando..." : "Criar acesso"}
           </Button>
 
-          {temporaryPassword ? (
-            <Alert tone="attention" className={styles.statusFeedback}>
-              Senha provisória: <strong>{temporaryPassword}</strong>. Ela não
-              será exibida de novo. Repasse ao vendedor por um canal seguro.
-            </Alert>
-          ) : null}
+          {temporaryPasswordAlert}
           {message ? (
             <Alert tone="critical" className={styles.statusFeedback}>
               {message}
@@ -164,6 +179,7 @@ export function SellerAccessPanel({
               : "Liberar acesso"}
         </Button>
 
+        {temporaryPasswordAlert}
         {message ? (
           <Alert tone="critical" className={styles.statusFeedback}>
             {message}

@@ -36,7 +36,8 @@ export type SaleCreationResult =
     }
   | { status: "missing-commission-rate" }
   | { status: "missing-installment-rule" }
-  | { status: "seller-rate-above-rule" };
+  | { status: "seller-rate-above-rule" }
+  | { status: "invalid-installment-schedule" };
 
 export interface SaleRepository {
   /**

@@ -1,6 +1,9 @@
 import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { generateSellerCommissionInstallments } from "@/modules/commissions";
+import {
+  CommissionInstallmentScheduleError,
+  generateSellerCommissionInstallments,
+} from "@/modules/commissions";
 import {
   findCommissionRateOn,
   MissingCommissionRateError,
@@ -126,13 +129,25 @@ export const saleRepository: SaleRepository = {
         return { status: "seller-rate-above-rule" as const };
       }
 
-      const installments = generateSellerCommissionInstallments({
-        creditAmountInCents: sale.creditAmountInCents,
-        sellerRateBasisPoints: rate.rateBasisPoints,
-        installmentRatesBasisPoints: rule.installmentRatesBasisPoints,
-        firstInstallmentDueOn: sale.firstInstallmentDueOn,
-        createdAt: new Date(),
-      });
+      let installments;
+
+      try {
+        installments = generateSellerCommissionInstallments({
+          creditAmountInCents: sale.creditAmountInCents,
+          sellerRateBasisPoints: rate.rateBasisPoints,
+          installmentRatesBasisPoints: rule.installmentRatesBasisPoints,
+          firstInstallmentDueOn: sale.firstInstallmentDueOn,
+          createdAt: new Date(),
+        });
+      } catch (error) {
+        // A primeira previsão é uma data válida, mas a régua pode levar a última
+        // parcela além do calendário suportado.
+        if (error instanceof CommissionInstallmentScheduleError) {
+          return { status: "invalid-installment-schedule" as const };
+        }
+
+        throw error;
+      }
 
       const [created] = await transaction
         .insert(sales)
@@ -177,8 +192,9 @@ export const saleRepository: SaleRepository = {
 
       await transaction.insert(commissionInstallmentStatusEvents).values(
         installments.flatMap((installment) =>
-          installment.statusHistory.map((entry) => ({
+          installment.statusHistory.map((entry, index) => ({
             installmentId: installmentIdByNumber.get(installment.number) ?? "",
+            sequence: index + 1,
             previousStatus: entry.previousStatus,
             status: entry.status,
             changedAt: new Date(entry.changedAt),

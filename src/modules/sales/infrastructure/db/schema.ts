@@ -264,8 +264,10 @@ export const commissionInstallments = pgTable(
 /**
  * Histórico de situação da parcela. A situação atual é a do último evento, como
  * definido no domínio: não existe campo de situação que possa divergir daqui.
- * A tabela é apenas de inclusão: o gatilho criado na migração `0011` recusa
- * `UPDATE` e `DELETE`.
+ * A ordem é a de `sequence`, e não a do instante: o domínio aceita duas
+ * mudanças no mesmo instante, então datar não serve para ordenar nem para
+ * identificar. A tabela é apenas de inclusão: o gatilho criado na migração
+ * `0011` recusa `UPDATE` e `DELETE`.
  */
 export const commissionInstallmentStatusEvents = pgTable(
   "commission_installment_status_events",
@@ -274,6 +276,8 @@ export const commissionInstallmentStatusEvents = pgTable(
     installmentId: uuid("installment_id")
       .notNull()
       .references(() => commissionInstallments.id, { onDelete: "restrict" }),
+    /** Posição no histórico da parcela, a partir de 1. */
+    sequence: integer("sequence").notNull(),
     previousStatus: commissionInstallmentStatusEnum("previous_status"),
     status: commissionInstallmentStatusEnum("status").notNull(),
     changedAt: timestamp("changed_at", { withTimezone: true }).notNull(),
@@ -283,8 +287,12 @@ export const commissionInstallmentStatusEvents = pgTable(
   },
   (table) => [
     unique(
-      "commission_installment_status_events_installment_changed_unique",
-    ).on(table.installmentId, table.changedAt),
+      "commission_installment_status_events_installment_sequence_unique",
+    ).on(table.installmentId, table.sequence),
+    check(
+      "commission_installment_status_events_sequence_check",
+      sql`${table.sequence} > 0`,
+    ),
     check(
       "commission_installment_status_events_transition_check",
       sql`${table.previousStatus} IS NULL OR ${table.previousStatus} <> ${table.status}`,

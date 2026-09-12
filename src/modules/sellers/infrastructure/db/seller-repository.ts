@@ -13,6 +13,7 @@ import { db } from "@/db";
 import { findDatabaseViolation } from "@/db/database-violation";
 import { getBusinessDate } from "@/lib/business-date";
 import { users } from "@/modules/auth/infrastructure/db/schema";
+import { findRuleValidOn } from "@/shared/effective-dated-rule";
 import {
   DuplicateSellerCommissionRateError,
   DuplicateSellerError,
@@ -21,7 +22,6 @@ import type {
   SellerCommissionRateListItem,
   SellerRepository,
 } from "../../application/seller-repository";
-import { findRateValidOn } from "../../domain/commission-rate-on-date";
 import { sellerCommissionRates, sellers } from "./schema";
 
 function mapUniqueViolation(error: unknown): never {
@@ -199,7 +199,7 @@ export const sellerRepository: SellerRepository = {
     const today = getBusinessDate();
 
     return sellerRows.map((seller) => {
-      const currentRate = findRateValidOn(
+      const currentRate = findRuleValidOn(
         ratesBySeller.get(seller.id) ?? [],
         today,
       );
@@ -298,7 +298,7 @@ export const sellerRepository: SellerRepository = {
     }
 
     const commissionRates = await selectCommissionRates(id);
-    const currentRate = findRateValidOn(commissionRates, getBusinessDate());
+    const currentRate = findRuleValidOn(commissionRates, getBusinessDate());
 
     return {
       ...seller,

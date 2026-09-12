@@ -22,6 +22,18 @@ em `bigint` e devolve o total em centavos, sem converter valores monetários par
 Quando o percentual produz uma fração de centavo, o valor é arredondado para o
 centavo mais próximo; exatamente meio centavo é arredondado para cima.
 
+## Situações da parcela
+
+Uma parcela nasce como `prevista` e pode assumir as situações `programada`,
+`paga`, `cancelada` e `ajustada`. Cada mudança gera uma nova entrada de histórico
+com a situação anterior, a nova situação e o instante da alteração.
+
+O histórico é imutável e cronológico: registrar uma transição devolve um novo
+estado, sem alterar os registros anteriores, e mudanças retroativas são
+recusadas. As restrições entre situações poderão ser adicionadas quando o fluxo
+operacional for definido; neste incremento, qualquer mudança entre situações
+distintas é aceita e rastreada.
+
 ## Não pertence a este módulo
 
 - cadastro do vendedor;

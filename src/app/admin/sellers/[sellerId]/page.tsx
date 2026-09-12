@@ -15,9 +15,11 @@ import {
   type StatusTone,
 } from "@/app/_components/ui/status-badge";
 import { getBusinessDate } from "@/lib/business-date";
+import { sellerAccessRepository } from "@/modules/auth/infrastructure/db/seller-access-repository";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { isSellerId } from "@/modules/sellers/domain/seller-id";
 import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+import { SellerAccessPanel } from "./seller-access-panel";
 import styles from "./seller-details.module.css";
 import { SellerProfileForm } from "./seller-profile-form";
 import { SellerRateForm } from "./seller-rate-form";
@@ -95,7 +97,10 @@ export default async function SellerDetailsPage({
     notFound();
   }
 
-  const seller = await sellerRepository.findById(sellerId);
+  const [seller, access] = await Promise.all([
+    sellerRepository.findById(sellerId),
+    sellerAccessRepository.findBySellerId(sellerId),
+  ]);
 
   if (!seller) {
     notFound();
@@ -138,6 +143,13 @@ export default async function SellerDetailsPage({
                 phone={formatPhone(seller.phone)}
               />
               <SellerStatusForm sellerId={seller.id} active={seller.active} />
+              <SellerAccessPanel
+                sellerId={seller.id}
+                email={seller.email}
+                access={
+                  access ? { email: access.email, active: access.active } : null
+                }
+              />
             </div>
           </Card>
 

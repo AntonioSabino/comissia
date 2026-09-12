@@ -90,6 +90,29 @@ describe("commission installment statuses", () => {
     expect(Object.isFrozen(initial.entries)).toBe(true);
   });
 
+  it("não congela entradas pertencentes ao chamador", () => {
+    const callerEntry = {
+      previousStatus: null,
+      status: "prevista" as const,
+      changedAt: "2026-09-12T10:00:00.000Z",
+    };
+    const callerHistory = {
+      currentStatus: "prevista" as const,
+      entries: [callerEntry],
+    };
+
+    const changed = changeCommissionInstallmentStatus(
+      callerHistory,
+      "programada",
+      new Date("2026-09-13T10:00:00.000Z"),
+    );
+
+    expect(Object.isFrozen(callerEntry)).toBe(false);
+    expect(Object.isFrozen(callerHistory.entries)).toBe(false);
+    expect(changed.entries[0]).not.toBe(callerEntry);
+    expect(Object.isFrozen(changed.entries[0])).toBe(true);
+  });
+
   it("recusa uma situação não suportada", () => {
     const initial = createCommissionInstallmentStatusHistory(CREATED_AT);
 

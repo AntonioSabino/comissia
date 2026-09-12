@@ -28,3 +28,9 @@ export {
   type CommissionInstallmentStatusHistory,
   type CommissionInstallmentStatusHistoryEntry,
 } from "./domain/commission-installment-status";
+export {
+  generateSellerCommissionInstallments,
+  type GeneratedSellerCommissionInstallment,
+  type GeneratedSellerCommissionInstallments,
+  type GenerateSellerCommissionInstallmentsInput,
+} from "./domain/generate-seller-commission-installments";

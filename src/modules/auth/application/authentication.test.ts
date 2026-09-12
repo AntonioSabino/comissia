@@ -46,8 +46,17 @@ class InMemoryAuthRepository implements AuthRepository {
     };
   }
 
-  async createSession(session: SessionRecord): Promise<void> {
+  async createSessionForActiveUser(session: SessionRecord): Promise<boolean> {
+    const user = this.users.find(
+      (candidate) => candidate.id === session.userId && candidate.active,
+    );
+
+    if (!user) {
+      return false;
+    }
+
     this.sessions.push(session);
+    return true;
   }
 
   async deleteSessionByTokenHash(tokenHash: string): Promise<void> {
@@ -168,6 +177,24 @@ describe("authentication", () => {
     ).rejects.toBeInstanceOf(InvalidCredentialsError);
 
     expect(verifyPassword).toHaveBeenCalledOnce();
+    expect(repository.sessions).toHaveLength(0);
+  });
+
+  it("rejects login when the user is blocked before storing the session", async () => {
+    const repository = new InMemoryAuthRepository();
+    repository.users.push(activeUser);
+    const verifyPassword = vi.fn(async () => {
+      repository.users[0] = { ...activeUser, active: false };
+      return true;
+    });
+
+    await expect(
+      login(
+        { email: activeUser.email, password: "senha-correta" },
+        { repository, verifyPassword },
+      ),
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+
     expect(repository.sessions).toHaveLength(0);
   });
 

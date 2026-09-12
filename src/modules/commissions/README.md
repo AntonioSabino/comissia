@@ -112,6 +112,11 @@ para `paga` somente quando estiver integralmente quitada.
 
 ## Parcelas persistidas
 
+As tabelas das parcelas são definidas no módulo de vendas, porque a parcela
+referencia a venda e nasce dentro da transação dela; assim `sales` depende de
+`commissions` e não o contrário. As regras continuam aqui: quem calcula,
+distribui, agenda e define situação é este módulo.
+
 `commission_installments` guarda as parcelas geradas no cadastro da venda:
 número, competência (`AAAA-MM`), data prevista, o pedaço da régua que originou a
 parcela (`rule_rate_basis_points`) e o valor do vendedor em centavos inteiros. O

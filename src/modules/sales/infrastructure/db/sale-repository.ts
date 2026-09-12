@@ -1,10 +1,6 @@
 import { and, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  commissionInstallments,
-  commissionInstallmentStatusEvents,
-  generateSellerCommissionInstallments,
-} from "@/modules/commissions";
+import { generateSellerCommissionInstallments } from "@/modules/commissions";
 import {
   findCommissionRateOn,
   MissingCommissionRateError,
@@ -14,7 +10,13 @@ import {
 import { MissingAdministratorInstallmentRuleError } from "../../application/errors";
 import { findAdministratorInstallmentRuleOn } from "../../application/find-administrator-installment-rule-on";
 import type { SaleRepository } from "../../application/sale-repository";
-import { administratorInstallmentRules, administrators, sales } from "./schema";
+import {
+  administratorInstallmentRules,
+  administrators,
+  commissionInstallments,
+  commissionInstallmentStatusEvents,
+  sales,
+} from "./schema";
 
 export const saleRepository: SaleRepository = {
   async createWithCommissionSnapshot(sale) {

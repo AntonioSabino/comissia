@@ -53,9 +53,16 @@ Contém o comportamento do negócio. Cada módulo controla seus próprios concei
 casos de uso e persistência.
 
 - `sellers`: cadastro, situação e histórico de percentuais dos vendedores.
-- `sales`: registro e situação das vendas de consórcio, administradoras e a
-  régua de parcelas que cada uma define por produto e vigência.
-- `commissions`: snapshot da regra aplicada, cálculo e geração de parcelas.
+- `sales`: registro e situação das vendas de consórcio, administradoras, a régua
+  de parcelas que cada uma define por produto e vigência e a persistência das
+  parcelas geradas junto com a venda.
+- `commissions`: cálculo, distribuição, agenda e situações das parcelas.
+
+As parcelas são geradas e gravadas dentro da transação da venda, e a tabela
+referencia a venda. Manter a definição dela em `sales` é o que impede a
+dependência circular: `sales` usa as regras de `commissions`, e `commissions`
+não conhece `sales`. As regras continuam inteiras em `commissions` — quem
+calcula, distribui e decide situação é ele, sem saber onde os dados moram.
 
 ### `src/db`
 

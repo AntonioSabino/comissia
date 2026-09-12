@@ -19,7 +19,6 @@ const input: SaleRegistrationInput = {
   quotaCode: "567",
   soldOn: "2026-03-15",
   creditAmount: "R$ 200.000,00",
-  commissionInstallments: "6",
   firstInstallmentDueOn: "2026-04-15",
 };
 
@@ -28,6 +27,7 @@ function createDependencies(
     status: "created",
     id: "sale-1",
     code: "V-000001",
+    installments: 3,
   },
 ) {
   const repository: SaleRepository = {
@@ -62,6 +62,7 @@ describe("createSale", () => {
       id: "sale-1",
       code: "V-000001",
       creditAmountInCents: BigInt("20000000"),
+      installments: 3,
     });
     expect(
       dependencies.repository.createWithCommissionSnapshot,
@@ -112,6 +113,32 @@ describe("createSale", () => {
       fieldErrorsOf(createSale(input, dependencies)),
     ).resolves.toEqual({
       sellerId: "Selecione um vendedor ativo",
+    });
+  });
+
+  it("impede a venda sem régua da administradora na data", async () => {
+    const dependencies = createDependencies({
+      status: "missing-installment-rule",
+    });
+
+    await expect(
+      fieldErrorsOf(createSale(input, dependencies)),
+    ).resolves.toEqual({
+      product:
+        "A administradora não tem régua de parcelas para este produto na data da venda",
+    });
+  });
+
+  it("impede a venda cujo percentual do vendedor excede a régua", async () => {
+    const dependencies = createDependencies({
+      status: "seller-rate-above-rule",
+    });
+
+    await expect(
+      fieldErrorsOf(createSale(input, dependencies)),
+    ).resolves.toEqual({
+      sellerId:
+        "O percentual do vendedor excede o que a administradora paga neste produto",
     });
   });
 

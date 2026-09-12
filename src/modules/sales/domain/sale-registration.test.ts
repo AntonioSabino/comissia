@@ -16,7 +16,6 @@ const validInput: SaleRegistrationInput = {
   quotaCode: "567",
   soldOn: "2026-09-05",
   creditAmount: "R$ 200.000,00",
-  commissionInstallments: "6",
   firstInstallmentDueOn: "2026-10-05",
 };
 
@@ -45,7 +44,6 @@ describe("validateSaleRegistration", () => {
       quotaCode: "567",
       soldOn: "2026-09-05",
       creditAmountInCents: BigInt("20000000"),
-      commissionInstallments: 6,
       firstInstallmentDueOn: "2026-10-05",
     });
   });
@@ -70,7 +68,6 @@ describe("validateSaleRegistration", () => {
         "quotaCode",
         "soldOn",
         "creditAmount",
-        "commissionInstallments",
         "firstInstallmentDueOn",
       ].sort(),
     );
@@ -117,22 +114,13 @@ describe("validateSaleRegistration", () => {
     });
   });
 
-  it.each(["0", "121", "2,5", "abc"])(
-    "recusa %j parcelas de comissão",
-    (installments) => {
-      expect(
-        fieldErrorsOf({ ...validInput, commissionInstallments: installments }),
-      ).toEqual({ commissionInstallments: "Informe de 1 a 120 parcelas" });
-    },
-  );
+  it("não pede a quantidade de parcelas, que vem da régua", () => {
+    const valid = validateSaleRegistration(validInput, TODAY);
 
-  it("aceita a quantidade de parcelas como número", () => {
-    expect(
-      validateSaleRegistration(
-        { ...validInput, commissionInstallments: 120 },
-        TODAY,
-      ).commissionInstallments,
-    ).toBe(120);
+    expect(valid).not.toHaveProperty("commissionInstallments");
+    expect(Object.keys(fieldErrorsOf({}))).not.toContain(
+      "commissionInstallments",
+    );
   });
 
   it("recusa grupo e cota com caracteres inválidos ou longos demais", () => {

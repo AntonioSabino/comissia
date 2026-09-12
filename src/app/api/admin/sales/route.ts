@@ -46,7 +46,6 @@ export async function POST(request: Request) {
     quotaCode,
     soldOn,
     creditAmount,
-    commissionInstallments,
     firstInstallmentDueOn,
   } = body as SaleRegistrationInput;
 
@@ -61,7 +60,6 @@ export async function POST(request: Request) {
         quotaCode,
         soldOn,
         creditAmount,
-        commissionInstallments,
         firstInstallmentDueOn,
       },
       {
@@ -75,6 +73,7 @@ export async function POST(request: Request) {
         id: sale.id,
         code: sale.code,
         creditAmount: centsToDecimalString(sale.creditAmountInCents),
+        installments: sale.installments,
       },
       { status: 201 },
     );

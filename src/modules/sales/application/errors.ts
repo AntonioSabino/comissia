@@ -18,3 +18,17 @@ export class AdministratorStatusValidationError extends Error {
     this.name = "AdministratorStatusValidationError";
   }
 }
+
+export class DuplicateAdministratorInstallmentRuleError extends Error {
+  constructor() {
+    super("Já existe uma régua de parcelas com esta data de vigência");
+    this.name = "DuplicateAdministratorInstallmentRuleError";
+  }
+}
+
+export class MissingAdministratorInstallmentRuleError extends Error {
+  constructor() {
+    super("A administradora não tem régua de parcelas vigente nesta data");
+    this.name = "MissingAdministratorInstallmentRuleError";
+  }
+}

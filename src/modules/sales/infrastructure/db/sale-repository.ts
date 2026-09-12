@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte, or, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   findCommissionRateOn,
@@ -86,5 +86,65 @@ export const saleRepository: SaleRepository = {
 
       return { status: "created" as const, ...created };
     });
+  },
+
+  async list(filters = {}) {
+    const conditions: SQL[] = [];
+    const search = filters.search?.trim();
+
+    if (search) {
+      const searchCondition = or(
+        ilike(sales.code, `%${search}%`),
+        ilike(sales.customerName, `%${search}%`),
+        ilike(sales.product, `%${search}%`),
+        ilike(sales.groupCode, `%${search}%`),
+        ilike(sales.quotaCode, `%${search}%`),
+      );
+
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
+    }
+
+    if (filters.sellerId) {
+      conditions.push(eq(sales.sellerId, filters.sellerId));
+    }
+
+    if (filters.administratorId) {
+      conditions.push(eq(sales.administratorId, filters.administratorId));
+    }
+
+    if (filters.quotaStatus) {
+      conditions.push(eq(sales.quotaStatus, filters.quotaStatus));
+    }
+
+    if (filters.soldFrom) {
+      conditions.push(gte(sales.soldOn, filters.soldFrom));
+    }
+
+    if (filters.soldTo) {
+      conditions.push(lte(sales.soldOn, filters.soldTo));
+    }
+
+    return db
+      .select({
+        id: sales.id,
+        code: sales.code,
+        soldOn: sales.soldOn,
+        sellerId: sales.sellerId,
+        sellerName: sellers.name,
+        administratorId: sales.administratorId,
+        administratorName: administrators.name,
+        customerName: sales.customerName,
+        groupCode: sales.groupCode,
+        quotaCode: sales.quotaCode,
+        creditAmountInCents: sales.creditAmountInCents,
+        quotaStatus: sales.quotaStatus,
+      })
+      .from(sales)
+      .innerJoin(sellers, eq(sellers.id, sales.sellerId))
+      .innerJoin(administrators, eq(administrators.id, sales.administratorId))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(sales.soldOn), desc(sales.createdAt));
   },
 };

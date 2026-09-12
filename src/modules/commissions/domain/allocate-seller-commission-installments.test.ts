@@ -123,16 +123,60 @@ describe("allocateSellerCommissionInstallments", () => {
     },
   );
 
-  it("recusa quando os percentuais das parcelas não somam o total", () => {
+  it("distribui na proporção da régua quando o total dela é maior que o percentual do vendedor", () => {
+    // Régua de 4% da administradora em 2% + 1% + 1%; vendedor com 2% do crédito.
+    const allocation = allocateSellerCommissionInstallments({
+      creditAmountInCents: BigInt("20000000"),
+      sellerRateBasisPoints: 200,
+      installmentRatesBasisPoints: [200, 100, 100],
+    });
+
+    expect(allocation.map(({ amountInCents }) => amountInCents)).toEqual([
+      BigInt("200000"),
+      BigInt("100000"),
+      BigInt("100000"),
+    ]);
+  });
+
+  it("preserva a comissão do vendedor qualquer que seja o total da régua", () => {
+    const distributed = (installmentRatesBasisPoints: number[]) =>
+      allocateSellerCommissionInstallments({
+        creditAmountInCents: BigInt("20000000"),
+        sellerRateBasisPoints: 250,
+        installmentRatesBasisPoints,
+      }).reduce(
+        (total, installment) => total + installment.amountInCents,
+        BigInt(0),
+      );
+
+    expect(distributed([400, 300, 300])).toBe(BigInt("500000"));
+    expect(distributed([250])).toBe(BigInt("500000"));
+    expect(distributed([100, 100, 100, 100, 100])).toBe(BigInt("500000"));
+  });
+
+  it("recusa percentual do vendedor acima do total da régua", () => {
     expect(() =>
       allocateSellerCommissionInstallments({
         creditAmountInCents: BigInt(10_000),
-        sellerRateBasisPoints: 200,
-        installmentRatesBasisPoints: [50, 100],
+        sellerRateBasisPoints: 450,
+        installmentRatesBasisPoints: [200, 200],
       }),
     ).toThrow(
-      "A soma dos percentuais das parcelas deve ser igual ao percentual total do vendedor",
+      "O percentual do vendedor não pode exceder o total da régua da administradora",
     );
+  });
+
+  it("aceita a régua cujo total é exatamente o percentual do vendedor", () => {
+    const allocation = allocateSellerCommissionInstallments({
+      creditAmountInCents: BigInt("20000000"),
+      sellerRateBasisPoints: 400,
+      installmentRatesBasisPoints: [200, 200],
+    });
+
+    expect(allocation.map(({ amountInCents }) => amountInCents)).toEqual([
+      BigInt("400000"),
+      BigInt("400000"),
+    ]);
   });
 
   it("padroniza erros dos dados usados para calcular a comissão total", () => {

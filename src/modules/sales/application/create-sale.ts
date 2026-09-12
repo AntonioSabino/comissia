@@ -54,6 +54,13 @@ export async function createSale(
     });
   }
 
+  if (result.status === "invalid-installment-schedule") {
+    throw new SaleValidationError({
+      firstInstallmentDueOn:
+        "A agenda das parcelas passaria do calendário suportado; revise a primeira previsão",
+    });
+  }
+
   if (result.status === "seller-rate-above-rule") {
     throw new SaleValidationError({
       sellerId:

@@ -286,6 +286,7 @@ describe("database schema", () => {
     expect(table.columns.map((column) => column.name)).toEqual([
       "id",
       "installment_id",
+      "sequence",
       "previous_status",
       "status",
       "changed_at",
@@ -295,11 +296,12 @@ describe("database schema", () => {
     expect(
       table.uniqueConstraints.map((constraint) => constraint.name),
     ).toEqual([
-      "commission_installment_status_events_installment_changed_unique",
+      "commission_installment_status_events_installment_sequence_unique",
     ]);
-    expect(table.checks.map((constraint) => constraint.name)).toContain(
+    expect(table.checks.map((constraint) => constraint.name).sort()).toEqual([
+      "commission_installment_status_events_sequence_check",
       "commission_installment_status_events_transition_check",
-    );
+    ]);
   });
 
   it("stores the sale credit in cents", () => {

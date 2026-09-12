@@ -142,6 +142,19 @@ describe("createSale", () => {
     });
   });
 
+  it("impede a venda cuja agenda passaria do calendário suportado", async () => {
+    const dependencies = createDependencies({
+      status: "invalid-installment-schedule",
+    });
+
+    await expect(
+      fieldErrorsOf(createSale(input, dependencies)),
+    ).resolves.toEqual({
+      firstInstallmentDueOn:
+        "A agenda das parcelas passaria do calendário suportado; revise a primeira previsão",
+    });
+  });
+
   it("impede a venda sem percentual vigente na data", async () => {
     const dependencies = createDependencies({
       status: "missing-commission-rate",

@@ -95,14 +95,18 @@ npm run db:seed
 
 O seed cria três administradoras, quatro vendedores com vigências de
 percentual, doze vendas espalhadas pelo ano e, se ainda não existir nenhum
-administrador, o usuário `admin@exemplo.test` com a senha `comissia-demo-2026`,
-impressa no terminal ao final.
+administrador, o usuário `admin@exemplo.test`. A senha desse usuário é sorteada
+na hora e impressa uma única vez no terminal: nenhuma credencial fica no
+repositório. Se você perder a senha, apague o usuário e rode o seed de novo.
 
 Nada ali é real: os nomes são inventados, os CPFs são calculados a partir de
 bases sequenciais e os e-mails usam o domínio reservado `.test`. Rodar o
 comando de novo não duplica nada, porque cada registro é procurado pela sua
-chave natural antes de ser inserido. O seed recusa rodar com
-`NODE_ENV=production` e nunca deve apontar para um banco com dados de verdade.
+chave natural antes de ser inserido.
+
+O seed é para banco local: recusa rodar com `NODE_ENV=production` e recusa uma
+`DATABASE_URL` que não aponte para `localhost`, a menos que você confirme com
+`npm run db:seed -- --allow-remote`.
 
 ## Executar localmente
 

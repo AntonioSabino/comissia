@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { config } from "dotenv";
 import {
   createInitialAdmin,
@@ -19,8 +20,18 @@ config({ path: ".env.local", quiet: true });
 const DEMO_ADMIN = {
   name: "Administração Comissia",
   email: "admin@exemplo.test",
-  password: "comissia-demo-2026",
 };
+
+/** Endereços aceitos sem confirmação explícita. */
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+/**
+ * Senha sorteada a cada execução. Nenhuma credencial fica no repositório, e a
+ * senha aparece uma única vez, no terminal de quem rodou o comando.
+ */
+function generatePassword(): string {
+  return randomBytes(18).toString("base64url");
+}
 
 type DemoAdministrator = {
   name: string;
@@ -308,6 +319,15 @@ async function run() {
     throw new Error("DATABASE_URL não foi definida em .env.local");
   }
 
+  // `NODE_ENV` sozinho não protege um banco remoto mal configurado.
+  const { hostname } = new URL(databaseUrl);
+
+  if (!LOCAL_HOSTS.has(hostname) && !process.argv.includes("--allow-remote")) {
+    throw new Error(
+      `O seed é destinado ao banco local, e a DATABASE_URL aponta para ${hostname}. Se isso é intencional, repita com --allow-remote.`,
+    );
+  }
+
   const [
     { db, postgresPool },
     { and, eq, sql },
@@ -326,12 +346,14 @@ async function run() {
 
   try {
     try {
-      const admin = await createInitialAdmin(DEMO_ADMIN, {
-        repository: new PostgresInitialAdminRepository(),
-      });
+      const password = generatePassword();
+      const admin = await createInitialAdmin(
+        { ...DEMO_ADMIN, password },
+        { repository: new PostgresInitialAdminRepository() },
+      );
 
       console.log(`Administrador criado: ${admin.email}`);
-      console.log(`Senha: ${DEMO_ADMIN.password}`);
+      console.log(`Senha sorteada agora, anote: ${password}`);
     } catch (error) {
       if (!(error instanceof InitialAdminAlreadyExistsError)) {
         throw error;
@@ -371,7 +393,10 @@ async function run() {
     );
 
     const sellerIds = new Map<string, string>();
-    const rateIds = new Map<string, string>();
+    const storedRates = new Map<
+      string,
+      { id: string; rateBasisPoints: number }
+    >();
     let createdSellers = 0;
     let createdRates = 0;
 
@@ -407,7 +432,10 @@ async function run() {
 
       for (const rate of seller.rates) {
         const [existingRate] = await db
-          .select({ id: sellerCommissionRates.id })
+          .select({
+            id: sellerCommissionRates.id,
+            rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+          })
           .from(sellerCommissionRates)
           .where(
             and(
@@ -417,8 +445,17 @@ async function run() {
           )
           .limit(1);
 
+        // O percentual gravado é o da linha que existe, não o do script: o
+        // snapshot da venda precisa bater com a vigência referenciada.
         if (existingRate) {
-          rateIds.set(`${seller.name}:${rate.effectiveFrom}`, existingRate.id);
+          storedRates.set(`${seller.name}:${rate.effectiveFrom}`, existingRate);
+
+          if (existingRate.rateBasisPoints !== rate.rateBasisPoints) {
+            console.log(
+              `Vigência de ${seller.name} em ${rate.effectiveFrom}: mantido o percentual já gravado (${existingRate.rateBasisPoints} pontos-base).`,
+            );
+          }
+
           continue;
         }
 
@@ -429,9 +466,12 @@ async function run() {
             rateBasisPoints: rate.rateBasisPoints,
             effectiveFrom: rate.effectiveFrom,
           })
-          .returning({ id: sellerCommissionRates.id });
+          .returning({
+            id: sellerCommissionRates.id,
+            rateBasisPoints: sellerCommissionRates.rateBasisPoints,
+          });
 
-        rateIds.set(`${seller.name}:${rate.effectiveFrom}`, createdRate.id);
+        storedRates.set(`${seller.name}:${rate.effectiveFrom}`, createdRate);
         createdRates += 1;
       }
     }
@@ -471,9 +511,11 @@ async function run() {
       }
 
       const rate = rateValidOn(seller, sale.soldOn);
-      const rateId = rateIds.get(`${seller.name}:${rate.effectiveFrom}`);
+      const storedRate = storedRates.get(
+        `${seller.name}:${rate.effectiveFrom}`,
+      );
 
-      if (!rateId) {
+      if (!storedRate) {
         throw new Error(
           `Vigência de ${seller.name} em ${rate.effectiveFrom} não foi encontrada`,
         );
@@ -482,8 +524,8 @@ async function run() {
       await db.insert(sales).values({
         administratorId,
         sellerId,
-        sellerCommissionRateId: rateId,
-        sellerRateBasisPoints: rate.rateBasisPoints,
+        sellerCommissionRateId: storedRate.id,
+        sellerRateBasisPoints: storedRate.rateBasisPoints,
         customerName: sale.customerName,
         product: sale.product,
         groupCode: sale.groupCode,

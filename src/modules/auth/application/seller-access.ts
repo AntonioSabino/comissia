@@ -30,6 +30,13 @@ export class SellerAccessEmailInUseError extends Error {
   }
 }
 
+export class SellerAccessSellerNotFoundError extends Error {
+  constructor() {
+    super("Vendedor não encontrado");
+    this.name = "SellerAccessSellerNotFoundError";
+  }
+}
+
 export class SellerAccessNotFoundError extends Error {
   constructor() {
     super("Este vendedor não tem acesso criado");
@@ -43,8 +50,6 @@ type SellerAccessDependencies = {
 
 type CreateSellerAccessInput = {
   sellerId: string;
-  name: string;
-  email: string;
 };
 
 type CreateSellerAccessDependencies = SellerAccessDependencies & {
@@ -80,10 +85,14 @@ export async function createSellerAccess(
   }: CreateSellerAccessDependencies,
 ): Promise<CreatedSellerAccess> {
   const sellerId = validateSellerId(input.sellerId);
-  const name = typeof input.name === "string" ? input.name.trim() : "";
-  const email = normalizeEmail(
-    typeof input.email === "string" ? input.email : "",
-  );
+  const seller = await repository.findSellerIdentityById(sellerId);
+
+  if (!seller) {
+    throw new SellerAccessSellerNotFoundError();
+  }
+
+  const name = seller.name.trim();
+  const email = normalizeEmail(seller.email);
 
   if (name.length === 0 || name.length > 160) {
     throw new SellerAccessValidationError(
@@ -115,7 +124,7 @@ export async function createSellerAccess(
   }
 
   if (result.status === "seller-not-found") {
-    throw new SellerAccessValidationError("Informe um vendedor válido");
+    throw new SellerAccessSellerNotFoundError();
   }
 
   return { access: result.access, temporaryPassword };

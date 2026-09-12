@@ -5,10 +5,10 @@ import {
   createSellerAccess,
   SellerAccessAlreadyExistsError,
   SellerAccessEmailInUseError,
+  SellerAccessSellerNotFoundError,
   SellerAccessValidationError,
 } from "@/modules/auth/application/seller-access";
 import { sellerAccessRepository } from "@/modules/auth/infrastructure/db/seller-access-repository";
-import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
 
 export const runtime = "nodejs";
 
@@ -24,18 +24,10 @@ export async function POST(_request: Request, context: RouteContext) {
   }
 
   const { sellerId } = await context.params;
-  const seller = await sellerRepository.findById(sellerId);
-
-  if (!seller) {
-    return NextResponse.json(
-      { message: "Vendedor não encontrado" },
-      { status: 404 },
-    );
-  }
 
   try {
     const { access, temporaryPassword } = await createSellerAccess(
-      { sellerId, name: seller.name, email: seller.email },
+      { sellerId },
       { repository: sellerAccessRepository },
     );
 
@@ -48,6 +40,10 @@ export async function POST(_request: Request, context: RouteContext) {
   } catch (error) {
     if (error instanceof SellerAccessValidationError) {
       return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
+    if (error instanceof SellerAccessSellerNotFoundError) {
+      return NextResponse.json({ message: error.message }, { status: 404 });
     }
 
     if (

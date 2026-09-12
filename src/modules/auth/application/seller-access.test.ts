@@ -5,10 +5,12 @@ import {
   SellerAccessAlreadyExistsError,
   SellerAccessEmailInUseError,
   SellerAccessNotFoundError,
+  SellerAccessSellerNotFoundError,
   SellerAccessValidationError,
 } from "./seller-access";
 import type {
   SellerAccessCreationResult,
+  SellerAccessIdentity,
   SellerAccessRepository,
 } from "./seller-access-repository";
 
@@ -21,16 +23,22 @@ const ACCESS = {
   active: true,
 };
 
-const INPUT = {
-  sellerId: SELLER_ID,
+const SELLER = {
+  id: SELLER_ID,
   name: "Helena Duarte",
   email: "Helena@Exemplo.test",
 };
 
+const INPUT = {
+  sellerId: SELLER_ID,
+};
+
 function createDependencies(
   result: SellerAccessCreationResult = { status: "created", access: ACCESS },
+  seller: SellerAccessIdentity | null = SELLER,
 ) {
   const repository: SellerAccessRepository = {
+    findSellerIdentityById: vi.fn().mockResolvedValue(seller),
     findBySellerId: vi.fn().mockResolvedValue(null),
     createSellerAccess: vi.fn().mockResolvedValue(result),
     setSellerAccessActive: vi.fn().mockResolvedValue(ACCESS),
@@ -74,22 +82,25 @@ describe("createSellerAccess", () => {
 
   it("recusa vendedor que não é um identificador válido", async () => {
     await expect(
-      createSellerAccess(
-        { ...INPUT, sellerId: "vendedor-1" },
-        createDependencies(),
-      ),
+      createSellerAccess({ sellerId: "vendedor-1" }, createDependencies()),
     ).rejects.toBeInstanceOf(SellerAccessValidationError);
   });
 
   it("recusa cadastro sem e-mail utilizável", async () => {
     await expect(
-      createSellerAccess({ ...INPUT, email: "helena" }, createDependencies()),
+      createSellerAccess(
+        INPUT,
+        createDependencies(undefined, { ...SELLER, email: "helena" }),
+      ),
     ).rejects.toThrow("O vendedor precisa de um e-mail válido no cadastro");
   });
 
   it("recusa cadastro sem nome", async () => {
     await expect(
-      createSellerAccess({ ...INPUT, name: "   " }, createDependencies()),
+      createSellerAccess(
+        INPUT,
+        createDependencies(undefined, { ...SELLER, name: "   " }),
+      ),
     ).rejects.toBeInstanceOf(SellerAccessValidationError);
   });
 
@@ -108,13 +119,23 @@ describe("createSellerAccess", () => {
     ).rejects.toBeInstanceOf(SellerAccessEmailInUseError);
   });
 
-  it("recusa vendedor inexistente", async () => {
+  it("recusa vendedor inexistente antes de gerar a senha", async () => {
+    const dependencies = createDependencies(undefined, null);
+
+    await expect(
+      createSellerAccess(INPUT, dependencies),
+    ).rejects.toBeInstanceOf(SellerAccessSellerNotFoundError);
+
+    expect(dependencies.generateTemporaryPassword).not.toHaveBeenCalled();
+  });
+
+  it("recusa vendedor removido durante a criação do acesso", async () => {
     await expect(
       createSellerAccess(
         INPUT,
         createDependencies({ status: "seller-not-found" }),
       ),
-    ).rejects.toBeInstanceOf(SellerAccessValidationError);
+    ).rejects.toBeInstanceOf(SellerAccessSellerNotFoundError);
   });
 });
 

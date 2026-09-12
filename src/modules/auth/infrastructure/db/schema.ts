@@ -9,7 +9,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { sellers } from "../../../sellers";
+import { sellers } from "../../../sellers/infrastructure/db/schema";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "seller"]);
 

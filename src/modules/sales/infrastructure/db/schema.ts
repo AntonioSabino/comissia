@@ -16,7 +16,10 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sellerCommissionRates, sellers } from "../../../sellers";
-import { QUOTA_STATUSES } from "../../domain/quota-status";
+import {
+  INITIAL_QUOTA_STATUS,
+  QUOTA_STATUSES,
+} from "../../domain/quota-status";
 
 export const quotaStatusEnum = pgEnum("quota_status", QUOTA_STATUSES);
 
@@ -76,7 +79,7 @@ export const sales = pgTable(
     firstInstallmentDueOn: date("first_installment_due_on").notNull(),
     quotaStatus: quotaStatusEnum("quota_status")
       .notNull()
-      .default("adimplente"),
+      .default(INITIAL_QUOTA_STATUS),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

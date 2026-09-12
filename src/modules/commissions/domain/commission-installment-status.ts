@@ -52,7 +52,7 @@ function createHistory(
 ): CommissionInstallmentStatusHistory {
   return Object.freeze({
     currentStatus,
-    entries: Object.freeze(entries.map((entry) => Object.freeze(entry))),
+    entries: Object.freeze(entries.map((entry) => Object.freeze({ ...entry }))),
   });
 }
 

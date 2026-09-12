@@ -18,6 +18,7 @@ export type {
   SellerCommissionRate,
 } from "../modules/sellers";
 export {
+  administratorInstallmentRules,
   administrators,
   quotaStatusEnum,
   saleCodeSequence,
@@ -25,7 +26,9 @@ export {
 } from "../modules/sales";
 export type {
   Administrator,
+  AdministratorInstallmentRule,
   NewAdministrator,
+  NewAdministratorInstallmentRule,
   NewSale,
   QuotaStatus,
   Sale,

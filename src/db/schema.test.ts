@@ -1,6 +1,7 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import {
+  administratorInstallmentRules,
   administrators,
   quotaStatusEnum,
   sales,
@@ -112,6 +113,48 @@ describe("database schema", () => {
         unique: index.config.unique,
       })),
     ).toEqual([{ name: "administrators_name_lower_unique", unique: true }]);
+  });
+
+  it("keeps administrator installment rules as dated versions", () => {
+    const table = getTableConfig(administratorInstallmentRules);
+
+    expect(table.name).toBe("administrator_installment_rules");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "administrator_id",
+      "product",
+      "effective_from",
+      "installment_rates_basis_points",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
+    expect(
+      table.indexes.map((index) => ({
+        name: index.config.name,
+        unique: index.config.unique,
+      })),
+    ).toEqual([
+      {
+        name: "administrator_installment_rules_effective_from_unique",
+        unique: true,
+      },
+    ]);
+    expect(table.checks.map((constraint) => constraint.name).sort()).toEqual([
+      "administrator_installment_rules_installments_check",
+      "administrator_installment_rules_rates_check",
+    ]);
+  });
+
+  it("stores the installment distribution as ordered basis points", () => {
+    const table = getTableConfig(administratorInstallmentRules);
+    const distribution = table.columns.find(
+      (column) => column.name === "installment_rates_basis_points",
+    );
+
+    expect(distribution?.getSQLType()).toBe("integer[]");
+    expect(distribution?.mapFromDriverValue("{75,50,25}")).toEqual([
+      75, 50, 25,
+    ]);
   });
 
   it("persists the supported quota situations", () => {

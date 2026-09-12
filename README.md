@@ -84,6 +84,26 @@ exibi-la no terminal. Ele grava somente o hash `scrypt` e recusa a operação
 quando já existe um administrador. Não coloque a senha no comando, no código,
 no arquivo de ambiente ou em logs.
 
+## Dados de demonstração
+
+Para navegar pela aplicação com conteúdo, popule o banco local com dados
+fictícios:
+
+```bash
+npm run db:seed
+```
+
+O seed cria três administradoras, quatro vendedores com vigências de
+percentual, doze vendas espalhadas pelo ano e, se ainda não existir nenhum
+administrador, o usuário `admin@exemplo.test` com a senha `comissia-demo-2026`,
+impressa no terminal ao final.
+
+Nada ali é real: os nomes são inventados, os CPFs são calculados a partir de
+bases sequenciais e os e-mails usam o domínio reservado `.test`. Rodar o
+comando de novo não duplica nada, porque cada registro é procurado pela sua
+chave natural antes de ser inserido. O seed recusa rodar com
+`NODE_ENV=production` e nunca deve apontar para um banco com dados de verdade.
+
 ## Executar localmente
 
 ```bash

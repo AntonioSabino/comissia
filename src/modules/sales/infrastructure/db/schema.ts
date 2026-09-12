@@ -16,13 +16,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sellerCommissionRates, sellers } from "../../../sellers";
+import { QUOTA_STATUSES } from "../../domain/quota-status";
 
-export const quotaStatusEnum = pgEnum("quota_status", [
-  "adimplente",
-  "inadimplente",
-  "cancelado",
-  "contemplado",
-]);
+export const quotaStatusEnum = pgEnum("quota_status", QUOTA_STATUSES);
 
 export const administrators = pgTable(
   "administrators",
@@ -131,4 +127,3 @@ export type Administrator = typeof administrators.$inferSelect;
 export type NewAdministrator = typeof administrators.$inferInsert;
 export type Sale = typeof sales.$inferSelect;
 export type NewSale = typeof sales.$inferInsert;
-export type QuotaStatus = (typeof quotaStatusEnum.enumValues)[number];

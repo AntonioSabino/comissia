@@ -47,8 +47,14 @@ export function groupInstallmentsByCompetence(
 }
 
 /**
- * Competência a exibir: a pedida, quando existe; senão a do mês corrente; senão
- * a próxima com valor previsto; e, se tudo já passou, a última.
+ * Competência a exibir: a pedida, quando existe; senão a próxima com valor a
+ * partir do mês corrente; senão a última com valor; e, se nenhuma tiver valor,
+ * a última.
+ *
+ * A busca ignora meses zerados porque uma parcela pode valer zero centavo
+ * quando a comissão é de poucos centavos: abrir a tela num mês de R$ 0,00
+ * esconderia o próximo mês com dinheiro. A competência pedida é respeitada
+ * mesmo zerada, porque ali a escolha foi de quem navegou.
  */
 export function selectCompetence(
   months: readonly MonthlyCommissionForecast[],
@@ -59,16 +65,18 @@ export function selectCompetence(
     return null;
   }
 
-  const available = months.map((month) => month.competence);
-
-  if (requested && available.includes(requested)) {
+  if (requested && months.some((month) => month.competence === requested)) {
     return requested;
   }
 
   const current = competenceOf(today);
+  const withValue = months.filter((month) => month.totalInCents > BigInt(0));
+
+  const next = withValue.find((month) => month.competence >= current);
 
   return (
-    available.find((competence) => competence >= current) ??
-    available[available.length - 1]
+    next?.competence ??
+    withValue[withValue.length - 1]?.competence ??
+    months[months.length - 1].competence
   );
 }

@@ -1,0 +1,135 @@
+import { describe, expect, it } from "vitest";
+import {
+  competenceOf,
+  groupInstallmentsByCompetence,
+  selectCompetence,
+} from "./monthly-commission-forecast";
+import type { SellerCommissionInstallment } from "./seller-commission-repository";
+
+const TODAY = "2026-09-13";
+
+function installment(
+  overrides: Partial<SellerCommissionInstallment> = {},
+): SellerCommissionInstallment {
+  return {
+    id: `parcela-${overrides.competence ?? "2026-09"}-${overrides.number ?? 1}`,
+    competence: "2026-09",
+    dueOn: "2026-09-10",
+    number: 1,
+    saleInstallments: 3,
+    amountInCents: BigInt(100_000),
+    status: "prevista",
+    saleId: "venda-1",
+    saleCode: "V-000001",
+    product: "Auto Leve",
+    administratorName: "Porto Consórcio",
+    customerName: "Cliente Aurora",
+    ...overrides,
+  };
+}
+
+describe("groupInstallmentsByCompetence", () => {
+  it("agrupa por competência somando os centavos do mês", () => {
+    const months = groupInstallmentsByCompetence([
+      installment({ competence: "2026-09", amountInCents: BigInt(120_000) }),
+      installment({
+        competence: "2026-09",
+        number: 2,
+        amountInCents: BigInt(80_000),
+      }),
+      installment({ competence: "2026-10", amountInCents: BigInt(50_000) }),
+    ]);
+
+    expect(
+      months.map(({ competence, totalInCents }) => ({
+        competence,
+        totalInCents,
+      })),
+    ).toEqual([
+      { competence: "2026-09", totalInCents: BigInt(200_000) },
+      { competence: "2026-10", totalInCents: BigInt(50_000) },
+    ]);
+  });
+
+  it("ordena as competências da mais antiga para a mais recente", () => {
+    const months = groupInstallmentsByCompetence([
+      installment({ competence: "2027-01" }),
+      installment({ competence: "2026-12" }),
+      installment({ competence: "2026-09" }),
+    ]);
+
+    expect(months.map(({ competence }) => competence)).toEqual([
+      "2026-09",
+      "2026-12",
+      "2027-01",
+    ]);
+  });
+
+  it("ordena as parcelas do mês por data prevista, venda e número", () => {
+    const months = groupInstallmentsByCompetence([
+      installment({ dueOn: "2026-09-20", saleCode: "V-000002", number: 3 }),
+      installment({ dueOn: "2026-09-10", saleCode: "V-000001", number: 2 }),
+      installment({ dueOn: "2026-09-10", saleCode: "V-000001", number: 1 }),
+    ]);
+
+    expect(
+      months[0].installments.map(
+        ({ saleCode, number }) => `${saleCode}:${number}`,
+      ),
+    ).toEqual(["V-000001:1", "V-000001:2", "V-000002:3"]);
+  });
+
+  it("preserva a precisão de valores acima de Number.MAX_SAFE_INTEGER", () => {
+    const months = groupInstallmentsByCompetence([
+      installment({ amountInCents: BigInt("9007199254740993") }),
+      installment({ number: 2, amountInCents: BigInt("9007199254740993") }),
+    ]);
+
+    expect(months[0].totalInCents).toBe(BigInt("18014398509481986"));
+  });
+
+  it("aceita lista vazia", () => {
+    expect(groupInstallmentsByCompetence([])).toEqual([]);
+  });
+});
+
+describe("selectCompetence", () => {
+  const months = groupInstallmentsByCompetence([
+    installment({ competence: "2026-07" }),
+    installment({ competence: "2026-09" }),
+    installment({ competence: "2026-11" }),
+  ]);
+
+  it("respeita a competência pedida quando ela tem parcelas", () => {
+    expect(selectCompetence(months, "2026-07", TODAY)).toBe("2026-07");
+  });
+
+  it("ignora competência pedida sem parcelas e usa o mês corrente", () => {
+    expect(selectCompetence(months, "2026-08", TODAY)).toBe("2026-09");
+    expect(selectCompetence(months, "não é competência", TODAY)).toBe(
+      "2026-09",
+    );
+  });
+
+  it("usa a próxima competência com valor quando o mês corrente não tem", () => {
+    expect(selectCompetence(months, undefined, "2026-10-01")).toBe("2026-11");
+  });
+
+  it("usa a última competência quando todas já passaram", () => {
+    expect(selectCompetence(months, undefined, "2027-03-01")).toBe("2026-11");
+  });
+
+  it("usa a primeira competência quando todas são futuras", () => {
+    expect(selectCompetence(months, undefined, "2026-01-01")).toBe("2026-07");
+  });
+
+  it("não escolhe nada quando não há parcelas", () => {
+    expect(selectCompetence([], undefined, TODAY)).toBeNull();
+  });
+});
+
+describe("competenceOf", () => {
+  it("usa o ano e o mês da data de negócio", () => {
+    expect(competenceOf("2026-09-13")).toBe("2026-09");
+  });
+});

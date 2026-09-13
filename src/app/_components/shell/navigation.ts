@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarClock,
   LayoutDashboard,
   Ruler,
   TrendingUp,
@@ -40,5 +41,10 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
   ],
   seller: [
     { href: "/seller", label: "Resumo", icon: LayoutDashboard, exact: true },
+    {
+      href: "/seller/commissions",
+      label: "Previsão mensal",
+      icon: CalendarClock,
+    },
   ],
 };

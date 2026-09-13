@@ -21,7 +21,7 @@ import {
   formatBusinessDate,
   formatCents,
   formatCompetence,
-} from "@/app/admin/_utils/format";
+} from "@/app/_utils/format";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import {
   calculateSellerCommissionTotal,

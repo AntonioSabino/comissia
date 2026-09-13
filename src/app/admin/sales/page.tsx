@@ -12,7 +12,7 @@ import {
   StatusBadge,
   type StatusTone,
 } from "@/app/_components/ui/status-badge";
-import { formatBusinessDate, formatCents } from "@/app/admin/_utils/format";
+import { formatBusinessDate, formatCents } from "@/app/_utils/format";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { QUOTA_STATUSES, type QuotaStatus } from "@/modules/sales";

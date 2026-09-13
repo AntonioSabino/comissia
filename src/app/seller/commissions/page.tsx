@@ -104,6 +104,11 @@ export default async function SellerCommissionsPage({
       ? months[currentIndex + 1]
       : null;
 
+  const paidInstallments = month
+    ? month.installments.filter((installment) => installment.status === "paga")
+        .length
+    : 0;
+
   if (!month) {
     return (
       <>
@@ -132,7 +137,11 @@ export default async function SellerCommissionsPage({
               <CardHeading
                 titleId="month-total-title"
                 kicker={`Competência ${formatCompetence(month.competence)}`}
-                title="Previsto para o mês"
+                title={
+                  paidInstallments > 0
+                    ? "Total da competência"
+                    : "Previsto para o mês"
+                }
                 action={
                   <div className={styles.navigation}>
                     {previous ? (
@@ -168,9 +177,9 @@ export default async function SellerCommissionsPage({
               </p>
 
               <Alert>
-                Estes valores são previsões de comissão, calculadas quando cada
-                venda foi registrada. Nenhum deles representa pagamento já
-                efetuado.
+                {paidInstallments > 0
+                  ? `Os valores foram calculados quando cada venda foi registrada. Nesta competência, ${paidInstallments} de ${month.installments.length} parcelas já constam como pagas; a coluna Situação mostra o estado de cada uma.`
+                  : "Estes valores são previsões de comissão, calculadas quando cada venda foi registrada. Nenhuma parcela desta competência foi paga até agora."}
               </Alert>
             </Card>
 
@@ -239,7 +248,7 @@ export default async function SellerCommissionsPage({
                 <tr>
                   <th>Competência</th>
                   <th>Parcelas</th>
-                  <th>Previsto</th>
+                  <th>Total</th>
                 </tr>
               </thead>
               <tbody>

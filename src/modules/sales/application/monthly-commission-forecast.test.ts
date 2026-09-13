@@ -123,6 +123,42 @@ describe("selectCompetence", () => {
     expect(selectCompetence(months, undefined, "2026-01-01")).toBe("2026-07");
   });
 
+  it("pula a competência zerada e abre na próxima com valor", () => {
+    const zeroed = groupInstallmentsByCompetence([
+      installment({ competence: "2026-09", amountInCents: BigInt(0) }),
+      installment({ competence: "2026-10", amountInCents: BigInt(90_000) }),
+    ]);
+
+    expect(selectCompetence(zeroed, undefined, TODAY)).toBe("2026-10");
+  });
+
+  it("respeita a competência zerada quando ela foi pedida", () => {
+    const zeroed = groupInstallmentsByCompetence([
+      installment({ competence: "2026-09", amountInCents: BigInt(0) }),
+      installment({ competence: "2026-10", amountInCents: BigInt(90_000) }),
+    ]);
+
+    expect(selectCompetence(zeroed, "2026-09", TODAY)).toBe("2026-09");
+  });
+
+  it("usa a última competência com valor quando as seguintes são zeradas", () => {
+    const zeroed = groupInstallmentsByCompetence([
+      installment({ competence: "2026-07", amountInCents: BigInt(90_000) }),
+      installment({ competence: "2026-10", amountInCents: BigInt(0) }),
+    ]);
+
+    expect(selectCompetence(zeroed, undefined, TODAY)).toBe("2026-07");
+  });
+
+  it("usa a última competência quando nenhuma tem valor", () => {
+    const zeroed = groupInstallmentsByCompetence([
+      installment({ competence: "2026-07", amountInCents: BigInt(0) }),
+      installment({ competence: "2026-10", amountInCents: BigInt(0) }),
+    ]);
+
+    expect(selectCompetence(zeroed, undefined, TODAY)).toBe("2026-10");
+  });
+
   it("não escolhe nada quando não há parcelas", () => {
     expect(selectCompetence([], undefined, TODAY)).toBeNull();
   });

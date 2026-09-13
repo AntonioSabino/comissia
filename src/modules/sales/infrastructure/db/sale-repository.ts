@@ -13,9 +13,7 @@ import {
 import { db } from "@/db";
 import {
   CommissionInstallmentScheduleError,
-  currentCommissionInstallmentStatus,
   generateSellerCommissionInstallments,
-  type CommissionInstallmentStatusHistoryEntry,
 } from "@/modules/commissions";
 import {
   findCommissionRateOn,
@@ -30,6 +28,10 @@ import type {
   SaleInstallmentDetail,
   SaleRepository,
 } from "../../application/sale-repository";
+import {
+  collectStatusHistories,
+  resolveInstallmentStatus,
+} from "./installment-status-history";
 import {
   administratorInstallmentRules,
   administrators,
@@ -369,51 +371,35 @@ export const saleRepository: SaleRepository = {
             asc(commissionInstallmentStatusEvents.sequence),
           );
 
-        // Uma linha por evento: as parcelas são agrupadas preservando a ordem da
-        // consulta, e a situação sai do histórico, como o domínio define.
-        const grouped = new Map<
+        const histories = collectStatusHistories(
+          rows.map((row) => ({ ...row, installmentId: row.id })),
+        );
+        const installments = new Map<
           string,
-          {
-            installment: Omit<SaleInstallmentDetail, "status">;
-            history: CommissionInstallmentStatusHistoryEntry[];
-          }
+          Omit<SaleInstallmentDetail, "status">
         >();
 
         for (const row of rows) {
-          const entry = grouped.get(row.id) ?? {
-            installment: {
-              id: row.id,
-              number: row.number,
-              competence: row.competence,
-              dueOn: row.dueOn,
-              ruleRateBasisPoints: row.ruleRateBasisPoints,
-              amountInCents: row.amountInCents,
-            },
-            history: [],
-          };
-
-          if (row.status && row.changedAt) {
-            entry.history.push({
-              previousStatus: row.previousStatus,
-              status: row.status,
-              changedAt: row.changedAt.toISOString(),
-            });
+          if (installments.has(row.id)) {
+            continue;
           }
 
-          grouped.set(row.id, entry);
+          installments.set(row.id, {
+            id: row.id,
+            number: row.number,
+            competence: row.competence,
+            dueOn: row.dueOn,
+            ruleRateBasisPoints: row.ruleRateBasisPoints,
+            amountInCents: row.amountInCents,
+          });
         }
 
         const details: SaleDetails = {
           ...sale,
-          installments: [...grouped.values()].map(
-            ({ installment, history }) => ({
-              ...installment,
-              // Sem fallback: uma parcela sem histórico é inconsistência de
-              // persistência, e o domínio recusa histórico vazio em vez de
-              // apresentar uma situação que ninguém registrou.
-              status: currentCommissionInstallmentStatus(history),
-            }),
-          ),
+          installments: [...installments.values()].map((installment) => ({
+            ...installment,
+            status: resolveInstallmentStatus(histories, installment.id),
+          })),
         };
 
         return details;

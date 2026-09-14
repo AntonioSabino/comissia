@@ -1,0 +1,88 @@
+.period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.period .date {
+  width: auto;
+  min-width: 150px;
+  height: 40px;
+}
+
+.body {
+  padding: 22px var(--card-padding) var(--card-padding);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0 0 18px;
+}
+
+.stat {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-sunken);
+}
+
+.statLabel {
+  display: block;
+  color: var(--text-subtle);
+  font-size: var(--text-3xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-table-head);
+  text-transform: uppercase;
+}
+
+.statValue {
+  display: block;
+  margin: 8px 0 0;
+  color: var(--text-heading);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Verde é dinheiro: só a comissão recebe a cor. */
+.money {
+  color: var(--money-in);
+}
+
+@media (max-width: 860px) {
+  /* Sem o mínimo da regra base os dois extremos cabem lado a lado. */
+  .period .date {
+    flex: 1 1 calc(50% - 5px);
+    width: auto;
+    min-width: 0;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 660px) {
+  .body {
+    padding: 18px 20px 20px;
+  }
+
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .stat {
+    padding: 14px 16px;
+  }
+
+  .statValue {
+    font-size: var(--text-lg);
+  }
+}

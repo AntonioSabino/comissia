@@ -236,6 +236,13 @@ a lista nunca mostre uma venda sem as parcelas que ela tinha quando foi lida.
 Venda registrada antes de a régua existir continua na lista, com a lista de
 parcelas vazia — que é o que ela é.
 
+O resumo em `/seller` não acrescenta um quinto caminho: ele lê o mesmo
+`listSales`, recortado só pelo período, e agrega o resultado em
+`summarizeSellerSales`. Contar vendas, somar crédito e distribuir a comissão por
+competência é aritmética sobre o que já foi lido, então mora na aplicação e não
+no banco. O período em si é `parseSoldPeriod`, o pedaço de recorte por data que
+as listagens usam por dentro e o resumo usa sozinho.
+
 A régua da administradora e qualquer percentual da corretora ficam fora desses
 contratos, por decisão registrada no MVP: o que a administradora paga à
 corretora não aparece na visão do vendedor. O percentual dele, que define a

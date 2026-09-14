@@ -152,6 +152,7 @@ export const sellerCommissionRepository: SellerCommissionRepository = {
             quotaStatus: sales.quotaStatus,
             administratorId: sales.administratorId,
             administratorName: administrators.name,
+            sellerRateBasisPoints: sales.sellerRateBasisPoints,
             firstInstallmentDueOn: sales.firstInstallmentDueOn,
           })
           .from(sales)

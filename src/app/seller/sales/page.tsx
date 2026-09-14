@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Alert } from "@/app/_components/ui/alert";
 import { Button, ButtonLink } from "@/app/_components/ui/button";
 import { Card, CardHeading } from "@/app/_components/ui/card";
 import { DataTable, DataToolbar } from "@/app/_components/ui/data-table";
@@ -25,6 +26,7 @@ import {
 } from "@/app/_utils/installment-status";
 import { QUOTA_STATUS_LABELS, QUOTA_STATUS_TONES } from "@/app/_utils/quota";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
+import { calculateSellerCommissionTotal } from "@/modules/commissions";
 import { QUOTA_STATUSES } from "@/modules/sales";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
 import {
@@ -182,7 +184,14 @@ export default async function SellerSalesPage({
           ) : (
             <div className={styles.list}>
               {sales.map((sale) => {
-                const commissionInCents = sumInstallmentAmounts(
+                // A comissão sai do percentual gravado na venda, como no
+                // detalhe: existe mesmo sem parcelas, e é ela que a soma das
+                // parcelas deveria reproduzir.
+                const commissionInCents = calculateSellerCommissionTotal({
+                  creditAmountInCents: sale.creditAmountInCents,
+                  sellerRateBasisPoints: sale.sellerRateBasisPoints,
+                });
+                const installmentsInCents = sumInstallmentAmounts(
                   sale.installments,
                 );
                 const hasInstallments = sale.installments.length > 0;
@@ -235,9 +244,7 @@ export default async function SellerSalesPage({
                               Sua comissão
                             </span>
                             <span className={`num ${styles.commission}`}>
-                              {hasInstallments
-                                ? formatCents(commissionInCents)
-                                : "—"}
+                              {formatCents(commissionInCents)}
                             </span>
                           </span>
                         </span>
@@ -269,9 +276,16 @@ export default async function SellerSalesPage({
                         <>
                           <p className={styles.note}>
                             {formatInstallmentCount(sale.installments.length)} ·{" "}
-                            {formatCents(commissionInCents)} no total desta
-                            venda.
+                            {formatCents(installmentsInCents)} somados.
                           </p>
+
+                          {installmentsInCents !== commissionInCents ? (
+                            <Alert tone="attention">
+                              A soma das parcelas está diferente da comissão
+                              calculada. Avise a administração para conferir
+                              esta venda.
+                            </Alert>
+                          ) : null}
                           <DataTable className={styles.installments}>
                             <thead>
                               <tr>

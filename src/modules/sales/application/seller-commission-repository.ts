@@ -56,6 +56,12 @@ export type SellerSaleListItem = {
   quotaStatus: QuotaStatus;
   administratorId: string;
   administratorName: string;
+  /**
+   * Percentual do vendedor gravado na venda. A comissão da listagem sai dele,
+   * pela mesma regra do detalhe: é o que define a comissão, e continua
+   * disponível nas vendas que não têm parcelas.
+   */
+  sellerRateBasisPoints: number;
   firstInstallmentDueOn: string;
   /** Da primeira à última; vazia nas vendas registradas antes da régua. */
   installments: SellerSaleInstallment[];

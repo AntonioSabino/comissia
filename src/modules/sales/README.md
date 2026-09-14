@@ -187,6 +187,29 @@ A situação de cada parcela é derivada do histórico gravado, nunca de um camp
 separado. Vendas registradas antes da régua aparecem sem régua e sem parcelas,
 que é o que elas são.
 
+## Situação da cota
+
+A administração altera a situação em `/admin/sales/[saleId]`, no card
+"Situação da cota". São aceitas `adimplente`, `inadimplente`, `cancelado` e
+`contemplado`; registrar novamente a situação atual é recusado.
+
+`sales.quota_status` continua sendo a situação atual, usada para filtros e
+leituras diretas. A auditoria fica em `sale_quota_status_events`: a primeira
+linha registra a situação de cadastro e cada mudança posterior preserva a
+sequência, a situação anterior, a nova situação e a data. A migração registra
+como situação inicial o estado já existente nas vendas antigas, usando a data
+de criação da venda.
+
+Gatilhos do PostgreSQL criam os eventos tanto nas operações da aplicação quanto
+em alterações diretas na venda. Outro gatilho recusa `UPDATE` e `DELETE` no
+histórico, tornando-o somente de inclusão. O repositório bloqueia a venda com
+`FOR UPDATE` antes da mudança, para serializar atualizações simultâneas e impedir
+que duas requisições registrem a mesma sequência.
+
+Esta operação altera somente a situação da cota. Ela não recalcula, cancela nem
+reagenda parcelas de comissão; os efeitos financeiros de inadimplência e
+cancelamento pertencem ao fluxo de reprocessamento controlado da SCRUM-37.
+
 ## O que o vendedor vê
 
 A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos

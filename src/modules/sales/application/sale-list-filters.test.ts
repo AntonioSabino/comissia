@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildSellerSaleListQuery,
   hasSaleListFilters,
+  hasSoldPeriod,
   hasSellerSaleListFilters,
   parseSaleListFilters,
   parseSellerSaleListFilters,
+  parseSoldPeriod,
   type SellerSaleListSearchParams,
 } from "./sale-list-filters";
 
@@ -249,5 +251,58 @@ describe("seller sale list query", () => {
     );
 
     expect(roundTrip).toEqual(filters);
+  });
+});
+
+describe("sold period", () => {
+  it("devolve um período vazio quando nada é informado", () => {
+    const period = parseSoldPeriod({});
+
+    expect(period).toEqual({ from: "", to: "" });
+    expect(hasSoldPeriod(period)).toBe(false);
+  });
+
+  it("devolve os dois extremos como filtro efetivo", () => {
+    const period = parseSoldPeriod({ from: "2026-01-01", to: "2026-03-31" });
+
+    expect(period).toEqual({
+      from: "2026-01-01",
+      to: "2026-03-31",
+      soldFrom: "2026-01-01",
+      soldTo: "2026-03-31",
+    });
+    expect(hasSoldPeriod(period)).toBe(true);
+  });
+
+  it("aceita apenas um dos extremos", () => {
+    expect(parseSoldPeriod({ from: "2026-01-01" })).toEqual({
+      from: "2026-01-01",
+      to: "",
+      soldFrom: "2026-01-01",
+    });
+    expect(parseSoldPeriod({ to: "2026-01-01" })).toEqual({
+      from: "",
+      to: "2026-01-01",
+      soldTo: "2026-01-01",
+    });
+  });
+
+  it("ordena um período informado ao contrário", () => {
+    expect(parseSoldPeriod({ from: "2026-03-31", to: "2026-01-01" })).toEqual({
+      from: "2026-01-01",
+      to: "2026-03-31",
+      soldFrom: "2026-01-01",
+      soldTo: "2026-03-31",
+    });
+  });
+
+  it("descarta data fora do calendário, fora do formato ou repetida", () => {
+    const period = parseSoldPeriod({
+      from: "2026-02-30",
+      to: ["2026-01-01", "2026-02-01"],
+    });
+
+    expect(period).toEqual({ from: "", to: "" });
+    expect(hasSoldPeriod(period)).toBe(false);
   });
 });

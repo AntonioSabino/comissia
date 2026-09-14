@@ -23,6 +23,18 @@ export type SellerSummary = {
    * esconder atrás de um número só.
    */
   installmentsInCents: bigint;
+  /**
+   * Quantas vendas têm parcelas que não somam a própria comissão. Contadas uma
+   * a uma de propósito: no total, uma venda a menos e outra a mais se anulam, e
+   * as duas estariam erradas.
+   */
+  salesWithMismatch: number;
+  /**
+   * Quantas vendas não têm parcelas geradas. Elas fazem a soma das parcelas
+   * ficar legitimamente abaixo da comissão, e sem isso o resumo acusaria
+   * divergência onde não há.
+   */
+  salesWithoutInstallments: number;
   /** Competências dessas vendas, da mais antiga para a mais recente. */
   months: SellerSummaryMonth[];
 };
@@ -40,14 +52,26 @@ export function summarizeSellerSales(
   let creditInCents = BigInt(0);
   let commissionInCents = BigInt(0);
   let installmentsInCents = BigInt(0);
+  let salesWithMismatch = 0;
+  let salesWithoutInstallments = 0;
 
   for (const sale of sales) {
-    creditInCents += sale.creditAmountInCents;
-    commissionInCents += calculateSellerCommissionTotal({
+    const saleCommissionInCents = calculateSellerCommissionTotal({
       creditAmountInCents: sale.creditAmountInCents,
       sellerRateBasisPoints: sale.sellerRateBasisPoints,
     });
-    installmentsInCents += sumInstallmentAmounts(sale.installments);
+    const saleInstallmentsInCents = sumInstallmentAmounts(sale.installments);
+
+    creditInCents += sale.creditAmountInCents;
+    commissionInCents += saleCommissionInCents;
+    installmentsInCents += saleInstallmentsInCents;
+
+    if (sale.installments.length === 0) {
+      // Venda anterior à régua: não ter parcelas é o que ela é, não um erro.
+      salesWithoutInstallments += 1;
+    } else if (saleInstallmentsInCents !== saleCommissionInCents) {
+      salesWithMismatch += 1;
+    }
 
     for (const installment of sale.installments) {
       const month = months.get(installment.competence) ?? {
@@ -67,6 +91,8 @@ export function summarizeSellerSales(
     creditInCents,
     commissionInCents,
     installmentsInCents,
+    salesWithMismatch,
+    salesWithoutInstallments,
     months: [...months.values()].sort((first, second) =>
       first.competence.localeCompare(second.competence),
     ),

@@ -29,10 +29,6 @@ export const metadata: Metadata = {
   title: "Resumo | Comissia",
 };
 
-function formatSaleCount(count: number): string {
-  return count === 1 ? "1 venda" : `${count} vendas`;
-}
-
 function formatInstallmentCount(count: number): string {
   return count === 1 ? "1 parcela" : `${count} parcelas`;
 }
@@ -185,17 +181,25 @@ export default async function SellerPage({ searchParams }: SellerPageProps) {
                 </div>
               </dl>
 
-              {summary.installmentsInCents === summary.commissionInCents ? (
+              {summary.salesWithMismatch > 0 ? (
+                <Alert tone="attention">
+                  {summary.salesWithMismatch === 1
+                    ? "Uma venda deste período tem parcelas que não somam a própria comissão."
+                    : `${summary.salesWithMismatch} vendas deste período têm parcelas que não somam a própria comissão.`}{" "}
+                  Avise a administração para conferir.
+                </Alert>
+              ) : summary.salesWithoutInstallments > 0 ? (
+                <Alert>
+                  {summary.salesWithoutInstallments === 1
+                    ? "Uma venda deste período não tem parcelas geradas, então ela entra na comissão mas não aparece em nenhum mês."
+                    : `${summary.salesWithoutInstallments} vendas deste período não têm parcelas geradas, então elas entram na comissão mas não aparecem em nenhum mês.`}{" "}
+                  Fale com a administração para saber como serão pagas.
+                </Alert>
+              ) : (
                 <Alert>
                   Estes valores são previsões, calculadas quando cada venda foi
                   registrada. A previsão mensal mostra o que já consta como pago
                   e o que ainda não.
-                </Alert>
-              ) : (
-                <Alert tone="attention">
-                  A soma das parcelas destas vendas (
-                  {formatCents(summary.installmentsInCents)}) está diferente da
-                  comissão calculada. Avise a administração para conferir.
                 </Alert>
               )}
             </div>
@@ -212,7 +216,23 @@ export default async function SellerPage({ searchParams }: SellerPageProps) {
                   : `${summary.months.length} competências`
               }
               title="Previsto por mês"
-              description="Como a comissão destas vendas se distribui. A competência abre a previsão mensal."
+              description={
+                isFiltered
+                  ? "Como a comissão das vendas deste período se distribui. A previsão mensal soma todas as suas parcelas do mês, inclusive as de vendas fora deste recorte, então os totais são de coisas diferentes."
+                  : "Como a comissão destas vendas se distribui. A competência abre a previsão mensal."
+              }
+              action={
+                isFiltered ? (
+                  <ButtonLink
+                    href="/seller/commissions"
+                    variant="secondary"
+                    size="sm"
+                    iconAfter={ArrowRight}
+                  >
+                    Previsão mensal
+                  </ButtonLink>
+                ) : null
+              }
             />
 
             <DataTable>
@@ -227,11 +247,15 @@ export default async function SellerPage({ searchParams }: SellerPageProps) {
                 {summary.months.map((month) => (
                   <tr key={month.competence}>
                     <td className="num">
-                      <Link
-                        href={`/seller/commissions?competencia=${month.competence}`}
-                      >
-                        {formatCompetence(month.competence)}
-                      </Link>
+                      {isFiltered ? (
+                        formatCompetence(month.competence)
+                      ) : (
+                        <Link
+                          href={`/seller/commissions?competencia=${month.competence}`}
+                        >
+                          {formatCompetence(month.competence)}
+                        </Link>
+                      )}
                     </td>
                     <td className="num">
                       {formatInstallmentCount(month.installments)}
@@ -241,13 +265,6 @@ export default async function SellerPage({ searchParams }: SellerPageProps) {
                 ))}
               </tbody>
             </DataTable>
-          </Card>
-        ) : summary.sales > 0 ? (
-          <Card flush>
-            <EmptyState
-              title="Estas vendas não têm parcelas geradas"
-              description={`${formatSaleCount(summary.sales)} no período, registradas antes de as parcelas passarem a ser geradas automaticamente. Fale com a administração para saber como serão pagas.`}
-            />
           </Card>
         ) : null}
       </PageBody>

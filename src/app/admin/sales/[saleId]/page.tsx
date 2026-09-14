@@ -26,7 +26,7 @@ import {
 } from "@/app/_utils/format";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { calculateSellerCommissionTotal } from "@/modules/commissions";
-import type { SaleDetails } from "@/modules/sales";
+import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
 import { isUuid } from "@/shared/uuid";
 import styles from "./sale-details.module.css";
@@ -37,13 +37,6 @@ export const metadata: Metadata = {
 
 function formatInstallmentCount(count: number): string {
   return count === 1 ? "1 parcela" : `${count} parcelas`;
-}
-
-function sumInstallments(installments: SaleDetails["installments"]): bigint {
-  return installments.reduce(
-    (total, installment) => total + installment.amountInCents,
-    BigInt(0),
-  );
 }
 
 function sumBasisPoints(rates: readonly number[]): number {
@@ -76,7 +69,7 @@ export default async function SaleDetailsPage({
     creditAmountInCents: sale.creditAmountInCents,
     sellerRateBasisPoints: sale.sellerRateBasisPoints,
   });
-  const installmentsInCents = sumInstallments(sale.installments);
+  const installmentsInCents = sumInstallmentAmounts(sale.installments);
   const quotaStatus = sale.quotaStatus;
 
   return (

@@ -59,6 +59,48 @@ function readDate(value: string | string[] | undefined): string {
   return isValidDateOnly(date) ? date : "";
 }
 
+/**
+ * Recorte pela data da venda: os campos do formulário e os filtros efetivos.
+ * É o único filtro que o resumo do vendedor oferece, e o pedaço de período das
+ * listagens, que leem os demais campos por cima deste.
+ */
+export type ParsedSoldPeriod = SellerSaleListFilters & {
+  from: string;
+  to: string;
+};
+
+export type SoldPeriodSearchParams = {
+  from?: string | string[];
+  to?: string | string[];
+};
+
+/**
+ * Lê o período descartando datas fora do calendário ou do formato AAAA-MM-DD.
+ * Um período invertido é ordenado, em vez de devolver uma lista vazia.
+ */
+export function parseSoldPeriod(
+  input: SoldPeriodSearchParams,
+): ParsedSoldPeriod {
+  const firstDate = readDate(input.from);
+  const secondDate = readDate(input.to);
+  const isInverted =
+    firstDate.length > 0 && secondDate.length > 0 && firstDate > secondDate;
+  const from = isInverted ? secondDate : firstDate;
+  const to = isInverted ? firstDate : secondDate;
+
+  return {
+    from,
+    to,
+    ...(from.length > 0 ? { soldFrom: from } : {}),
+    ...(to.length > 0 ? { soldTo: to } : {}),
+  };
+}
+
+/** Indica se há recorte de período, para oferecer a limpeza dele. */
+export function hasSoldPeriod(period: ParsedSoldPeriod): boolean {
+  return period.from.length > 0 || period.to.length > 0;
+}
+
 type SharedFields = {
   search: string;
   administrator: string;
@@ -75,18 +117,9 @@ function readSharedFields(input: SellerSaleListSearchParams): SharedFields {
   const status: QuotaStatusFilter = isQuotaStatus(requestedStatus)
     ? requestedStatus
     : "all";
-  const firstDate = readDate(input.from);
-  const secondDate = readDate(input.to);
-  const isInverted =
-    firstDate.length > 0 && secondDate.length > 0 && firstDate > secondDate;
+  const { from, to } = parseSoldPeriod(input);
 
-  return {
-    search,
-    administrator,
-    status,
-    from: isInverted ? secondDate : firstDate,
-    to: isInverted ? firstDate : secondDate,
-  };
+  return { search, administrator, status, from, to };
 }
 
 /** Os filtros efetivos que nascem dos campos comuns, sem os campos vazios. */

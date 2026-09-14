@@ -25,6 +25,7 @@ export {
   commissionInstallmentStatusEvents,
   quotaStatusEnum,
   saleCodeSequence,
+  saleQuotaStatusEvents,
   sales,
 } from "../modules/sales";
 export type {
@@ -37,6 +38,8 @@ export type {
   NewCommissionInstallment,
   NewCommissionInstallmentStatusEvent,
   NewSale,
+  NewSaleQuotaStatusEvent,
   QuotaStatus,
   Sale,
+  SaleQuotaStatusEvent,
 } from "../modules/sales";

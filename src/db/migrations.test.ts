@@ -18,6 +18,7 @@ const installmentRulesSql = readMigration(
 const appendOnlyInstallmentRulesSql = readMigration(
   "0009_append_only_installment_rules",
 );
+const quotaStatusHistorySql = readMigration("0013_sale_quota_status_history");
 
 describe("database migrations", () => {
   it("enforces append-only seller commission rate history", () => {
@@ -62,6 +63,33 @@ describe("database migrations", () => {
     );
     expect(appendOnlyInstallmentRulesSql).toContain(
       "RAISE EXCEPTION 'administrator_installment_rules is append-only'",
+    );
+  });
+
+  it("backfills and records every quota situation change", () => {
+    expect(quotaStatusHistorySql).toContain(
+      'INSERT INTO "sale_quota_status_events"',
+    );
+    expect(quotaStatusHistorySql).toContain(
+      'CREATE TRIGGER "sales_initial_quota_status_event"',
+    );
+    expect(quotaStatusHistorySql).toContain(
+      'CREATE TRIGGER "sales_quota_status_changed_event"',
+    );
+    expect(quotaStatusHistorySql).toContain(
+      'OLD."quota_status" IS DISTINCT FROM NEW."quota_status"',
+    );
+  });
+
+  it("keeps quota situation events append-only", () => {
+    expect(quotaStatusHistorySql).toContain(
+      'CREATE TRIGGER "sale_quota_status_events_append_only"',
+    );
+    expect(quotaStatusHistorySql).toContain(
+      'BEFORE UPDATE OR DELETE ON "sale_quota_status_events"',
+    );
+    expect(quotaStatusHistorySql).toContain(
+      "RAISE EXCEPTION 'sale_quota_status_events is append-only'",
     );
   });
 });

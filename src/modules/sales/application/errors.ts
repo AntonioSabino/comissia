@@ -32,3 +32,24 @@ export class MissingAdministratorInstallmentRuleError extends Error {
     this.name = "MissingAdministratorInstallmentRuleError";
   }
 }
+
+export class SaleNotFoundError extends Error {
+  constructor() {
+    super("Venda não encontrada");
+    this.name = "SaleNotFoundError";
+  }
+}
+
+export class QuotaStatusValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "QuotaStatusValidationError";
+  }
+}
+
+export class QuotaStatusUnchangedError extends Error {
+  constructor() {
+    super("A nova situação deve ser diferente da situação atual");
+    this.name = "QuotaStatusUnchangedError";
+  }
+}

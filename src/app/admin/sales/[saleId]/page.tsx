@@ -27,8 +27,10 @@ import {
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { calculateSellerCommissionTotal } from "@/modules/commissions";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
+import { quotaStatusRepository } from "@/modules/sales/infrastructure/db/quota-status-repository";
 import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
 import { isUuid } from "@/shared/uuid";
+import { QuotaStatusPanel } from "./quota-status-panel";
 import styles from "./sale-details.module.css";
 
 export const metadata: Metadata = {
@@ -63,6 +65,8 @@ export default async function SaleDetailsPage({
     notFound();
   }
 
+  const quotaStatusHistory = await quotaStatusRepository.listHistory(sale.id);
+
   // O total vem do percentual gravado na venda; a soma das parcelas é exibida ao
   // lado justamente para que qualquer divergência apareça na tela.
   const commissionInCents = calculateSellerCommissionTotal({
@@ -70,7 +74,7 @@ export default async function SaleDetailsPage({
     sellerRateBasisPoints: sale.sellerRateBasisPoints,
   });
   const installmentsInCents = sumInstallmentAmounts(sale.installments);
-  const quotaStatus = sale.quotaStatus;
+  const quotaStatus = quotaStatusHistory.at(-1)?.status ?? sale.quotaStatus;
 
   return (
     <>
@@ -152,6 +156,13 @@ export default async function SaleDetailsPage({
                 </div>
               </dl>
             </Card>
+
+            <QuotaStatusPanel
+              key={`${sale.id}:${quotaStatus}`}
+              saleId={sale.id}
+              currentStatus={quotaStatus}
+              history={quotaStatusHistory}
+            />
 
             <Card flush aria-labelledby="sale-installments-title">
               <CardHeading

@@ -207,6 +207,42 @@ export const sales = pgTable(
   ],
 );
 
+/**
+ * Histórico auditável da situação da cota. A situação atual continua em
+ * `sales` para filtros e leitura direta, enquanto cada mudança é preservada
+ * nesta tabela somente de inclusão.
+ */
+export const saleQuotaStatusEvents = pgTable(
+  "sale_quota_status_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    saleId: uuid("sale_id")
+      .notNull()
+      .references(() => sales.id, { onDelete: "restrict" }),
+    sequence: integer("sequence").notNull(),
+    previousStatus: quotaStatusEnum("previous_status"),
+    status: quotaStatusEnum("status").notNull(),
+    changedAt: timestamp("changed_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("sale_quota_status_events_sale_sequence_unique").on(
+      table.saleId,
+      table.sequence,
+    ),
+    index("sale_quota_status_events_sale_changed_at_index").on(
+      table.saleId,
+      table.changedAt,
+    ),
+    check(
+      "sale_quota_status_events_history_check",
+      sql`(${table.sequence} = 1 AND ${table.previousStatus} IS NULL) OR (${table.sequence} > 1 AND ${table.previousStatus} IS NOT NULL AND ${table.previousStatus} <> ${table.status})`,
+    ),
+  ],
+);
+
 export const commissionInstallmentStatusEnum = pgEnum(
   "commission_installment_status",
   COMMISSION_INSTALLMENT_STATUSES,
@@ -312,6 +348,8 @@ export type Administrator = typeof administrators.$inferSelect;
 export type NewAdministrator = typeof administrators.$inferInsert;
 export type Sale = typeof sales.$inferSelect;
 export type NewSale = typeof sales.$inferInsert;
+export type SaleQuotaStatusEvent = typeof saleQuotaStatusEvents.$inferSelect;
+export type NewSaleQuotaStatusEvent = typeof saleQuotaStatusEvents.$inferInsert;
 export type AdministratorInstallmentRule =
   typeof administratorInstallmentRules.$inferSelect;
 export type NewAdministratorInstallmentRule =

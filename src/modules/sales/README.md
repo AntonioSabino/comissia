@@ -189,14 +189,29 @@ que é o que elas são.
 
 ## O que o vendedor vê
 
-A área do vendedor lê as próprias parcelas por dois caminhos, os dois sempre
-filtrados pelo vendedor da sessão: `listInstallments`, que alimenta a previsão
-mensal, e `findSale`, que devolve uma venda com as parcelas dela em
+A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos
+sempre filtrados pelo vendedor da sessão: `listInstallments`, que alimenta a
+previsão mensal; `listSales`, que alimenta a lista de vendas e comissões em
+`/seller/sales`; `listSaleAdministrators`, que monta o filtro de administradora
+dessa lista; e `findSale`, que devolve uma venda com as parcelas dela em
 `/seller/sales/[saleId]`.
+
+O vendedor nunca é um campo dos filtros. Ele é um argumento à parte, lido da
+sessão, e abre a lista de condições da consulta: os filtros vindos da URL só
+conseguem estreitar o recorte. `parseSellerSaleListFilters` existe justamente
+para isso — é o parser da administração sem o campo `seller`, de modo que um
+`seller` colado na query string não tem onde encostar.
 
 Venda de outro vendedor não é negada, é **não encontrada**: o identificador
 entra na condição da consulta junto com o vendedor, então trocar a URL não
-confirma que aquela venda existe.
+confirma que aquela venda existe. Pelo mesmo motivo, o filtro de administradora
+é montado com as administradoras que aparecem nas vendas dele, e não com o
+catálogo inteiro.
+
+`listSales` traz as vendas e as parcelas de cada uma no mesmo snapshot, para que
+a lista nunca mostre uma venda sem as parcelas que ela tinha quando foi lida.
+Venda registrada antes de a régua existir continua na lista, com a lista de
+parcelas vazia — que é o que ela é.
 
 A régua da administradora e qualquer percentual da corretora ficam fora desses
 contratos, por decisão registrada no MVP: o que a administradora paga à

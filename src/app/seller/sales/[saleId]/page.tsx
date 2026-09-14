@@ -1,6 +1,5 @@
 import { ArrowLeft, Receipt } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Alert } from "@/app/_components/ui/alert";
 import { ButtonLink } from "@/app/_components/ui/button";
@@ -11,25 +10,25 @@ import {
   PageHeader,
   TwoColumn,
 } from "@/app/_components/ui/page-layout";
-import { EmptyState } from "@/app/_components/ui/state-block";
+import { EmptyState, ErrorState } from "@/app/_components/ui/state-block";
 import { StatusBadge } from "@/app/_components/ui/status-badge";
-import {
-  INSTALLMENT_STATUS_LABELS,
-  INSTALLMENT_STATUS_TONES,
-} from "@/app/_utils/installment-status";
-import { QUOTA_STATUS_LABELS, QUOTA_STATUS_TONES } from "@/app/_utils/quota";
 import {
   formatBasisPoints,
   formatBusinessDate,
   formatCents,
   formatCompetence,
 } from "@/app/_utils/format";
+import {
+  INSTALLMENT_STATUS_LABELS,
+  INSTALLMENT_STATUS_TONES,
+} from "@/app/_utils/installment-status";
+import { QUOTA_STATUS_LABELS, QUOTA_STATUS_TONES } from "@/app/_utils/quota";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { calculateSellerCommissionTotal } from "@/modules/commissions";
-import type { SaleDetails } from "@/modules/sales";
-import { saleRepository } from "@/modules/sales/infrastructure/db/sale-repository";
+import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
+import { sellerCommissionRepository } from "@/modules/sales/infrastructure/db/seller-commission-repository";
 import { isUuid } from "@/shared/uuid";
-import styles from "./sale-details.module.css";
+import styles from "./seller-sale.module.css";
 
 export const metadata: Metadata = {
   title: "Detalhes da venda | Comissia",
@@ -39,59 +38,66 @@ function formatInstallmentCount(count: number): string {
   return count === 1 ? "1 parcela" : `${count} parcelas`;
 }
 
-function sumInstallments(installments: SaleDetails["installments"]): bigint {
-  return installments.reduce(
-    (total, installment) => total + installment.amountInCents,
-    BigInt(0),
-  );
-}
-
-function sumBasisPoints(rates: readonly number[]): number {
-  return rates.reduce((total, rate) => total + rate, 0);
-}
-
-type SaleDetailsPageProps = {
+type SellerSalePageProps = {
   params: Promise<{ saleId: string }>;
 };
 
-export default async function SaleDetailsPage({
-  params,
-}: SaleDetailsPageProps) {
-  await requirePageRole("admin");
+export default async function SellerSalePage({ params }: SellerSalePageProps) {
+  const user = await requirePageRole("seller");
   const { saleId } = await params;
+
+  if (!user.sellerId) {
+    return (
+      <>
+        <PageHeader eyebrow="Área do vendedor" title="Detalhes da venda" />
+        <PageBody>
+          <Card flush>
+            <ErrorState
+              title="Sua conta ainda não está ligada a um cadastro de vendedor"
+              description="Peça à administração para vincular o seu acesso ao seu cadastro; sem isso não há vendas para mostrar."
+            />
+          </Card>
+        </PageBody>
+      </>
+    );
+  }
 
   if (!isUuid(saleId)) {
     notFound();
   }
 
-  const sale = await saleRepository.findById(saleId);
+  // A consulta filtra pelo vendedor da sessão: venda de outro vendedor não é
+  // encontrada, em vez de ser negada — trocar o identificador na URL não
+  // confirma que ela existe.
+  const sale = await sellerCommissionRepository.findSale(saleId, user.sellerId);
 
   if (!sale) {
     notFound();
   }
 
-  // O total vem do percentual gravado na venda; a soma das parcelas é exibida ao
-  // lado justamente para que qualquer divergência apareça na tela.
   const commissionInCents = calculateSellerCommissionTotal({
     creditAmountInCents: sale.creditAmountInCents,
     sellerRateBasisPoints: sale.sellerRateBasisPoints,
   });
-  const installmentsInCents = sumInstallments(sale.installments);
-  const quotaStatus = sale.quotaStatus;
+  const installmentsInCents = sumInstallmentAmounts(sale.installments);
 
   return (
     <>
       <PageHeader
         breadcrumb={[
-          { label: "Vendas", href: "/admin/sales" },
+          { label: "Previsão mensal", href: "/seller/commissions" },
           { label: sale.code },
         ]}
-        eyebrow="Venda"
+        eyebrow="Sua venda"
         title={sale.code}
         subtitle={`${sale.customerName} · ${sale.product}`}
         actions={
-          <ButtonLink href="/admin/sales" variant="secondary" icon={ArrowLeft}>
-            Voltar para vendas
+          <ButtonLink
+            href="/seller/commissions"
+            variant="secondary"
+            icon={ArrowLeft}
+          >
+            Voltar para a previsão
           </ButtonLink>
         }
       />
@@ -99,10 +105,10 @@ export default async function SaleDetailsPage({
       <PageBody>
         <TwoColumn>
           <div className={styles.stack}>
-            <Card aria-labelledby="sale-data-title">
+            <Card aria-labelledby="seller-sale-data-title">
               <CardHeading
-                titleId="sale-data-title"
-                kicker="Cadastro"
+                titleId="seller-sale-data-title"
+                kicker="Venda"
                 title="Dados da venda"
               />
 
@@ -114,13 +120,13 @@ export default async function SaleDetailsPage({
                 <div>
                   <dt>Situação da cota</dt>
                   <dd>
-                    <StatusBadge tone={QUOTA_STATUS_TONES[quotaStatus]}>
-                      {QUOTA_STATUS_LABELS[quotaStatus]}
+                    <StatusBadge tone={QUOTA_STATUS_TONES[sale.quotaStatus]}>
+                      {QUOTA_STATUS_LABELS[sale.quotaStatus]}
                     </StatusBadge>
                   </dd>
                 </div>
                 <div>
-                  <dt>Crédito</dt>
+                  <dt>Crédito vendido</dt>
                   <dd className="num">
                     {formatCents(sale.creditAmountInCents)}
                   </dd>
@@ -140,14 +146,6 @@ export default async function SaleDetailsPage({
                   </dd>
                 </div>
                 <div>
-                  <dt>Vendedor</dt>
-                  <dd>
-                    <Link href={`/admin/sellers/${sale.sellerId}`}>
-                      {sale.sellerName}
-                    </Link>
-                  </dd>
-                </div>
-                <div>
                   <dt>Administradora</dt>
                   <dd>{sale.administratorName}</dd>
                 </div>
@@ -160,23 +158,23 @@ export default async function SaleDetailsPage({
               </dl>
             </Card>
 
-            <Card flush aria-labelledby="sale-installments-title">
+            <Card flush aria-labelledby="seller-sale-installments-title">
               <CardHeading
-                titleId="sale-installments-title"
+                titleId="seller-sale-installments-title"
                 kicker={
                   sale.installments.length > 0
                     ? `${formatInstallmentCount(sale.installments.length)} · ${formatCents(installmentsInCents)}`
                     : "Nenhuma parcela"
                 }
-                title="Parcelas previstas"
-                description="Geradas no cadastro da venda e preservadas quando a régua muda."
+                title="Suas parcelas"
+                description="Da primeira à última, como foram geradas no cadastro da venda."
               />
 
               {sale.installments.length === 0 ? (
                 <EmptyState
                   icon={Receipt}
                   title="Esta venda não tem parcelas geradas"
-                  description="Ela foi registrada antes de a régua de parcelas existir, então não há régua nem parcelas para exibir. Vendas registradas depois disso têm as duas."
+                  description="Ela foi registrada antes de as parcelas passarem a ser geradas automaticamente. Fale com a administração para saber como ela será paga."
                 />
               ) : (
                 <DataTable>
@@ -185,7 +183,6 @@ export default async function SaleDetailsPage({
                       <th>Parcela</th>
                       <th>Competência</th>
                       <th>Previsão</th>
-                      <th>Régua</th>
                       <th>Valor</th>
                       <th>Situação</th>
                     </tr>
@@ -201,9 +198,6 @@ export default async function SaleDetailsPage({
                         </td>
                         <td className="num">
                           {formatBusinessDate(installment.dueOn)}
-                        </td>
-                        <td className="num">
-                          {formatBasisPoints(installment.ruleRateBasisPoints)}
                         </td>
                         <td className="num">
                           {formatCents(installment.amountInCents)}
@@ -223,74 +217,42 @@ export default async function SaleDetailsPage({
             </Card>
           </div>
 
-          <Card aria-labelledby="sale-commission-title">
+          <Card aria-labelledby="seller-sale-commission-title">
             <CardHeading
-              titleId="sale-commission-title"
-              kicker="Cálculo"
-              title="Comissão da venda"
-              description="Valores do momento do cadastro. Alterações posteriores no acordo ou na régua não recalculam esta venda."
+              titleId="seller-sale-commission-title"
+              kicker="Sua comissão"
+              title="Como o valor foi calculado"
+              description="Pelo percentual acordado com você, vigente na data da venda. Mudanças posteriores no acordo não recalculam esta venda."
             />
 
             <dl className={styles.snapshot}>
               <div>
-                <dt>Comissão do vendedor</dt>
-                <dd className="num">{formatCents(commissionInCents)}</dd>
-              </div>
-              <div>
-                <dt>Percentual do vendedor</dt>
+                <dt>Seu percentual</dt>
                 <dd className="num">
                   {formatBasisPoints(sale.sellerRateBasisPoints)}
                   <span className={styles.origin}>
-                    Vigência de{" "}
-                    {formatBusinessDate(sale.sellerRateEffectiveFrom)}, no
-                    histórico do{" "}
-                    <Link href={`/admin/sellers/${sale.sellerId}`}>
-                      vendedor
-                    </Link>
+                    Vigente desde{" "}
+                    {formatBusinessDate(sale.sellerRateEffectiveFrom)}
                   </span>
                 </dd>
               </div>
-
-              {sale.installmentRatesBasisPoints &&
-              sale.installmentRuleEffectiveFrom ? (
-                <>
-                  <div>
-                    <dt>Régua da administradora</dt>
-                    <dd className="num">
-                      {formatBasisPoints(
-                        sumBasisPoints(sale.installmentRatesBasisPoints),
-                      )}
-                      <span className={styles.origin}>
-                        {sale.installmentRuleProduct}, vigência de{" "}
-                        {formatBusinessDate(sale.installmentRuleEffectiveFrom)},
-                        em{" "}
-                        <Link href="/admin/installment-rules">
-                          réguas de parcelas
-                        </Link>
-                      </span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Distribuição aplicada</dt>
-                    <dd className={`num ${styles.distribution}`}>
-                      {sale.installmentRatesBasisPoints
-                        .map(formatBasisPoints)
-                        .join(" · ")}
-                    </dd>
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <dt>Régua da administradora</dt>
-                  <dd>
-                    <Alert tone="attention">
-                      Venda registrada antes da régua de parcelas: nenhuma régua
-                      foi gravada e nenhuma parcela foi gerada.
-                    </Alert>
-                  </dd>
-                </div>
-              )}
+              <div>
+                <dt>Comissão desta venda</dt>
+                <dd className="num">{formatCents(commissionInCents)}</dd>
+              </div>
+              <div>
+                <dt>Soma das parcelas</dt>
+                <dd className="num">{formatCents(installmentsInCents)}</dd>
+              </div>
             </dl>
+
+            {sale.installments.length > 0 &&
+            installmentsInCents !== commissionInCents ? (
+              <Alert tone="attention">
+                A soma das parcelas está diferente da comissão calculada. Avise
+                a administração para conferir esta venda.
+              </Alert>
+            ) : null}
           </Card>
         </TwoColumn>
       </PageBody>

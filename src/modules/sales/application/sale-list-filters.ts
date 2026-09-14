@@ -2,6 +2,7 @@ import { isValidDateOnly } from "@/shared/date-only";
 import { isUuid } from "@/shared/uuid";
 import { isQuotaStatus, type QuotaStatus } from "../domain/quota-status";
 import type { SaleListFilters } from "./sale-repository";
+import type { SellerSaleListFilters } from "./seller-commission-repository";
 
 export type QuotaStatusFilter = QuotaStatus | "all";
 
@@ -18,13 +19,28 @@ export type ParsedSaleListFilters = SaleListFilters & {
   to: string;
 };
 
-export type SaleListSearchParams = {
+/**
+ * Os mesmos filtros na área do vendedor, sem o campo de vendedor: lá ele vem
+ * da sessão e não é oferecido nem aceito pela URL.
+ */
+export type ParsedSellerSaleListFilters = SellerSaleListFilters & {
+  search: string;
+  administrator: string;
+  status: QuotaStatusFilter;
+  from: string;
+  to: string;
+};
+
+export type SellerSaleListSearchParams = {
   search?: string | string[];
-  seller?: string | string[];
   administrator?: string | string[];
   status?: string | string[];
   from?: string | string[];
   to?: string | string[];
+};
+
+export type SaleListSearchParams = SellerSaleListSearchParams & {
+  seller?: string | string[];
 };
 
 function readSingleValue(value: string | string[] | undefined): string {
@@ -43,16 +59,17 @@ function readDate(value: string | string[] | undefined): string {
   return isValidDateOnly(date) ? date : "";
 }
 
-/**
- * Lê os filtros da URL descartando valores que não fazem sentido, para que uma
- * query string editada à mão não derrube a página nem filtre por engano. Um
- * período invertido é ordenado, em vez de devolver uma lista vazia.
- */
-export function parseSaleListFilters(
-  input: SaleListSearchParams,
-): ParsedSaleListFilters {
+type SharedFields = {
+  search: string;
+  administrator: string;
+  status: QuotaStatusFilter;
+  from: string;
+  to: string;
+};
+
+/** Os campos que as duas áreas têm em comum, já limpos. */
+function readSharedFields(input: SellerSaleListSearchParams): SharedFields {
   const search = readSingleValue(input.search).trim().slice(0, 160);
-  const seller = readIdentifier(input.seller);
   const administrator = readIdentifier(input.administrator);
   const requestedStatus = readSingleValue(input.status);
   const status: QuotaStatusFilter = isQuotaStatus(requestedStatus)
@@ -62,32 +79,77 @@ export function parseSaleListFilters(
   const secondDate = readDate(input.to);
   const isInverted =
     firstDate.length > 0 && secondDate.length > 0 && firstDate > secondDate;
-  const from = isInverted ? secondDate : firstDate;
-  const to = isInverted ? firstDate : secondDate;
 
   return {
     search,
-    seller,
     administrator,
     status,
-    from,
-    to,
-    ...(seller.length > 0 ? { sellerId: seller } : {}),
-    ...(administrator.length > 0 ? { administratorId: administrator } : {}),
-    ...(status === "all" ? {} : { quotaStatus: status }),
-    ...(from.length > 0 ? { soldFrom: from } : {}),
-    ...(to.length > 0 ? { soldTo: to } : {}),
+    from: isInverted ? secondDate : firstDate,
+    to: isInverted ? firstDate : secondDate,
   };
+}
+
+/** Os filtros efetivos que nascem dos campos comuns, sem os campos vazios. */
+function toSharedFilters(fields: SharedFields): SellerSaleListFilters {
+  return {
+    ...(fields.administrator.length > 0
+      ? { administratorId: fields.administrator }
+      : {}),
+    ...(fields.status === "all" ? {} : { quotaStatus: fields.status }),
+    ...(fields.from.length > 0 ? { soldFrom: fields.from } : {}),
+    ...(fields.to.length > 0 ? { soldTo: fields.to } : {}),
+  };
+}
+
+function hasSharedFilters(fields: SharedFields): boolean {
+  return (
+    fields.search.length > 0 ||
+    fields.administrator.length > 0 ||
+    fields.status !== "all" ||
+    fields.from.length > 0 ||
+    fields.to.length > 0
+  );
+}
+
+/**
+ * Lê os filtros da URL descartando valores que não fazem sentido, para que uma
+ * query string editada à mão não derrube a página nem filtre por engano. Um
+ * período invertido é ordenado, em vez de devolver uma lista vazia.
+ */
+export function parseSaleListFilters(
+  input: SaleListSearchParams,
+): ParsedSaleListFilters {
+  const shared = readSharedFields(input);
+  const seller = readIdentifier(input.seller);
+
+  return {
+    ...shared,
+    seller,
+    ...toSharedFilters(shared),
+    ...(seller.length > 0 ? { sellerId: seller } : {}),
+  };
+}
+
+/**
+ * A mesma leitura na área do vendedor. Um `seller` na query string é ignorado
+ * por não existir aqui: o vendedor das consultas vem da sessão.
+ */
+export function parseSellerSaleListFilters(
+  input: SellerSaleListSearchParams,
+): ParsedSellerSaleListFilters {
+  const shared = readSharedFields(input);
+
+  return { ...shared, ...toSharedFilters(shared) };
 }
 
 /** Indica se a listagem está restrita, para oferecer a limpeza dos filtros. */
 export function hasSaleListFilters(filters: ParsedSaleListFilters): boolean {
-  return (
-    filters.search.length > 0 ||
-    filters.seller.length > 0 ||
-    filters.administrator.length > 0 ||
-    filters.status !== "all" ||
-    filters.from.length > 0 ||
-    filters.to.length > 0
-  );
+  return hasSharedFilters(filters) || filters.seller.length > 0;
+}
+
+/** O mesmo na área do vendedor, onde não há filtro por vendedor. */
+export function hasSellerSaleListFilters(
+  filters: ParsedSellerSaleListFilters,
+): boolean {
+  return hasSharedFilters(filters);
 }

@@ -7,6 +7,7 @@ import {
   commissionInstallmentStatusEnum,
   commissionInstallmentStatusEvents,
   quotaStatusEnum,
+  saleQuotaStatusEvents,
   sales,
   sellerCommissionRates,
   sellers,
@@ -171,6 +172,31 @@ describe("database schema", () => {
       "inadimplente",
       "cancelado",
       "contemplado",
+    ]);
+  });
+
+  it("keeps the quota situation as an append-only history", () => {
+    const table = getTableConfig(saleQuotaStatusEvents);
+
+    expect(table.name).toBe("sale_quota_status_events");
+    expect(table.columns.map((column) => column.name)).toEqual([
+      "id",
+      "sale_id",
+      "sequence",
+      "previous_status",
+      "status",
+      "changed_at",
+      "created_at",
+    ]);
+    expect(table.foreignKeys).toHaveLength(1);
+    expect(
+      table.uniqueConstraints.map((constraint) => constraint.name),
+    ).toEqual(["sale_quota_status_events_sale_sequence_unique"]);
+    expect(table.checks.map((constraint) => constraint.name)).toEqual([
+      "sale_quota_status_events_history_check",
+    ]);
+    expect(table.indexes.map((index) => index.config.name)).toEqual([
+      "sale_quota_status_events_sale_changed_at_index",
     ]);
   });
 

@@ -16,6 +16,7 @@ export {
   commissionInstallmentStatusEvents,
   quotaStatusEnum,
   saleCodeSequence,
+  saleQuotaStatusEvents,
   sales,
 } from "./infrastructure/db/schema";
 export type {
@@ -28,5 +29,7 @@ export type {
   NewCommissionInstallment,
   NewCommissionInstallmentStatusEvent,
   NewSale,
+  NewSaleQuotaStatusEvent,
   Sale,
+  SaleQuotaStatusEvent,
 } from "./infrastructure/db/schema";

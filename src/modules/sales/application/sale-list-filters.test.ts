@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSellerSaleListQuery,
+  buildSoldPeriodQuery,
   hasSaleListFilters,
   hasSoldPeriod,
   hasSellerSaleListFilters,
@@ -294,6 +295,18 @@ describe("sold period", () => {
       soldFrom: "2026-01-01",
       soldTo: "2026-03-31",
     });
+  });
+
+  it("vira query string só com os extremos preenchidos", () => {
+    expect(buildSoldPeriodQuery(parseSoldPeriod({}))).toBe("");
+    expect(buildSoldPeriodQuery(parseSoldPeriod({ from: "2026-01-01" }))).toBe(
+      "from=2026-01-01",
+    );
+    expect(
+      buildSoldPeriodQuery(
+        parseSoldPeriod({ from: "2026-03-31", to: "2026-01-01" }),
+      ),
+    ).toBe("from=2026-01-01&to=2026-03-31");
   });
 
   it("descarta data fora do calendário, fora do formato ou repetida", () => {

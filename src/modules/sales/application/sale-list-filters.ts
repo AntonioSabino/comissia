@@ -96,6 +96,25 @@ export function parseSoldPeriod(
   };
 }
 
+/**
+ * Query string do período, com os extremos preenchidos apenas. Nasce dos
+ * valores já limpos pelo parser, então o que volta para o navegador nunca é o
+ * texto cru que veio na URL.
+ */
+export function buildSoldPeriodQuery(period: ParsedSoldPeriod): string {
+  const query = new URLSearchParams();
+
+  if (period.from.length > 0) {
+    query.set("from", period.from);
+  }
+
+  if (period.to.length > 0) {
+    query.set("to", period.to);
+  }
+
+  return query.toString();
+}
+
 /** Indica se há recorte de período, para oferecer a limpeza dele. */
 export function hasSoldPeriod(period: ParsedSoldPeriod): boolean {
   return period.from.length > 0 || period.to.length > 0;

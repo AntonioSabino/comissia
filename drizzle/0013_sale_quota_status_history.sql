@@ -13,6 +13,11 @@ CREATE TABLE "sale_quota_status_events" (
 ALTER TABLE "sale_quota_status_events" ADD CONSTRAINT "sale_quota_status_events_sale_id_sales_id_fk" FOREIGN KEY ("sale_id") REFERENCES "public"."sales"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "sale_quota_status_events_sale_changed_at_index" ON "sale_quota_status_events" USING btree ("sale_id","changed_at");--> statement-breakpoint
 
+-- Impede INSERTs e UPDATEs concorrentes entre o backfill e a instalação dos
+-- gatilhos. O migrador executa este arquivo em uma transação, então o bloqueio
+-- permanece até todos os gatilhos abaixo estarem ativos.
+LOCK TABLE "sales" IN SHARE ROW EXCLUSIVE MODE;--> statement-breakpoint
+
 -- Antes desta história não existia um caminho de alteração na aplicação. O
 -- estado encontrado é, portanto, a situação inicial conhecida de cada venda.
 INSERT INTO "sale_quota_status_events" (

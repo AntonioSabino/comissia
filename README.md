@@ -99,8 +99,9 @@ vigências para demonstrar que vendas antigas preservam a versão aplicada.
 
 Todos os nomes, documentos, telefones e e-mails são fictícios. Os e-mails usam
 o domínio reservado `.test`, e a senha do administrador inicial é sorteada e
-exibida somente quando a conta é criada. O seed recusa produção e bancos fora
-de loopback, salvo confirmação explícita com `--allow-remote`.
+exibida somente quando a conta é criada. O seed recusa produção local e bancos
+remotos, salvo quando a execução combina `--allow-remote` com a marca explícita
+`DEPLOYMENT_ENV=staging` do ambiente de homologação.
 
 O comando é repetível: registros completos são mantidos e vendas antigas do
 próprio seed, ainda sem snapshot, são complementadas. Como snapshots e

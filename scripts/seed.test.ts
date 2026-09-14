@@ -38,7 +38,18 @@ describe("validateSeedTarget", () => {
     ).toThrow("--allow-remote");
   });
 
-  it("aceita loopback IPv4, IPv6 e banco remoto autorizado", () => {
+  it("recusa banco remoto autorizado fora da homologação", () => {
+    expect(() =>
+      validateSeedTarget(
+        "production",
+        "postgresql://postgres:postgres@database.example.test:5432/comissia",
+        true,
+        "production",
+      ),
+    ).toThrow("DEPLOYMENT_ENV=staging");
+  });
+
+  it("aceita loopback IPv4, IPv6 e homologação remota autorizada", () => {
     expect(
       validateSeedTarget(
         "development",
@@ -55,9 +66,10 @@ describe("validateSeedTarget", () => {
     ).toBe("[::1]");
     expect(
       validateSeedTarget(
-        "development",
+        "production",
         "postgresql://postgres:postgres@database.example.test:5432/comissia",
         true,
+        "staging",
       ).hostname,
     ).toBe("database.example.test");
   });

@@ -74,7 +74,7 @@ export default async function SaleDetailsPage({
     sellerRateBasisPoints: sale.sellerRateBasisPoints,
   });
   const installmentsInCents = sumInstallmentAmounts(sale.installments);
-  const quotaStatus = quotaStatusHistory.at(-1)?.status ?? sale.quotaStatus;
+  const quotaStatus = sale.quotaStatus;
 
   return (
     <>

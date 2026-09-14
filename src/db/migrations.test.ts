@@ -66,6 +66,26 @@ describe("database migrations", () => {
     );
   });
 
+  it("locks sales while backfilling and installing audit triggers", () => {
+    const lockPosition = quotaStatusHistorySql.indexOf(
+      'LOCK TABLE "sales" IN SHARE ROW EXCLUSIVE MODE',
+    );
+    const backfillPosition = quotaStatusHistorySql.indexOf(
+      'INSERT INTO "sale_quota_status_events"',
+    );
+    const initialTriggerPosition = quotaStatusHistorySql.indexOf(
+      'CREATE TRIGGER "sales_initial_quota_status_event"',
+    );
+    const changeTriggerPosition = quotaStatusHistorySql.indexOf(
+      'CREATE TRIGGER "sales_quota_status_changed_event"',
+    );
+
+    expect(lockPosition).toBeGreaterThanOrEqual(0);
+    expect(lockPosition).toBeLessThan(backfillPosition);
+    expect(backfillPosition).toBeLessThan(initialTriggerPosition);
+    expect(backfillPosition).toBeLessThan(changeTriggerPosition);
+  });
+
   it("backfills and records every quota situation change", () => {
     expect(quotaStatusHistorySql).toContain(
       'INSERT INTO "sale_quota_status_events"',

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { Alert } from "@/app/_components/ui/alert";
 import { Button } from "@/app/_components/ui/button";
 import { Card, CardHeading } from "@/app/_components/ui/card";
@@ -45,7 +45,7 @@ export function QuotaStatusPanel({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
     setError(null);

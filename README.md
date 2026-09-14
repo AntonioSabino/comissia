@@ -127,12 +127,30 @@ npm run typecheck
 npm run lint
 npm run test
 npm run db:check
+npm run test:db
 npm run build
 ```
 
 O GitHub Actions executa esses comandos automaticamente em pull requests e em
 pushes para a `main`. Uma alteração só deve ser integrada quando o check
 `CI / Quality` estiver aprovado.
+
+### Testes de integração
+
+`npm run test` não depende de banco: são testes de regra, com contratos
+substituíveis. As garantias que moram na consulta — como o vendedor só alcançar
+as próprias vendas — não se provam assim, e por isso existem em separado:
+
+```bash
+npm run db:up
+npm run test:db
+```
+
+Esses testes usam um banco próprio, com o sufixo `_test` no nome, derrubado e
+recriado a cada execução. O banco de desenvolvimento não é tocado, e recriar é
+o que os torna repetíveis: o histórico de situação das parcelas é append-only
+por gatilho, então uma trilha de auditoria não pode ser apagada no fim do teste.
+O CI sobe o seu próprio PostgreSQL e roda os dois comandos.
 
 ## Objetivo do MVP
 

@@ -247,6 +247,12 @@ confirma que aquela venda existe. Pelo mesmo motivo, o filtro de administradora
 é montado com as administradoras que aparecem nas vendas dele, e não com o
 catálogo inteiro.
 
+Como essa garantia mora no `where` das consultas, ela é verificada contra um
+PostgreSQL de verdade, em `seller-data-isolation.db.test.ts`: dois vendedores
+com vendas e administradoras próprias, e um pedindo pelo dado do outro por cada
+caminho de leitura e por cada filtro. Rodar com `npm run test:db`. Testes de
+contrato substituível não serviriam aqui — eles provariam o dublê, não o SQL.
+
 `listSales` traz as vendas e as parcelas de cada uma no mesmo snapshot, para que
 a lista nunca mostre uma venda sem as parcelas que ela tinha quando foi lida.
 Venda registrada antes de a régua existir continua na lista, com a lista de

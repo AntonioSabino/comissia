@@ -19,12 +19,69 @@ export type SellerCommissionInstallment = {
   customerName: string;
 };
 
+/**
+ * Recortes da listagem de vendas do vendedor. Não há filtro por vendedor de
+ * propósito: ele é um argumento à parte, lido da sessão, para que nenhum campo
+ * vindo da URL consiga trocar de quem são as vendas.
+ */
+export type SellerSaleListFilters = {
+  /** Texto livre aplicado a código, cliente, produto, grupo e cota. */
+  search?: string;
+  administratorId?: string;
+  quotaStatus?: QuotaStatus;
+  /** Recorte pela data da venda, nos dois extremos inclusive. */
+  soldFrom?: string;
+  soldTo?: string;
+};
+
+/** Administradora presente nas vendas do vendedor, para alimentar o filtro. */
+export type SellerSaleAdministrator = {
+  id: string;
+  name: string;
+};
+
+/**
+ * Venda do vendedor já acompanhada das suas parcelas, para que a tela mostre
+ * as duas coisas sem uma leitura por venda.
+ */
+export type SellerSaleListItem = {
+  id: string;
+  code: string;
+  soldOn: string;
+  customerName: string;
+  product: string;
+  groupCode: string;
+  quotaCode: string;
+  creditAmountInCents: bigint;
+  quotaStatus: QuotaStatus;
+  administratorId: string;
+  administratorName: string;
+  firstInstallmentDueOn: string;
+  /** Da primeira à última; vazia nas vendas registradas antes da régua. */
+  installments: SellerSaleInstallment[];
+};
+
 export interface SellerCommissionRepository {
   /**
    * Parcelas de comissão do vendedor, da competência mais antiga para a mais
    * recente. O vendedor vem sempre da sessão, nunca da requisição.
    */
   listInstallments(sellerId: string): Promise<SellerCommissionInstallment[]>;
+  /**
+   * Vendas do vendedor com as parcelas de cada uma, da mais recente para a mais
+   * antiga, lidas no mesmo snapshot. Os filtros recortam a lista; o vendedor,
+   * que vem da sessão, é a única condição que eles não conseguem afrouxar.
+   */
+  listSales(
+    sellerId: string,
+    filters?: SellerSaleListFilters,
+  ): Promise<SellerSaleListItem[]>;
+  /**
+   * Administradoras que aparecem nas vendas do vendedor, em ordem alfabética.
+   * O filtro é montado a partir daqui, e não do catálogo inteiro, para não
+   * revelar administradoras com as quais ele nunca vendeu.
+   */
+  listSaleAdministrators(sellerId: string): Promise<SellerSaleAdministrator[]>;
   /**
    * Uma venda do vendedor com as suas parcelas, lidas no mesmo snapshot.
    * Devolve `null` quando a venda não existe ou não é dele — sem distinguir os

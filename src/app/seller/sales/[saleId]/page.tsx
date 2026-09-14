@@ -27,6 +27,11 @@ import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user
 import { calculateSellerCommissionTotal } from "@/modules/commissions";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
 import { isCompetence } from "@/modules/sales/application/monthly-commission-forecast";
+import {
+  buildSellerSaleListQuery,
+  parseSellerSaleListFilters,
+  type SellerSaleListSearchParams,
+} from "@/modules/sales/application/sale-list-filters";
 import { sellerCommissionRepository } from "@/modules/sales/infrastructure/db/seller-commission-repository";
 import { isUuid } from "@/shared/uuid";
 import styles from "./seller-sale.module.css";
@@ -41,10 +46,12 @@ function formatInstallmentCount(count: number): string {
 
 type SellerSalePageProps = {
   params: Promise<{ saleId: string }>;
-  searchParams: Promise<{
-    competencia?: string | string[];
-    origem?: string | string[];
-  }>;
+  searchParams: Promise<
+    SellerSaleListSearchParams & {
+      competencia?: string | string[];
+      origem?: string | string[];
+    }
+  >;
 };
 
 export default async function SellerSalePage({
@@ -53,15 +60,23 @@ export default async function SellerSalePage({
 }: SellerSalePageProps) {
   const user = await requirePageRole("seller");
   const { saleId } = await params;
-  const { competencia, origem } = await searchParams;
+  const query = await searchParams;
+  const { competencia, origem } = query;
   const from = Array.isArray(competencia) ? competencia[0] : competencia;
   const origin = Array.isArray(origem) ? origem[0] : origem;
-  // A tela de onde o vendedor veio volta com ele. Nada da URL é devolvido ao
-  // navegador sem passar por um crivo: a origem é comparada com um valor
-  // conhecido e a competência só é aceita no formato AAAA-MM.
+  // A tela de onde o vendedor veio volta com ele, e com o recorte que ele
+  // estava vendo. Nada da URL é devolvido ao navegador sem passar por um
+  // crivo: a origem é comparada com um valor conhecido, a competência só é
+  // aceita no formato AAAA-MM e os filtros são relidos pelo mesmo parser da
+  // lista antes de virarem query string de novo.
   const cameFromSales = origin === "vendas";
+  const listQuery = cameFromSales
+    ? buildSellerSaleListQuery(parseSellerSaleListFilters(query))
+    : "";
   const backHref = cameFromSales
-    ? "/seller/sales"
+    ? listQuery.length > 0
+      ? `/seller/sales?${listQuery}`
+      : "/seller/sales"
     : isCompetence(from)
       ? `/seller/commissions?competencia=${from}`
       : "/seller/commissions";

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildSellerSaleListQuery,
   hasSaleListFilters,
   hasSellerSaleListFilters,
   parseSaleListFilters,
@@ -186,5 +187,67 @@ describe("seller sale list filters", () => {
     expect(filters.status).toBe("all");
     expect(filters.from).toBe("2026-01-01");
     expect(filters.to).toBe("2026-03-31");
+  });
+});
+
+describe("seller sale list query", () => {
+  it("não devolve nada quando não há filtro", () => {
+    expect(buildSellerSaleListQuery(parseSellerSaleListFilters({}))).toBe("");
+  });
+
+  it("leva apenas os campos preenchidos", () => {
+    const query = buildSellerSaleListQuery(
+      parseSellerSaleListFilters({
+        administrator: ADMINISTRATOR_ID,
+        from: "2026-01-01",
+      }),
+    );
+
+    expect(query).toBe(`administrator=${ADMINISTRATOR_ID}&from=2026-01-01`);
+  });
+
+  it("devolve o valor limpo, e não o texto que veio na URL", () => {
+    const query = buildSellerSaleListQuery(
+      parseSellerSaleListFilters({
+        search: "  V-000001  ",
+        administrator: "1 OR 1=1",
+        status: "quitado",
+        from: "2026-03-31",
+        to: "2026-01-01",
+      }),
+    );
+
+    // Busca sem as bordas, administradora e situação inválidas descartadas e
+    // período desinvertido: o que volta ao navegador já passou pelo crivo.
+    expect(query).toBe("search=V-000001&from=2026-01-01&to=2026-03-31");
+  });
+
+  it("escapa o que a busca traz de especial", () => {
+    const query = buildSellerSaleListQuery(
+      parseSellerSaleListFilters({ search: "a&b=c d" }),
+    );
+
+    expect(query).toBe("search=a%26b%3Dc+d");
+    expect(
+      parseSellerSaleListFilters(Object.fromEntries(new URLSearchParams(query)))
+        .search,
+    ).toBe("a&b=c d");
+  });
+
+  it("reconstrói o mesmo recorte depois de uma ida e volta", () => {
+    const filters = parseSellerSaleListFilters({
+      search: "Consórcio",
+      administrator: ADMINISTRATOR_ID,
+      status: "inadimplente",
+      from: "2026-01-01",
+      to: "2026-03-31",
+    });
+    const roundTrip = parseSellerSaleListFilters(
+      Object.fromEntries(
+        new URLSearchParams(buildSellerSaleListQuery(filters)),
+      ),
+    );
+
+    expect(roundTrip).toEqual(filters);
   });
 });

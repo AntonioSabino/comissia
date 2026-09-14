@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   competenceOf,
   groupInstallmentsByCompetence,
+  isCompetence,
   selectCompetence,
 } from "./monthly-commission-forecast";
 import type { SellerCommissionInstallment } from "./seller-commission-repository";
@@ -167,5 +168,33 @@ describe("selectCompetence", () => {
 describe("competenceOf", () => {
   it("usa o ano e o mês da data de negócio", () => {
     expect(competenceOf("2026-09-13")).toBe("2026-09");
+  });
+});
+
+describe("isCompetence", () => {
+  it.each(["2026-01", "2026-09", "2026-12", "9999-12"])(
+    "reconhece %p",
+    (value) => {
+      expect(isCompetence(value)).toBe(true);
+    },
+  );
+
+  it.each([
+    "2026-00",
+    "2026-13",
+    "2026-9",
+    "202-09",
+    "2026-09-13",
+    "2026/09",
+    " 2026-09",
+    "",
+  ])("recusa %p", (value) => {
+    expect(isCompetence(value)).toBe(false);
+  });
+
+  it("recusa valor que não é texto", () => {
+    expect(isCompetence(undefined)).toBe(false);
+    expect(isCompetence(202609)).toBe(false);
+    expect(isCompetence(["2026-09"])).toBe(false);
   });
 });

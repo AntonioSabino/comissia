@@ -181,3 +181,4 @@ Esses módulos serão adicionados depois que o fluxo principal de vendas e comis
 
 - [Escopo inicial do MVP](docs/mvp.md)
 - [Arquitetura e convenções](docs/architecture.md)
+- [Publicar a homologação no Railway](docs/deploy-railway.md)

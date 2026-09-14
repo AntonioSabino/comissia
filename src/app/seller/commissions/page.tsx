@@ -11,10 +11,11 @@ import {
   TwoColumn,
 } from "@/app/_components/ui/page-layout";
 import { EmptyState, ErrorState } from "@/app/_components/ui/state-block";
+import { StatusBadge } from "@/app/_components/ui/status-badge";
 import {
-  StatusBadge,
-  type StatusTone,
-} from "@/app/_components/ui/status-badge";
+  INSTALLMENT_STATUS_LABELS,
+  INSTALLMENT_STATUS_TONES,
+} from "@/app/_utils/installment-status";
 import {
   formatBusinessDate,
   formatCents,
@@ -22,7 +23,6 @@ import {
 } from "@/app/_utils/format";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
-import type { CommissionInstallmentStatus } from "@/modules/commissions";
 import {
   groupInstallmentsByCompetence,
   selectCompetence,
@@ -32,22 +32,6 @@ import styles from "./commissions.module.css";
 
 export const metadata: Metadata = {
   title: "Previsão mensal | Comissia",
-};
-
-const STATUS_LABELS: Record<CommissionInstallmentStatus, string> = {
-  prevista: "Prevista",
-  programada: "Programada",
-  paga: "Paga",
-  cancelada: "Cancelada",
-  ajustada: "Ajustada",
-};
-
-const STATUS_TONES: Record<CommissionInstallmentStatus, StatusTone> = {
-  prevista: "pending",
-  programada: "reconciled",
-  paga: "received",
-  cancelada: "cancelled",
-  ajustada: "neutral",
 };
 
 function formatInstallmentCount(count: number): string {
@@ -188,7 +172,7 @@ export default async function SellerCommissionsPage({
                 titleId="month-installments-title"
                 kicker={formatInstallmentCount(month.installments.length)}
                 title={`Parcelas de ${formatCompetence(month.competence)}`}
-                description="Cada linha mostra de qual venda o valor vem."
+                description="Cada linha mostra de qual venda o valor vem; o código abre a venda."
               />
 
               <DataTable>
@@ -213,7 +197,11 @@ export default async function SellerCommissionsPage({
                       <td className="num">
                         {formatBusinessDate(installment.dueOn)}
                       </td>
-                      <td className="num">{installment.saleCode}</td>
+                      <td className="num">
+                        <Link href={`/seller/sales/${installment.saleId}`}>
+                          {installment.saleCode}
+                        </Link>
+                      </td>
                       <td>{installment.product}</td>
                       <td>{installment.administratorName}</td>
                       <td>{installment.customerName}</td>
@@ -221,8 +209,10 @@ export default async function SellerCommissionsPage({
                         {formatCents(installment.amountInCents)}
                       </td>
                       <td>
-                        <StatusBadge tone={STATUS_TONES[installment.status]}>
-                          {STATUS_LABELS[installment.status]}
+                        <StatusBadge
+                          tone={INSTALLMENT_STATUS_TONES[installment.status]}
+                        >
+                          {INSTALLMENT_STATUS_LABELS[installment.status]}
                         </StatusBadge>
                       </td>
                     </tr>

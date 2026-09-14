@@ -8,14 +8,12 @@ import { DataTable, DataToolbar } from "@/app/_components/ui/data-table";
 import { Input, SearchBox, Select } from "@/app/_components/ui/field";
 import { PageBody, PageHeader } from "@/app/_components/ui/page-layout";
 import { EmptyState } from "@/app/_components/ui/state-block";
-import {
-  StatusBadge,
-  type StatusTone,
-} from "@/app/_components/ui/status-badge";
+import { StatusBadge } from "@/app/_components/ui/status-badge";
+import { QUOTA_STATUS_LABELS, QUOTA_STATUS_TONES } from "@/app/_utils/quota";
 import { formatBusinessDate, formatCents } from "@/app/_utils/format";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
-import { QUOTA_STATUSES, type QuotaStatus } from "@/modules/sales";
+import { QUOTA_STATUSES } from "@/modules/sales";
 import { selectActiveAdministrators } from "@/modules/sales/application/active-administrators";
 import {
   hasSaleListFilters,
@@ -31,20 +29,6 @@ import { SaleForm } from "./sale-form";
 
 export const metadata: Metadata = {
   title: "Vendas | Comissia",
-};
-
-const QUOTA_STATUS_LABELS: Record<QuotaStatus, string> = {
-  adimplente: "Adimplente",
-  inadimplente: "Inadimplente",
-  cancelado: "Cancelada",
-  contemplado: "Contemplada",
-};
-
-const QUOTA_STATUS_TONES: Record<QuotaStatus, StatusTone> = {
-  adimplente: "received",
-  inadimplente: "pending",
-  cancelado: "cancelled",
-  contemplado: "reconciled",
 };
 
 function formatSaleCount(count: number): string {

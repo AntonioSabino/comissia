@@ -409,6 +409,7 @@ async function run() {
     process.env.NODE_ENV,
     databaseUrl,
     process.argv.includes("--allow-remote"),
+    process.env.DEPLOYMENT_ENV,
   );
 
   const [

@@ -22,20 +22,32 @@ export function validateSeedTarget(
   nodeEnv: string | undefined,
   databaseUrl: string | undefined,
   allowRemote: boolean,
+  deploymentEnvironment?: string,
 ): URL {
-  if (nodeEnv === "production") {
-    throw new Error("O seed de demonstração não deve rodar em produção");
-  }
-
   if (!databaseUrl) {
     throw new Error("DATABASE_URL não foi definida em .env.local");
   }
 
   const parsedDatabaseUrl = new URL(databaseUrl);
+  const isLocal = LOCAL_HOSTS.has(parsedDatabaseUrl.hostname);
 
-  if (!LOCAL_HOSTS.has(parsedDatabaseUrl.hostname) && !allowRemote) {
+  if (isLocal) {
+    if (nodeEnv === "production") {
+      throw new Error("O seed de demonstração não deve rodar em produção");
+    }
+
+    return parsedDatabaseUrl;
+  }
+
+  if (!allowRemote) {
     throw new Error(
       `O seed é destinado ao banco local, e a DATABASE_URL aponta para ${parsedDatabaseUrl.hostname}. Se isso é intencional, repita com --allow-remote.`,
+    );
+  }
+
+  if (deploymentEnvironment !== "staging") {
+    throw new Error(
+      "O seed remoto exige DEPLOYMENT_ENV=staging no ambiente de homologação",
     );
   }
 

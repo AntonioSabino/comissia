@@ -13,7 +13,11 @@ const globalForDatabase = globalThis as unknown as {
 };
 
 export const postgresPool =
-  globalForDatabase.postgresPool ?? new Pool({ connectionString: databaseUrl });
+  globalForDatabase.postgresPool ??
+  new Pool({
+    connectionString: databaseUrl,
+    connectionTimeoutMillis: 5_000,
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForDatabase.postgresPool = postgresPool;

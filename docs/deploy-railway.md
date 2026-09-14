@@ -35,11 +35,13 @@ No serviço da aplicação, abra **Variables** e cadastre:
 | `DATABASE_URL`         | `${{Postgres.DATABASE_URL}}` |
 | `NEXT_PUBLIC_APP_NAME` | `Comissia — Homologação`     |
 | `BUSINESS_TIME_ZONE`   | `America/Sao_Paulo`          |
+| `DEPLOYMENT_ENV`       | `staging`                    |
 
 `DATABASE_URL` é uma referência ao segredo mantido pelo serviço PostgreSQL. Não
 copie seu valor para o repositório, para a descrição da PR ou para capturas de
-tela. `NODE_ENV` e `PORT` são definidos pela plataforma e não devem ser
-sobrescritos.
+tela. `DEPLOYMENT_ENV=staging` marca este projeto como homologação e é uma das
+duas autorizações exigidas pelo seed remoto. `NODE_ENV` e `PORT` são definidos
+pela plataforma e não devem ser sobrescritos.
 
 ## 3. Publicar a aplicação
 
@@ -55,13 +57,17 @@ o banco. Ele não divulga endereço, credenciais ou detalhes de falhas.
 
 ## 4. Carregar os dados fictícios
 
-O seed recusa bancos remotos e `NODE_ENV=production` por segurança. Para a
-primeira homologação, execute-o uma única vez em um shell do serviço da
-aplicação, com a autorização explícita abaixo:
+O seed recusa bancos remotos por padrão. Para a primeira homologação, execute-o
+uma única vez em um shell do serviço da aplicação, com a autorização explícita
+abaixo:
 
 ```bash
-NODE_ENV=staging npm run db:seed -- --allow-remote
+npm run db:seed -- --allow-remote
 ```
+
+A execução remota somente é aceita quando o comando inclui `--allow-remote` e o
+serviço possui `DEPLOYMENT_ENV=staging`. Não altere `NODE_ENV`: o Next.js deve
+continuar executando com `NODE_ENV=production`.
 
 Anote a senha sorteada do administrador exibida nessa primeira execução. O
 e-mail é `admin@exemplo.test`. Uma nova execução mantém os registros existentes

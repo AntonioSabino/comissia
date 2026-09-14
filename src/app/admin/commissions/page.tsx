@@ -26,7 +26,7 @@ import {
 } from "@/modules/sales/application/commission-installment-list-filters";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
 import { adminCommissionRepository } from "@/modules/sales/infrastructure/db/admin-commission-repository";
-import { sellerRepository } from "@/modules/sellers/infrastructure/db/seller-repository";
+import { listSellerOptions } from "@/modules/sellers/server";
 import styles from "./commissions.module.css";
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export default async function AdminCommissionsPage({
   await requirePageRole("admin");
   const filters = parseCommissionInstallmentListFilters(await searchParams);
   const [sellerList, installments] = await Promise.all([
-    sellerRepository.list(),
+    listSellerOptions(),
     adminCommissionRepository.listInstallments(filters),
   ]);
   const isFiltered = hasCommissionInstallmentListFilters(filters);

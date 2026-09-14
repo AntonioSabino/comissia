@@ -1,0 +1,234 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.filters .search {
+  flex: 1 1 260px;
+}
+
+.filters .choice {
+  width: auto;
+  min-width: 170px;
+  height: 40px;
+}
+
+.filters .date {
+  width: auto;
+  min-width: 150px;
+  height: 40px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sale {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sale:first-child {
+  border-top: 0;
+}
+
+/* O marcador nativo sai de cena; quem indica o estado é a seta. */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  list-style: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary:hover {
+  background: var(--surface-hover);
+}
+
+.summary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.sale[open] .summary {
+  background: var(--surface-header);
+}
+
+.summary > :last-child {
+  flex: none;
+  margin-left: auto;
+}
+
+.marker {
+  flex: none;
+  color: var(--text-subtle);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.sale[open] .marker {
+  transform: rotate(90deg);
+}
+
+/* Base zero: o bloco divide a linha com a seta em vez de cair abaixo dela. */
+.headline {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  min-width: 0;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.code {
+  color: var(--text-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.administrator {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.facts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.factLabel {
+  color: var(--text-subtle);
+  font-size: var(--text-3xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-table-head);
+  text-transform: uppercase;
+}
+
+.fact > span:last-child {
+  color: var(--text-body);
+  font-size: var(--text-xs);
+}
+
+/* Verde é dinheiro: a comissão da venda é o único valor marcado assim. */
+.fact > span.commission {
+  color: var(--money-in);
+  font-weight: var(--weight-bold);
+}
+
+.details {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+}
+
+.about {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin: 0 0 14px;
+}
+
+.about div {
+  min-width: 0;
+}
+
+.about dt {
+  color: var(--text-subtle);
+  font-size: var(--text-3xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-table-head);
+  text-transform: uppercase;
+}
+
+.about dd {
+  margin: 3px 0 0;
+  color: var(--text-body);
+  font-size: var(--text-xs);
+}
+
+.note {
+  max-width: 70ch;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--lh-body);
+}
+
+.installments {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.installments tbody tr:first-child td {
+  border-top: 0;
+}
+
+.action {
+  margin-top: 14px;
+}
+
+@media (max-width: 860px) {
+  .filters .search,
+  .filters .choice {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .filters .date {
+    flex: 1 1 calc(50% - 5px);
+    width: auto;
+  }
+}
+
+@media (max-width: 660px) {
+  .summary {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .marker {
+    margin-top: 3px;
+  }
+
+  .headline {
+    gap: 10px 18px;
+  }
+
+  .facts {
+    gap: 10px 18px;
+  }
+
+  .details {
+    padding: 14px 16px 18px;
+  }
+
+  .about {
+    gap: 12px 24px;
+  }
+}

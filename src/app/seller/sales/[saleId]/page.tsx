@@ -41,7 +41,10 @@ function formatInstallmentCount(count: number): string {
 
 type SellerSalePageProps = {
   params: Promise<{ saleId: string }>;
-  searchParams: Promise<{ competencia?: string | string[] }>;
+  searchParams: Promise<{
+    competencia?: string | string[];
+    origem?: string | string[];
+  }>;
 };
 
 export default async function SellerSalePage({
@@ -50,13 +53,19 @@ export default async function SellerSalePage({
 }: SellerSalePageProps) {
   const user = await requirePageRole("seller");
   const { saleId } = await params;
-  const { competencia } = await searchParams;
+  const { competencia, origem } = await searchParams;
   const from = Array.isArray(competencia) ? competencia[0] : competencia;
-  // A competência de onde o vendedor veio volta com ele. Só é aceita no
-  // formato AAAA-MM: o valor chega da URL e é devolvido ao navegador.
-  const backHref = isCompetence(from)
-    ? `/seller/commissions?competencia=${from}`
-    : "/seller/commissions";
+  const origin = Array.isArray(origem) ? origem[0] : origem;
+  // A tela de onde o vendedor veio volta com ele. Nada da URL é devolvido ao
+  // navegador sem passar por um crivo: a origem é comparada com um valor
+  // conhecido e a competência só é aceita no formato AAAA-MM.
+  const cameFromSales = origin === "vendas";
+  const backHref = cameFromSales
+    ? "/seller/sales"
+    : isCompetence(from)
+      ? `/seller/commissions?competencia=${from}`
+      : "/seller/commissions";
+  const backLabel = cameFromSales ? "Vendas e comissões" : "Previsão mensal";
 
   if (!user.sellerId) {
     return (
@@ -97,7 +106,7 @@ export default async function SellerSalePage({
     <>
       <PageHeader
         breadcrumb={[
-          { label: "Previsão mensal", href: backHref },
+          { label: backLabel, href: backHref },
           { label: sale.code },
         ]}
         eyebrow="Sua venda"
@@ -105,7 +114,7 @@ export default async function SellerSalePage({
         subtitle={`${sale.customerName} · ${sale.product}`}
         actions={
           <ButtonLink href={backHref} variant="secondary" icon={ArrowLeft}>
-            Voltar para a previsão
+            {cameFromSales ? "Voltar para as vendas" : "Voltar para a previsão"}
           </ButtonLink>
         }
       />

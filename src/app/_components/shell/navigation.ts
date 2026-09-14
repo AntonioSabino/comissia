@@ -28,6 +28,7 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
       exact: true,
     },
     { href: "/admin/sales", label: "Vendas", icon: TrendingUp },
+    { href: "/admin/commissions", label: "Parcelas", icon: CalendarClock },
     { href: "/admin/sellers", label: "Vendedores", icon: UsersRound },
     {
       href: "/admin/administrators",

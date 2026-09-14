@@ -187,6 +187,26 @@ A situação de cada parcela é derivada do histórico gravado, nunca de um camp
 separado. Vendas registradas antes da régua aparecem sem régua e sem parcelas,
 que é o que elas são.
 
+## O que o vendedor vê
+
+A área do vendedor lê as próprias parcelas por dois caminhos, os dois sempre
+filtrados pelo vendedor da sessão: `listInstallments`, que alimenta a previsão
+mensal, e `findSale`, que devolve uma venda com as parcelas dela em
+`/seller/sales/[saleId]`.
+
+Venda de outro vendedor não é negada, é **não encontrada**: o identificador
+entra na condição da consulta junto com o vendedor, então trocar a URL não
+confirma que aquela venda existe.
+
+A régua da administradora e qualquer percentual da corretora ficam fora desses
+contratos, por decisão registrada no MVP: o que a administradora paga à
+corretora não aparece na visão do vendedor. O percentual dele, que define a
+comissão dele, aparece com a vigência de onde veio.
+
+A tela mostra lado a lado a comissão calculada pelo percentual gravado e a soma
+das parcelas. As duas nascem iguais por construção; aparecem juntas para que
+uma divergência fique visível, e a tela avisa quando elas diferem.
+
 ## Snapshot do percentual
 
 A venda guarda o percentual aplicado em duas colunas complementares:

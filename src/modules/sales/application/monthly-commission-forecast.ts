@@ -7,6 +7,16 @@ export type MonthlyCommissionForecast = {
   installments: SellerCommissionInstallment[];
 };
 
+const COMPETENCE_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+/**
+ * Reconhece uma competência no formato AAAA-MM. A tela usa isto antes de
+ * devolver ao navegador um valor que veio da própria URL.
+ */
+export function isCompetence(value: unknown): value is string {
+  return typeof value === "string" && COMPETENCE_PATTERN.test(value);
+}
+
 /** Competência (AAAA-MM) de uma data de negócio (AAAA-MM-DD). */
 export function competenceOf(date: string): string {
   return date.slice(0, 7);

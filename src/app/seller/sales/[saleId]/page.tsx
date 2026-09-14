@@ -26,6 +26,7 @@ import { QUOTA_STATUS_LABELS, QUOTA_STATUS_TONES } from "@/app/_utils/quota";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { calculateSellerCommissionTotal } from "@/modules/commissions";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
+import { isCompetence } from "@/modules/sales/application/monthly-commission-forecast";
 import { sellerCommissionRepository } from "@/modules/sales/infrastructure/db/seller-commission-repository";
 import { isUuid } from "@/shared/uuid";
 import styles from "./seller-sale.module.css";
@@ -40,11 +41,22 @@ function formatInstallmentCount(count: number): string {
 
 type SellerSalePageProps = {
   params: Promise<{ saleId: string }>;
+  searchParams: Promise<{ competencia?: string | string[] }>;
 };
 
-export default async function SellerSalePage({ params }: SellerSalePageProps) {
+export default async function SellerSalePage({
+  params,
+  searchParams,
+}: SellerSalePageProps) {
   const user = await requirePageRole("seller");
   const { saleId } = await params;
+  const { competencia } = await searchParams;
+  const from = Array.isArray(competencia) ? competencia[0] : competencia;
+  // A competência de onde o vendedor veio volta com ele. Só é aceita no
+  // formato AAAA-MM: o valor chega da URL e é devolvido ao navegador.
+  const backHref = isCompetence(from)
+    ? `/seller/commissions?competencia=${from}`
+    : "/seller/commissions";
 
   if (!user.sellerId) {
     return (
@@ -85,18 +97,14 @@ export default async function SellerSalePage({ params }: SellerSalePageProps) {
     <>
       <PageHeader
         breadcrumb={[
-          { label: "Previsão mensal", href: "/seller/commissions" },
+          { label: "Previsão mensal", href: backHref },
           { label: sale.code },
         ]}
         eyebrow="Sua venda"
         title={sale.code}
         subtitle={`${sale.customerName} · ${sale.product}`}
         actions={
-          <ButtonLink
-            href="/seller/commissions"
-            variant="secondary"
-            icon={ArrowLeft}
-          >
+          <ButtonLink href={backHref} variant="secondary" icon={ArrowLeft}>
             Voltar para a previsão
           </ButtonLink>
         }
@@ -240,14 +248,21 @@ export default async function SellerSalePage({ params }: SellerSalePageProps) {
                 <dt>Comissão desta venda</dt>
                 <dd className="num">{formatCents(commissionInCents)}</dd>
               </div>
-              <div>
-                <dt>Soma das parcelas</dt>
-                <dd className="num">{formatCents(installmentsInCents)}</dd>
-              </div>
+              {sale.installments.length > 0 ? (
+                <div>
+                  <dt>Soma das parcelas</dt>
+                  <dd className="num">{formatCents(installmentsInCents)}</dd>
+                </div>
+              ) : null}
             </dl>
 
-            {sale.installments.length > 0 &&
-            installmentsInCents !== commissionInCents ? (
+            {sale.installments.length === 0 ? (
+              <Alert tone="attention">
+                Esta venda não tem parcelas geradas, então não há datas nem
+                valores por mês para comparar com a comissão. A administração
+                pode informar como ela será paga.
+              </Alert>
+            ) : installmentsInCents !== commissionInCents ? (
               <Alert tone="attention">
                 A soma das parcelas está diferente da comissão calculada. Avise
                 a administração para conferir esta venda.

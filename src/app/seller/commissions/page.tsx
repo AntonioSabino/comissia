@@ -198,7 +198,9 @@ export default async function SellerCommissionsPage({
                         {formatBusinessDate(installment.dueOn)}
                       </td>
                       <td className="num">
-                        <Link href={`/seller/sales/${installment.saleId}`}>
+                        <Link
+                          href={`/seller/sales/${installment.saleId}?competencia=${month.competence}`}
+                        >
                           {installment.saleCode}
                         </Link>
                       </td>

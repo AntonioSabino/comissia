@@ -51,6 +51,8 @@ describe("seller summary", () => {
       creditInCents: BigInt(0),
       commissionInCents: BigInt(0),
       installmentsInCents: BigInt(0),
+      salesWithMismatch: 0,
+      salesWithoutInstallments: 0,
       months: [],
     });
   });
@@ -109,6 +111,9 @@ describe("seller summary", () => {
     expect(summary.commissionInCents).toBe(BigInt(90_000));
     expect(summary.installmentsInCents).toBe(BigInt(0));
     expect(summary.months).toEqual([]);
+    // Não ter parcelas não é divergência: é o que essa venda é.
+    expect(summary.salesWithoutInstallments).toBe(1);
+    expect(summary.salesWithMismatch).toBe(0);
   });
 
   it("mantém a comissão e a soma das parcelas separadas quando divergem", () => {
@@ -120,6 +125,23 @@ describe("seller summary", () => {
 
     expect(summary.commissionInCents).toBe(BigInt(300_000));
     expect(summary.installmentsInCents).toBe(BigInt(100_000));
+    expect(summary.salesWithMismatch).toBe(1);
+  });
+
+  it("acusa divergências opostas, que no total se anulariam", () => {
+    const summary = summarizeSellerSales([
+      // Falta 1.000,00 nas parcelas desta...
+      sale("V-7", BigInt(10_000_000), 300, [
+        installment(1, "2026-06", BigInt(200_000)),
+      ]),
+      // ...e sobra 1.000,00 nas desta. Os totais fecham; as duas estão erradas.
+      sale("V-8", BigInt(10_000_000), 300, [
+        installment(1, "2026-06", BigInt(400_000)),
+      ]),
+    ]);
+
+    expect(summary.installmentsInCents).toBe(summary.commissionInCents);
+    expect(summary.salesWithMismatch).toBe(2);
   });
 
   it("soma em centavos inteiros, sem perder exatidão em valores altos", () => {

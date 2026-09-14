@@ -142,6 +142,39 @@ export function parseSellerSaleListFilters(
   return { ...shared, ...toSharedFilters(shared) };
 }
 
+/**
+ * Query string dos filtros do vendedor, com os campos preenchidos apenas. Ela
+ * nasce dos valores já limpos pelo parser, então o que volta para o navegador
+ * nunca é o texto cru que veio na URL.
+ */
+export function buildSellerSaleListQuery(
+  filters: ParsedSellerSaleListFilters,
+): string {
+  const query = new URLSearchParams();
+
+  if (filters.search.length > 0) {
+    query.set("search", filters.search);
+  }
+
+  if (filters.administrator.length > 0) {
+    query.set("administrator", filters.administrator);
+  }
+
+  if (filters.status !== "all") {
+    query.set("status", filters.status);
+  }
+
+  if (filters.from.length > 0) {
+    query.set("from", filters.from);
+  }
+
+  if (filters.to.length > 0) {
+    query.set("to", filters.to);
+  }
+
+  return query.toString();
+}
+
 /** Indica se a listagem está restrita, para oferecer a limpeza dos filtros. */
 export function hasSaleListFilters(filters: ParsedSaleListFilters): boolean {
   return hasSharedFilters(filters) || filters.seller.length > 0;

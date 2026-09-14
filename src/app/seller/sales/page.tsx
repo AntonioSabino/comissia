@@ -30,6 +30,7 @@ import { calculateSellerCommissionTotal } from "@/modules/commissions";
 import { QUOTA_STATUSES } from "@/modules/sales";
 import { sumInstallmentAmounts } from "@/modules/sales/application/installment-totals";
 import {
+  buildSellerSaleListQuery,
   hasSellerSaleListFilters,
   parseSellerSaleListFilters,
   type SellerSaleListSearchParams,
@@ -89,6 +90,9 @@ export default async function SellerSalesPage({
     sellerCommissionRepository.listSaleAdministrators(user.sellerId),
   ]);
   const isFiltered = hasSellerSaleListFilters(filters);
+  // Os filtros seguem no link da venda para que o caminho de volta devolva o
+  // vendedor à lista que ele estava vendo, e não à lista inteira.
+  const listQuery = buildSellerSaleListQuery(filters);
 
   const emptyState = isFiltered ? (
     <EmptyState
@@ -342,7 +346,9 @@ export default async function SellerSalesPage({
 
                       <div className={styles.action}>
                         <ButtonLink
-                          href={`/seller/sales/${sale.id}?origem=vendas`}
+                          href={`/seller/sales/${sale.id}?origem=vendas${
+                            listQuery.length > 0 ? `&${listQuery}` : ""
+                          }`}
                           variant="secondary"
                           size="sm"
                           iconAfter={ArrowRight}

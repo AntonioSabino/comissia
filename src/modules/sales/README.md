@@ -210,6 +210,22 @@ Esta operação altera somente a situação da cota. Ela não recalcula, cancela
 reagenda parcelas de comissão; os efeitos financeiros de inadimplência e
 cancelamento pertencem ao fluxo de reprocessamento controlado da SCRUM-37.
 
+## Consulta administrativa das parcelas
+
+`/admin/commissions` reúne todas as parcelas persistidas e permite combinar
+intervalo de competência, vendedor e situação. Cada linha identifica a venda de
+origem, o vendedor, a posição da parcela, competência, previsão, valor e
+situação atual; o código da venda abre o detalhe administrativo.
+
+A situação usada no filtro é sempre derivada do último evento do histórico. A
+consulta não cria nem lê um campo paralelo de situação atual. Os totais exibem
+a quantidade de parcelas e a soma do resultado já filtrado, usando `bigint` do
+banco até a formatação monetária.
+
+A página exige papel `admin`. Tributação e conciliação não fazem parte deste
+incremento: o valor mostrado é a comissão do vendedor preservada na parcela no
+momento do cadastro da venda.
+
 ## O que o vendedor vê
 
 A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos

@@ -153,6 +153,12 @@ o que os torna repetíveis: o histórico de situação das parcelas é append-on
 por gatilho, então uma trilha de auditoria não pode ser apagada no fim do teste.
 O CI sobe o seu próprio PostgreSQL e roda os dois comandos.
 
+É aqui que mora o teste do fluxo principal, em `src/main-flow.db.test.ts`: a
+administração cadastra administradora, régua e vendedor, cria o acesso dele,
+registra as vendas — e o vendedor entra com a própria senha e vê a própria
+comissão. Ele usa os casos de uso reais em vez dos repositórios, porque o que
+ele protege é a composição entre os módulos.
+
 ## Objetivo do MVP
 
 Permitir que a corretora cadastre as vendas efetuadas, calcule as parcelas de comissão e mostre ao vendedor quanto ele tem a receber em cada mês.

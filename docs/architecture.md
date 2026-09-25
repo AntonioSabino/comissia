@@ -170,8 +170,12 @@ inline e são reescritos aqui.
 - Regras de domínio têm testes unitários sem banco.
 - Casos de uso usam contratos substituíveis em testes.
 - Persistência tem testes de integração com PostgreSQL.
-- O fluxo principal terá teste de ponta a ponta quando suas partes estiverem
-  implementadas.
+- O fluxo principal tem teste de ponta a ponta em `src/main-flow.db.test.ts`,
+  do cadastro do vendedor até ele ver a própria comissão autenticado.
+
+Os testes de integração ficam em arquivos `.db.test.ts` e têm comando próprio
+(`npm run test:db`), para que `npm run test` continue sem depender de banco.
+Eles rodam em um banco descartável, recriado a cada execução.
 
 Testes ficam próximos do código testado usando o sufixo `.test.ts` ou
 `.test.tsx`.

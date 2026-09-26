@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { db, postgresPool } from "@/db";
+import { beforeAll, describe, expect, it } from "vitest";
+import { db } from "@/db";
 import { sellerCommissionRates, sellers } from "@/modules/sellers";
 import { validateSaleRegistration } from "../../domain/sale-registration";
 import { saleRepository } from "./sale-repository";
@@ -115,10 +115,6 @@ describe("isolamento dos dados do vendedor", () => {
     first = await createFixture("A");
     second = await createFixture("B");
   }, 30_000);
-
-  afterAll(async () => {
-    await postgresPool.end();
-  });
 
   it("a listagem devolve a venda do próprio vendedor e nenhuma do outro", async () => {
     const list = await sellerCommissionRepository.listSales(first.sellerId);

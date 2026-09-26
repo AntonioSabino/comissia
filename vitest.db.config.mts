@@ -31,6 +31,10 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.db.test.ts", "scripts/**/*.db.test.ts"],
     globalSetup: ["./vitest.db.setup.mts"],
+    // Nenhum arquivo de teste fecha o pool do `@/db`: ele é um singleton
+    // guardado em `globalThis`, e fechá-lo em um arquivo deixaria os demais
+    // dependendo da ordem de execução. Quem encerra as conexões é o vitest, ao
+    // derrubar o worker no fim da suíte.
     // Um banco só: arquivos que criam dados não podem correr em paralelo.
     fileParallelism: false,
   },

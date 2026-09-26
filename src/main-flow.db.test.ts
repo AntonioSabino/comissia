@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { postgresPool } from "@/db";
+import { beforeAll, describe, expect, it } from "vitest";
 import { authenticateSession } from "@/modules/auth/application/authenticate-session";
 import { login } from "@/modules/auth/application/login";
 import { createSellerAccess } from "@/modules/auth/application/seller-access";
@@ -63,7 +62,10 @@ function buildCpf(base: string): string {
 }
 
 type Flow = {
+  /** O vendedor como a sessão autenticada o devolve. É ele que vai às consultas. */
   sellerId: string;
+  /** O identificador que o cadastro gerou, para confrontar com o da sessão. */
+  registeredSellerId: string;
   sellerEmail: string;
   temporaryPassword: string;
   sessionToken: string;
@@ -128,7 +130,18 @@ describe("fluxo principal", () => {
       { repository: authRepository },
     );
 
-    // 5. A administração registra as vendas.
+    // 5. A sessão é quem diz de quem são as consultas daqui para a frente.
+    const authenticated = await authenticateSession(session.sessionToken, {
+      repository: authRepository,
+    });
+
+    if (authenticated?.role !== "seller" || !authenticated.sellerId) {
+      throw new Error(
+        "A sessão do vendedor não veio como vendedor com cadastro ligado",
+      );
+    }
+
+    // 6. A administração registra as vendas.
     const sale = await createSale(
       {
         administratorId: administrator.id,
@@ -160,7 +173,8 @@ describe("fluxo principal", () => {
     );
 
     flow = {
-      sellerId: seller.id,
+      sellerId: authenticated.sellerId,
+      registeredSellerId: seller.id,
       sellerEmail,
       temporaryPassword: access.temporaryPassword,
       sessionToken: session.sessionToken,
@@ -172,18 +186,17 @@ describe("fluxo principal", () => {
     };
   }, 60_000);
 
-  afterAll(async () => {
-    await postgresPool.end();
-  });
-
   it("a sessão do vendedor traz o papel e o cadastro dele", async () => {
     const user = await authenticateSession(flow.sessionToken, {
       repository: authRepository,
     });
 
     expect(user?.role).toBe("seller");
-    // É daqui que toda a área do vendedor tira o vendedor das consultas.
-    expect(user?.sellerId).toBe(flow.sellerId);
+    // O vendedor que a sessão devolve é o mesmo que o cadastro criou. Os casos
+    // seguintes consultam pelo identificador vindo da sessão, então uma sessão
+    // apontando para outro vendedor quebra este teste e os demais junto.
+    expect(user?.sellerId).toBe(flow.registeredSellerId);
+    expect(flow.sellerId).toBe(flow.registeredSellerId);
   });
 
   it("a venda gera as parcelas previstas pela régua da administradora", async () => {

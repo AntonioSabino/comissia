@@ -41,6 +41,7 @@ describe("buildPayoutClosing", () => {
     expect(closing.toPayInCents).toBe(BigInt(30_000));
     expect(closing.scheduledInCents).toBe(BigInt(20_000));
     expect(closing.paidInCents).toBe(BigInt(30_000));
+    expect(closing.totalInCents).toBe(BigInt(60_000));
     expect(closing.outsideInCents).toBe(BigInt(90_000));
     expect(closing.closingInstallments).toBe(3);
     expect(closing.plannedInstallments).toBe(1);
@@ -117,6 +118,7 @@ describe("buildPayoutClosing", () => {
       toPayInCents: BigInt(0),
       scheduledInCents: BigInt(0),
       paidInCents: BigInt(0),
+      totalInCents: BigInt(0),
       outsideInCents: BigInt(0),
     });
   });

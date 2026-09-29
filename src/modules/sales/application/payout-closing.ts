@@ -13,11 +13,15 @@ export type PayoutAmounts = {
   /** Programadas: o que o registro de pagamento vai quitar. */
   scheduledInCents: bigint;
   paidInCents: bigint;
+  /** Valor do fechamento: o que falta pagar mais o que já foi pago. */
+  totalInCents: bigint;
   /** Canceladas e ajustadas, que aparecem na composição sem entrar no valor. */
   outsideInCents: bigint;
 };
 
-export type SellerPayout = PayoutAmounts & {
+export type SellerPayout<
+  Installment extends AdminCommissionInstallment = AdminCommissionInstallment,
+> = PayoutAmounts & {
   sellerId: string;
   sellerName: string;
   stage: PayoutStage;
@@ -29,34 +33,40 @@ export type SellerPayout = PayoutAmounts & {
    * ser paga para o fechamento terminar.
    */
   scheduledInstallments: number;
-  installments: AdminCommissionInstallment[];
+  installments: Installment[];
 };
 
-export type PayoutClosing = PayoutAmounts & {
+export type PayoutClosing<
+  Installment extends AdminCommissionInstallment = AdminCommissionInstallment,
+> = PayoutAmounts & {
   stage: PayoutStage;
   closingInstallments: number;
   /** Parcelas previstas que a conferência vai programar. */
   plannedInstallments: number;
-  sellers: SellerPayout[];
+  sellers: SellerPayout<Installment>[];
 };
 
 function amountsOf(
   installments: readonly AdminCommissionInstallment[],
 ): PayoutAmounts {
-  return {
-    toPayInCents: sumInstallmentAmounts(
-      installments.filter(
-        (installment) =>
-          installment.status === "prevista" ||
-          installment.status === "programada",
-      ),
+  const toPayInCents = sumInstallmentAmounts(
+    installments.filter(
+      (installment) =>
+        installment.status === "prevista" ||
+        installment.status === "programada",
     ),
+  );
+  const paidInCents = sumInstallmentAmounts(
+    installments.filter((installment) => installment.status === "paga"),
+  );
+
+  return {
+    toPayInCents,
+    totalInCents: toPayInCents + paidInCents,
     scheduledInCents: sumInstallmentAmounts(
       installments.filter((installment) => installment.status === "programada"),
     ),
-    paidInCents: sumInstallmentAmounts(
-      installments.filter((installment) => installment.status === "paga"),
-    ),
+    paidInCents,
     outsideInCents: sumInstallmentAmounts(
       installments.filter(
         (installment) => !isInPayoutClosing(installment.status),
@@ -77,11 +87,13 @@ function countClosing(
  * Monta o fechamento de uma competência a partir das parcelas dela: os totais
  * do mês e a composição por vendedor, em ordem alfabética. A soma é sempre em
  * centavos inteiros, e o total do mês é a soma dos vendedores por construção.
+ * É genérico para que o demonstrativo, que lê parcelas mais detalhadas, some
+ * exatamente como a tela de repasses.
  */
-export function buildPayoutClosing(
-  installments: readonly AdminCommissionInstallment[],
-): PayoutClosing {
-  const bySeller = new Map<string, AdminCommissionInstallment[]>();
+export function buildPayoutClosing<
+  Installment extends AdminCommissionInstallment,
+>(installments: readonly Installment[]): PayoutClosing<Installment> {
+  const bySeller = new Map<string, Installment[]>();
 
   for (const installment of installments) {
     const list = bySeller.get(installment.sellerId) ?? [];
@@ -90,7 +102,7 @@ export function buildPayoutClosing(
   }
 
   const sellers = [...bySeller.values()]
-    .map((list): SellerPayout => {
+    .map((list): SellerPayout<Installment> => {
       const sorted = [...list].sort(
         (first, second) =>
           first.dueOn.localeCompare(second.dueOn) ||

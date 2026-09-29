@@ -23,6 +23,12 @@ export type SellerPayout = PayoutAmounts & {
   stage: PayoutStage;
   /** Parcelas que compõem o fechamento do vendedor. */
   closingInstallments: number;
+  /**
+   * Parcelas programadas, que o pagamento vai quitar. A tela decide pela
+   * quantidade, e não pelo valor: uma parcela de zero centavo também precisa
+   * ser paga para o fechamento terminar.
+   */
+  scheduledInstallments: number;
   installments: AdminCommissionInstallment[];
 };
 
@@ -97,6 +103,9 @@ export function buildPayoutClosing(
         sellerName: sorted[0].sellerName,
         stage: payoutStageOf(sorted.map((installment) => installment.status)),
         closingInstallments: countClosing(sorted),
+        scheduledInstallments: sorted.filter(
+          (installment) => installment.status === "programada",
+        ).length,
         installments: sorted,
         ...amountsOf(sorted),
       };

@@ -297,10 +297,14 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
                         variant="secondary"
                         size="sm"
                         icon={Banknote}
-                        disabled={seller.scheduledInCents === BigInt(0)}
+                        disabled={seller.scheduledInstallments === 0}
                         title={`Registrar pagamento de ${seller.sellerName}`}
                         description={`As parcelas programadas de ${label} passam a pagas. Parcelas ainda previstas continuam aguardando a conferência.`}
                         lines={[
+                          {
+                            label: "Parcelas programadas",
+                            value: String(seller.scheduledInstallments),
+                          },
                           {
                             label: "Valor pago",
                             note: `Competência ${label}`,

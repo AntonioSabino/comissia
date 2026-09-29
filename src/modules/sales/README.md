@@ -332,12 +332,22 @@ a lista nunca mostre uma venda sem as parcelas que ela tinha quando foi lida.
 Venda registrada antes de a régua existir continua na lista, com a lista de
 parcelas vazia — que é o que ela é.
 
-O resumo em `/seller` não acrescenta um quinto caminho: ele lê o mesmo
-`listSales`, recortado só pelo período, e agrega o resultado em
-`summarizeSellerSales`. Contar vendas, somar crédito e distribuir a comissão por
-competência é aritmética sobre o que já foi lido, então mora na aplicação e não
-no banco. O período em si é `parseSoldPeriod`, o pedaço de recorte por data que
-as listagens usam por dentro e o resumo usa sozinho.
+O resumo em `/seller` não acrescenta um quinto caminho de leitura. Os
+pagamentos vêm do demonstrativo (`commissionStatementRepository`, recortado pelo
+vendedor da sessão) e passam por `buildSellerSummaryOverview`, que soma pelo
+mesmo `buildPayoutClosing` da tela de repasses: o próximo pagamento (o
+fechamento pendente mais antigo, com a mesma regra de `/seller/payments`), o
+previsto no mês corrente, o programado para pagamento, o último pagamento
+registrado e o que ainda está previsto em competências futuras. Canceladas e
+ajustadas aparecem na lista do mês com a própria situação, mas não entram em
+soma nenhuma. A visão mês a mês fica em `/seller/payments`; o resumo só aponta
+para ela.
+
+Os números das vendas continuam num bloco secundário, lidos pelo mesmo
+`listSales` sem recorte e agregados em `summarizeSellerSales`. Contar vendas,
+somar crédito e comissão é aritmética sobre o que já foi lido, então mora na
+aplicação e não no banco. O recorte por data da venda fica na lista de vendas
+(`parseSoldPeriod`, usado por dentro de `parseSellerSaleListFilters`).
 
 A régua da administradora e qualquer percentual da corretora ficam fora desses
 contratos, por decisão registrada no MVP: o que a administradora paga à

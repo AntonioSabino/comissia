@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarClock,
+  HandCoins,
   LayoutDashboard,
   Receipt,
   Ruler,
@@ -29,6 +30,7 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
     },
     { href: "/admin/sales", label: "Vendas", icon: TrendingUp },
     { href: "/admin/commissions", label: "Parcelas", icon: CalendarClock },
+    { href: "/admin/payouts", label: "Repasses", icon: HandCoins },
     { href: "/admin/sellers", label: "Vendedores", icon: UsersRound },
     {
       href: "/admin/administrators",

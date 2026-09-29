@@ -279,12 +279,21 @@ tipo da parcela. O demonstrativo impresso soma, por construção, o que a
 administração conferiu, e o teste `commission-statement-repository.db.test.ts`
 confere isso contra a consulta de `/admin/commissions`.
 
-- **`/seller/payments`**: o histórico e a agenda do vendedor da sessão
-  (`buildSellerPaymentHistory`). Mostra um mês por competência até o mês
-  corrente, mais os meses futuros já conferidos ou pagos. O restante do futuro
-  é previsão e fica em `/seller/commissions`. A faixa de resumo traz o pago no
-  ano, o último pagamento (com a data em que foi registrado), o próximo
-  fechamento pendente e as parcelas fora do fechamento.
+- **`/seller/payments`**: a tela única de Pagamentos do vendedor da sessão,
+  que absorveu a antiga Previsão mensal (SCRUM-78). `buildSellerPaymentHistory`
+  devolve a linha do tempo com todos os meses que têm parcela, do passado ao
+  futuro. A tela mostra a faixa de resumo (pago no ano, último pagamento,
+  próximo fechamento pendente e o total a receber), o mês escolhido em
+  `?competencia=` (pelo padrão de `selectCompetence`, com navegação, total,
+  situação, parcelas e o demonstrativo) e a tabela de todos os meses.
+  `/seller/commissions` só redireciona para cá, preservando a competência.
+
+  A situação do mês é a da leitura do vendedor (`SellerMonthStatus`), e não a
+  etapa do fechamento da administração: Pago, Programado, Em fechamento (o
+  fechamento começou e ainda há previstas), Aguardando fechamento (o mês passou
+  sem fechamento) e Previsto (futuro). Um mês passado que ninguém fechou não
+  aparece como "em conferência", porque ninguém está conferindo.
+
 - **`/seller/payments/statement?competencia=AAAA-MM`**: o demonstrativo do
   vendedor. O vendedor vem sempre da sessão; não há parâmetro que alcance outro.
 - **`/admin/payouts/statement?competencia=AAAA-MM`**: a conferência do
@@ -303,8 +312,9 @@ no kit, para a tabela caber na largura útil do A4.
 ## O que o vendedor vê
 
 A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos
-sempre filtrados pelo vendedor da sessão: `listInstallments`, que alimenta a
-previsão mensal; `listSales`, que alimenta a lista de vendas e comissões em
+sempre filtrados pelo vendedor da sessão: `listInstallments`, que alimentava a
+antiga previsão mensal e hoje só é usado pelos testes de isolamento e do fluxo
+principal (Pagamentos lê `commissionStatementRepository`); `listSales`, que alimenta a lista de vendas e comissões em
 `/seller/sales`; `listSaleAdministrators`, que monta o filtro de administradora
 dessa lista; e `findSale`, que devolve uma venda com as parcelas dela em
 `/seller/sales/[saleId]`.

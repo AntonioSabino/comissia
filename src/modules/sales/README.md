@@ -291,7 +291,7 @@ confere isso contra a consulta de `/admin/commissions`.
   A situação do mês é a da leitura do vendedor (`SellerMonthStatus`), e não a
   etapa do fechamento da administração: Pago, Programado, Em fechamento (o
   fechamento começou e ainda há previstas), Aguardando fechamento (o mês passou
-  sem fechamento) e Previsto (futuro). Um mês passado que ninguém fechou não
+  sem fechamento) e Previsto (mês corrente ou futuro, sem fechamento iniciado). Um mês passado que ninguém fechou não
   aparece como "em conferência", porque ninguém está conferindo.
 
 - **`/seller/payments/statement?competencia=AAAA-MM`**: o demonstrativo do

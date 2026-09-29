@@ -30,6 +30,11 @@ export type SellerMonthlyPayment = {
   amountInCents: bigint;
   toPayInCents: bigint;
   paidInCents: bigint;
+  /**
+   * Parcelas previstas ou programadas: o que ainda vai ser pago. Contado pela
+   * situação, e não pelo valor, porque uma parcela pode valer zero centavo.
+   */
+  pendingInstallments: number;
   /** Data de negócio do último pagamento registrado no mês, se houve. */
   paidOn: string | null;
   /** Canceladas e ajustadas do mês, que não entram no valor. */
@@ -127,6 +132,11 @@ export function buildSellerPaymentHistory(
         amountInCents: closing.totalInCents,
         toPayInCents: closing.toPayInCents,
         paidInCents: closing.paidInCents,
+        pendingInstallments: list.filter(
+          (installment) =>
+            installment.status === "prevista" ||
+            installment.status === "programada",
+        ).length,
         paidOn: paidAt ? businessDateOf(paidAt) : null,
         outsideInstallments: list.filter(
           (installment) => !isInPayoutClosing(installment.status),

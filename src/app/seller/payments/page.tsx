@@ -138,7 +138,7 @@ export default async function SellerPaymentsPage({
     index >= 0 && index < timeline.length - 1 ? timeline[index + 1] : null;
   const currentCompetence = competenceOf(today);
   const pendingMonths = timeline.filter(
-    (item) => item.toPayInCents > BigInt(0),
+    (item) => item.pendingInstallments > 0,
   ).length;
 
   if (!month) {

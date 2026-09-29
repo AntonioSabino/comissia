@@ -89,7 +89,7 @@ describe("buildSellerSummaryOverview", () => {
     ]);
     expect(overview.nextPayment).toEqual({
       competence: "2026-09",
-      stage: "em-conferencia",
+      status: "em-fechamento",
       toPayInCents: BigInt(50_050),
       pendingInstallments: 2,
       dueOn: "2026-09-07",
@@ -229,9 +229,23 @@ describe("buildSellerSummaryOverview", () => {
     });
     expect(overview.nextPayment).toMatchObject({
       competence: "2026-09",
-      stage: "programado",
+      status: "programado",
       toPayInCents: BigInt(0),
       pendingInstallments: 1,
+    });
+  });
+
+  it("descreve o mês passado sem fechamento como aguardando, igual a Pagamentos", () => {
+    const overview = buildSellerSummaryOverview(
+      [installment("2026-07", "prevista", 3_000)],
+      TODAY,
+      toDate,
+    );
+
+    expect(overview.nextPayment).toMatchObject({
+      competence: "2026-07",
+      status: "aguardando-fechamento",
+      toPayInCents: BigInt(3_000),
     });
   });
 });

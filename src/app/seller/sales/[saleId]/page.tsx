@@ -70,6 +70,7 @@ export default async function SellerSalePage({
   // aceita no formato AAAA-MM e os filtros são relidos pelo mesmo parser da
   // lista antes de virarem query string de novo.
   const cameFromSales = origin === "vendas";
+  const cameFromSummary = origin === "resumo";
   const listQuery = cameFromSales
     ? buildSellerSaleListQuery(parseSellerSaleListFilters(query))
     : "";
@@ -77,10 +78,16 @@ export default async function SellerSalePage({
     ? listQuery.length > 0
       ? `/seller/sales?${listQuery}`
       : "/seller/sales"
-    : isCompetence(from)
-      ? `/seller/payments?competencia=${from}`
-      : "/seller/payments";
-  const backLabel = cameFromSales ? "Vendas e comissões" : "Pagamentos";
+    : cameFromSummary
+      ? "/seller"
+      : isCompetence(from)
+        ? `/seller/payments?competencia=${from}`
+        : "/seller/payments";
+  const backLabel = cameFromSales
+    ? "Vendas e comissões"
+    : cameFromSummary
+      ? "Resumo"
+      : "Pagamentos";
 
   if (!user.sellerId) {
     return (

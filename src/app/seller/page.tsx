@@ -29,6 +29,7 @@ import {
 } from "@/app/_utils/installment-status";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
+import type { SellerMonthStatus } from "@/modules/sales/application/seller-payment-history";
 import { buildSellerSummaryOverview } from "@/modules/sales/application/seller-summary-overview";
 import { summarizeSellerSales } from "@/modules/sales/application/seller-summary";
 import { commissionStatementRepository } from "@/modules/sales/infrastructure/db/commission-statement-repository";
@@ -67,6 +68,22 @@ function formatCompetenceLong(competence: string): string {
 function countLabel(count: number, singular: string, plural: string): string {
   return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
+
+/**
+ * Texto de apoio do destaque, pela mesma situação que Pagamentos mostra. Um
+ * mês que ninguém fechou não é descrito como "em conferência".
+ */
+const NEXT_PAYMENT_NOTES: Record<SellerMonthStatus, string> = {
+  programado:
+    "Pagamento mensal programado pela corretora, aguardando o registro.",
+  "em-fechamento":
+    "Fechamento em andamento: parte das parcelas já foi conferida pela corretora.",
+  "aguardando-fechamento":
+    "O mês já passou e aguarda o fechamento da corretora.",
+  previsto: "Parcelas previstas para o mês, antes do fechamento da corretora.",
+  pago: "Pagamento registrado pela corretora.",
+  "sem-valor": "Sem valor a receber neste mês.",
+};
 
 function paymentsHref(competence: string): string {
   return `/seller/payments?competencia=${competence}`;
@@ -205,9 +222,7 @@ export default async function SellerPage() {
 
   const nextNote = !nextPayment
     ? "Nenhum fechamento pendente. As parcelas dos próximos meses ainda estão em previsão."
-    : nextPayment.stage === "programado"
-      ? "Pagamento mensal programado pela corretora, aguardando o registro."
-      : "Parcelas previstas, em conferência pela corretora antes do pagamento.";
+    : NEXT_PAYMENT_NOTES[nextPayment.status];
 
   return (
     <>
@@ -237,9 +252,9 @@ export default async function SellerPage() {
               <CalendarDays size={22} strokeWidth={1.8} aria-hidden="true" />
               <div className={styles.heroDateText}>
                 <span>
-                  {nextPayment.stage === "programado"
+                  {nextPayment.status === "programado"
                     ? "Pagamento programado"
-                    : "Pagamento previsto"}
+                    : "Previsão da parcela"}
                 </span>
                 <strong className="num">
                   {formatBusinessDate(nextPayment.dueOn)}
@@ -395,7 +410,9 @@ export default async function SellerPage() {
                       {formatCompetence(installment.competence)}
                     </td>
                     <td className="num">
-                      <Link href={`/seller/sales/${installment.saleId}`}>
+                      <Link
+                        href={`/seller/sales/${installment.saleId}?origem=resumo`}
+                      >
                         {installment.saleCode}
                       </Link>
                     </td>

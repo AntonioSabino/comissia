@@ -1,0 +1,293 @@
+.period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.periodLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--control-height);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.periodForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.periodForm .periodInput {
+  width: auto;
+  min-width: 170px;
+  height: 40px;
+}
+
+/* Destaque do fechamento: o valor é dinheiro, então é o único verde da área. */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  align-items: center;
+  gap: 22px;
+  padding: var(--card-padding);
+  border: 1px solid var(--state-received-border);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(
+      circle at 8% 100%,
+      rgba(0, 155, 104, 0.08),
+      transparent 34%
+    ),
+    var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.heroText {
+  min-width: 0;
+}
+
+.heroKicker {
+  display: block;
+  color: var(--cobalt-700);
+  font: var(--type-kicker);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+}
+
+.heroAmount {
+  margin: 4px 0 7px;
+  color: var(--money-in);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-heading);
+}
+
+.heroDescription {
+  max-width: 590px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.steps li + li::before {
+  width: 24px;
+  height: 1px;
+  margin-right: 4px;
+  background: var(--border-default);
+  content: "";
+}
+
+.done {
+  color: var(--state-received);
+}
+
+.current {
+  color: var(--state-pending);
+}
+
+.upcoming {
+  color: var(--text-subtle);
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.actionStatus {
+  color: var(--state-received);
+  font-size: var(--text-xs);
+}
+
+.actionStatus:empty {
+  display: none;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+}
+
+.totals div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.totals span {
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.totals strong {
+  color: var(--text-heading);
+  font-size: var(--text-lg);
+}
+
+.outside {
+  color: var(--text-subtle);
+  font-size: var(--text-2xs);
+}
+
+.rowAction {
+  text-align: right;
+}
+
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: var(--card-padding);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-3xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-modal);
+  color: var(--text-body);
+  text-align: left;
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+  backdrop-filter: var(--blur-scrim);
+}
+
+.dialogTitle {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.dialogDescription {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: normal;
+}
+
+.breakdown {
+  display: grid;
+  gap: 2px;
+  margin: 20px 0 16px;
+}
+
+.breakdown div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.breakdown dt {
+  display: flex;
+  flex-direction: column;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.breakdown dt small {
+  color: var(--text-subtle);
+  font-size: var(--text-2xs);
+}
+
+.breakdown dd {
+  margin: 0;
+  color: var(--money-out);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.breakdown .breakdownTotal {
+  border-bottom: 0;
+}
+
+.breakdown .breakdownTotal dt,
+.breakdown .breakdownTotal dd {
+  color: var(--text-heading);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1120px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .steps {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .steps {
+    grid-row: auto;
+  }
+
+  .action {
+    align-items: stretch;
+  }
+
+  .heroAmount {
+    font-size: var(--text-xl);
+  }
+
+  .totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .periodForm {
+    order: -1;
+    flex: 1 1 100%;
+  }
+
+  .periodForm .periodInput {
+    flex: 1 1 auto;
+  }
+}

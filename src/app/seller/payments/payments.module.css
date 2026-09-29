@@ -43,19 +43,56 @@
   font-size: var(--text-2xs);
 }
 
-.statementForm {
+/* Mês selecionado: o total é dinheiro a receber, então é o destaque. */
+.navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.totalRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  width: 100%;
+  gap: 12px;
 }
 
-.statementForm .statementSelect {
-  width: auto;
-  min-width: 170px;
-  height: 40px;
+.total {
+  margin: 0;
+  color: var(--money-in);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+}
+
+.totalNote {
+  margin: 6px 0 16px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.monthActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Nomes longos quebram linha em vez de alargar a tabela. */
+td.text {
+  min-width: 120px;
+  white-space: normal;
+}
+
+.selected td {
+  background: var(--surface-sunken);
+  font-weight: var(--weight-bold);
+}
+
+.current {
+  color: var(--text-subtle);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-regular);
 }
 
 @media (max-width: 1120px) {
@@ -80,13 +117,5 @@
   .summary div + div {
     border-top: 1px solid var(--border-subtle);
     border-left: 0;
-  }
-
-  .statementForm {
-    justify-content: stretch;
-  }
-
-  .statementForm .statementSelect {
-    flex: 1 1 auto;
   }
 }

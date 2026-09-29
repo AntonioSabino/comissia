@@ -36,7 +36,7 @@ describe("reviewPayoutClosing", () => {
     expect(repository.advance).toHaveBeenCalledWith({
       competence: "2026-08",
       transition: PAYOUT_REVIEW,
-      changedAt: NOW,
+      now: expect.any(Function),
     });
   });
 
@@ -77,8 +77,9 @@ describe("paySellerPayout", () => {
       competence: "2026-08",
       sellerId: SELLER_ID,
       transition: PAYOUT_PAYMENT,
-      changedAt: NOW,
+      now: expect.any(Function),
     });
+    expect(vi.mocked(repository.advance).mock.calls[0][0].now()).toBe(NOW);
   });
 
   it("recusa um vendedor inválido", async () => {

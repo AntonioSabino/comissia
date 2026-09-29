@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { PAYOUT_PAYMENT, PAYOUT_REVIEW } from "@/modules/commissions";
@@ -98,6 +98,92 @@ async function statusesOf(sellerId: string, competence: string) {
   return installments.map((installment) => installment.status);
 }
 
+type HeldInstallment = {
+  locked: Promise<void>;
+  release: () => void;
+  done: Promise<void>;
+};
+
+/**
+ * Simula uma conferência em andamento: trava a parcela do vendedor na
+ * competência e, quando liberada, grava o evento `prevista → programada` na
+ * posição 2 antes de confirmar.
+ */
+function holdInstallment(
+  competence: string,
+  sellerId: string,
+): HeldInstallment {
+  let lockAcquired!: () => void;
+  let release!: () => void;
+  const locked = new Promise<void>((resolve) => (lockAcquired = resolve));
+  const released = new Promise<void>((resolve) => (release = resolve));
+
+  const done = db.transaction(async (transaction) => {
+    const [installment] = await transaction
+      .select({ id: commissionInstallments.id })
+      .from(commissionInstallments)
+      .innerJoin(sales, eq(sales.id, commissionInstallments.saleId))
+      .where(
+        and(
+          eq(commissionInstallments.competence, competence),
+          eq(sales.sellerId, sellerId),
+        ),
+      )
+      .for("update", { of: commissionInstallments });
+
+    lockAcquired();
+    await released;
+
+    await transaction.insert(commissionInstallmentStatusEvents).values({
+      installmentId: installment.id,
+      sequence: 2,
+      previousStatus: "prevista",
+      status: "programada",
+      changedAt: new Date(),
+    });
+  });
+
+  return { locked, release, done };
+}
+
+/**
+ * Espera o banco confirmar que alguma sessão está parada numa trava, em vez de
+ * supor isso por tempo. Devolve `false` se ninguém esperou dentro do prazo.
+ */
+async function waitForLockWaiter(timeoutMs = 3_000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const result = await db.execute<{ waiting: number }>(
+      sql`SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+    );
+
+    if (result.rows[0]?.waiting > 0) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+
+  return false;
+}
+
+/**
+ * Libera a trava só depois de ver a operação esperando por ela, e libera
+ * sempre — mesmo quando ninguém esperou —, para o teste falhar pela asserção e
+ * não por uma transação pendurada.
+ */
+async function raceAgainstLock<T>(
+  held: HeldInstallment,
+  operation: Promise<T>,
+): Promise<[boolean, PromiseSettledResult<void>, PromiseSettledResult<T>]> {
+  const waited = await waitForLockWaiter();
+  held.release();
+  const [inProgress, result] = await Promise.allSettled([held.done, operation]);
+
+  return [waited, inProgress, result];
+}
+
 describe("fechamento dos repasses", () => {
   let first: { sellerId: string };
   let second: { sellerId: string };
@@ -111,7 +197,7 @@ describe("fechamento dos repasses", () => {
     const result = await payoutRepository.advance({
       competence: "2026-04",
       transition: PAYOUT_REVIEW,
-      changedAt: new Date(),
+      now: () => new Date(),
     });
 
     // Pode haver parcelas de outros testes na mesma competência; as duas
@@ -159,7 +245,7 @@ describe("fechamento dos repasses", () => {
       payoutRepository.advance({
         competence: "2026-04",
         transition: PAYOUT_REVIEW,
-        changedAt: new Date(),
+        now: () => new Date(),
       }),
     ).resolves.toEqual({ installments: 0, totalInCents: BigInt(0) });
   });
@@ -169,7 +255,7 @@ describe("fechamento dos repasses", () => {
       competence: "2026-04",
       sellerId: first.sellerId,
       transition: PAYOUT_PAYMENT,
-      changedAt: new Date(),
+      now: () => new Date(),
     });
 
     expect(result.installments).toBe(1);
@@ -186,63 +272,59 @@ describe("fechamento dos repasses", () => {
         competence: "2026-05",
         sellerId: first.sellerId,
         transition: PAYOUT_PAYMENT,
-        changedAt: new Date(),
+        now: () => new Date(),
       }),
     ).resolves.toEqual({ installments: 0, totalInCents: BigInt(0) });
     expect(await statusesOf(first.sellerId, "2026-05")).toEqual(["prevista"]);
   });
 
   it("espera um fechamento em andamento e não grava a mesma sequência", async () => {
-    let lockAcquired!: () => void;
-    let releaseLock!: () => void;
-    const locked = new Promise<void>((resolve) => (lockAcquired = resolve));
-    const release = new Promise<void>((resolve) => (releaseLock = resolve));
+    // Outra conferência já travou a parcela de maio do vendedor e grava o
+    // evento de posição 2 assim que for liberada.
+    const held = holdInstallment("2026-05", first.sellerId);
+    await held.locked;
 
-    // Outra conferência já travou a parcela de maio do vendedor e está prestes
-    // a gravar o evento de posição 2.
-    const inProgress = db.transaction(async (transaction) => {
-      const [installment] = await transaction
-        .select({ id: commissionInstallments.id })
-        .from(commissionInstallments)
-        .innerJoin(sales, eq(sales.id, commissionInstallments.saleId))
-        .where(
-          and(
-            eq(commissionInstallments.competence, "2026-05"),
-            eq(sales.sellerId, first.sellerId),
-          ),
-        )
-        .for("update", { of: commissionInstallments });
-
-      lockAcquired();
-      await release;
-
-      await transaction.insert(commissionInstallmentStatusEvents).values({
-        installmentId: installment.id,
-        sequence: 2,
-        previousStatus: "prevista",
-        status: "programada",
-        changedAt: new Date(),
-      });
-    });
-
-    await locked;
     const advancing = payoutRepository.advance({
       competence: "2026-05",
       sellerId: first.sellerId,
       transition: PAYOUT_REVIEW,
-      changedAt: new Date(Date.now() + 1_000),
+      now: () => new Date(),
     });
+    const [waited, inProgress, advanced] = await raceAgainstLock(
+      held,
+      advancing,
+    );
 
-    // Sem a trava, o repositório gravaria a posição 2 neste intervalo e a
-    // transação em andamento falharia na chave única da sequência.
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    releaseLock();
-
-    await expect(inProgress).resolves.toBeUndefined();
-    await expect(advancing).resolves.toEqual({
-      installments: 0,
-      totalInCents: BigInt(0),
+    // Sem a trava o repositório não espera: grava a posição 2 antes e a
+    // transação em andamento falha na chave única da sequência.
+    expect(waited).toBe(true);
+    expect(inProgress.status).toBe("fulfilled");
+    expect(advanced).toEqual({
+      status: "fulfilled",
+      value: { installments: 0, totalInCents: BigInt(0) },
     });
     expect(await statusesOf(first.sellerId, "2026-05")).toEqual(["programada"]);
+  });
+
+  it("paga depois de uma conferência concorrente sem gravar um instante retroativo", async () => {
+    const held = holdInstallment("2026-06", first.sellerId);
+    await held.locked;
+
+    // O pagamento chega antes de a conferência gravar. Se ele fixasse o
+    // instante agora, o evento dela seria mais novo e o domínio recusaria o
+    // pagamento como retroativo.
+    const paying = payoutRepository.advance({
+      competence: "2026-06",
+      sellerId: first.sellerId,
+      transition: PAYOUT_PAYMENT,
+      now: () => new Date(),
+    });
+    const [waited, inProgress, paid] = await raceAgainstLock(held, paying);
+
+    expect(waited).toBe(true);
+    expect(inProgress.status).toBe("fulfilled");
+    expect(paid.status).toBe("fulfilled");
+    expect(paid.status === "fulfilled" && paid.value.installments).toBe(1);
+    expect(await statusesOf(first.sellerId, "2026-06")).toEqual(["paga"]);
   });
 });

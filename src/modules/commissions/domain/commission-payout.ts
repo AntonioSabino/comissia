@@ -82,13 +82,14 @@ export type PayoutStatusEvent = Readonly<{
 /**
  * Eventos que a transição gera: um por parcela que está exatamente na situação
  * de origem. As demais são ignoradas, e não recusadas, para que conferir ou
- * pagar de novo não falhe por causa das parcelas que já avançaram.
+ * pagar de novo não falhe por causa das parcelas que já avançaram. O plano é
+ * imutável nos dois níveis, como as demais coleções do módulo.
  */
 export function planPayoutTransition(
   installments: readonly PayoutInstallmentHistory[],
   transition: PayoutTransition,
   changedAt: Date,
-): PayoutStatusEvent[] {
+): readonly PayoutStatusEvent[] {
   const events: PayoutStatusEvent[] = [];
 
   for (const { installmentId, history } of installments) {
@@ -102,12 +103,14 @@ export function planPayoutTransition(
       changedAt,
     );
 
-    events.push({
-      installmentId,
-      sequence: next.length,
-      entry: next[next.length - 1],
-    });
+    events.push(
+      Object.freeze({
+        installmentId,
+        sequence: next.length,
+        entry: next[next.length - 1],
+      }),
+    );
   }
 
-  return events;
+  return Object.freeze(events);
 }

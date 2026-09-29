@@ -105,6 +105,18 @@ describe("fechamento mensal de comissões", () => {
     ]);
   });
 
+  it("devolve um plano imutável nos dois níveis", () => {
+    const events = planPayoutTransition(
+      [{ installmentId: "a", history: planned }],
+      PAYOUT_REVIEW,
+      REVIEWED_AT,
+    );
+
+    expect(Object.isFrozen(events)).toBe(true);
+    expect(Object.isFrozen(events[0])).toBe(true);
+    expect(Object.isFrozen(events[0].entry)).toBe(true);
+  });
+
   it("não gera evento quando nada está na situação de origem", () => {
     expect(
       planPayoutTransition(

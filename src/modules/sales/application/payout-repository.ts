@@ -6,7 +6,12 @@ export type PayoutTransitionInput = {
   /** Sem vendedor, a transição vale para a competência inteira. */
   sellerId?: string;
   transition: PayoutTransition;
-  changedAt: Date;
+  /**
+   * Relógio da transição. O repositório o consulta só depois de travar as
+   * parcelas e ler o histórico: quem esperou outro fechamento terminar nunca
+   * grava um evento anterior ao dele.
+   */
+  now: () => Date;
 };
 
 export type PayoutTransitionResult = {

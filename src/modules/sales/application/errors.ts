@@ -53,3 +53,24 @@ export class QuotaStatusUnchangedError extends Error {
     this.name = "QuotaStatusUnchangedError";
   }
 }
+
+export class PayoutValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PayoutValidationError";
+  }
+}
+
+export class NothingToReviewError extends Error {
+  constructor() {
+    super("Não há parcelas previstas para conferir nesta competência");
+    this.name = "NothingToReviewError";
+  }
+}
+
+export class NothingToPayError extends Error {
+  constructor() {
+    super("Não há parcelas programadas deste vendedor nesta competência");
+    this.name = "NothingToPayError";
+  }
+}

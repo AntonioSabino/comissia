@@ -22,9 +22,12 @@
   height: 40px;
 }
 
+/* A lista é o contêiner de referência: a grade das vendas acompanha a largura
+   do card, e não a da janela, que muda com o menu lateral aberto ou não. */
 .list {
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
 }
 
 .sale {
@@ -35,12 +38,17 @@
   border-top: 0;
 }
 
-/* O marcador nativo sai de cena; quem indica o estado é a seta. */
+/* Grade comum a todas as vendas: as trilhas têm mínimo fixo e o resto do
+   espaço vai por fração, então cada coluna tem a mesma largura em todas as
+   linhas, qualquer que seja o conteúdo. A badge fica numa coluna de largura
+   fixa, alinhada à direita. O marcador nativo sai de cena; quem indica o
+   estado é a seta. */
 .summary {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-areas: "marker headline badge";
+  grid-template-columns: 16px minmax(0, 1fr) 5.75rem;
   align-items: center;
-  gap: 12px;
+  gap: 10px 16px;
   padding: 14px 20px;
   list-style: none;
   cursor: pointer;
@@ -65,12 +73,12 @@
 }
 
 .summary > :last-child {
-  flex: none;
-  margin-left: auto;
+  grid-area: badge;
+  justify-self: end;
 }
 
 .marker {
-  flex: none;
+  grid-area: marker;
   color: var(--text-subtle);
   transition: transform var(--duration-fast) var(--ease-standard);
 }
@@ -79,11 +87,10 @@
   transform: rotate(90deg);
 }
 
-/* Base zero: o bloco divide a linha com a seta em vez de cair abaixo dela. */
 .headline {
-  display: flex;
-  flex: 1 1 0;
-  flex-wrap: wrap;
+  display: grid;
+  grid-area: headline;
+  grid-template-columns: minmax(8rem, 1.4fr) minmax(0, 5fr);
   align-items: center;
   gap: 10px 24px;
   min-width: 0;
@@ -100,24 +107,30 @@
   color: var(--text-heading);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
+  overflow-wrap: anywhere;
 }
 
 .administrator {
   color: var(--text-muted);
   font-size: var(--text-xs);
+  overflow-wrap: anywhere;
 }
 
+/* Data, grupo/cota, crédito, parcelas e comissão, sempre nesta ordem. */
 .facts {
-  display: flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  gap: 10px 24px;
+  display: grid;
+  grid-template-columns:
+    minmax(4.75rem, 0.9fr) minmax(5rem, 1fr) minmax(7rem, 1.3fr)
+    minmax(3.75rem, 0.6fr) minmax(7rem, 1.2fr);
+  gap: 10px 20px;
+  min-width: 0;
 }
 
 .fact {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .factLabel {
@@ -131,6 +144,7 @@
 .fact > span:last-child {
   color: var(--text-body);
   font-size: var(--text-xs);
+  overflow-wrap: anywhere;
 }
 
 /* Verde é dinheiro: a comissão da venda é o único valor marcado assim. */
@@ -205,11 +219,15 @@
   }
 }
 
-@media (max-width: 660px) {
+/* Card estreito: código e badge na primeira linha, os fatos abaixo, cada um
+   com o rótulo acima do valor. A badge continua no canto direito. */
+@container (max-width: 859px) {
   .summary {
-    align-items: flex-start;
-    gap: 10px;
-    padding: 14px 16px;
+    grid-template-areas:
+      "marker identity badge"
+      ". facts facts";
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: start;
   }
 
   .marker {
@@ -217,11 +235,34 @@
   }
 
   .headline {
-    gap: 10px 18px;
+    display: contents;
+  }
+
+  .identity {
+    grid-area: identity;
   }
 
   .facts {
+    grid-area: facts;
+  }
+}
+
+@container (max-width: 599px) {
+  .facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px 18px;
+  }
+}
+
+@container (max-width: 419px) {
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 660px) {
+  .summary {
+    padding: 14px 16px;
   }
 
   .details {

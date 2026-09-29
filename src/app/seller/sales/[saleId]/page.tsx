@@ -78,9 +78,9 @@ export default async function SellerSalePage({
       ? `/seller/sales?${listQuery}`
       : "/seller/sales"
     : isCompetence(from)
-      ? `/seller/commissions?competencia=${from}`
-      : "/seller/commissions";
-  const backLabel = cameFromSales ? "Vendas e comissões" : "Previsão mensal";
+      ? `/seller/payments?competencia=${from}`
+      : "/seller/payments";
+  const backLabel = cameFromSales ? "Vendas e comissões" : "Pagamentos";
 
   if (!user.sellerId) {
     return (

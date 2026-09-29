@@ -47,11 +47,6 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
   seller: [
     { href: "/seller", label: "Resumo", icon: LayoutDashboard, exact: true },
     { href: "/seller/sales", label: "Vendas e comissões", icon: Receipt },
-    {
-      href: "/seller/commissions",
-      label: "Previsão mensal",
-      icon: CalendarClock,
-    },
     { href: "/seller/payments", label: "Pagamentos", icon: WalletCards },
   ],
 };

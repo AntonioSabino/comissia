@@ -103,96 +103,6 @@
 }
 
 /* Quatro cards com ícone (MetricCard do kit). */
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--grid-gap);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* O card é contêiner: quando fica estreito, o ícone sobe e o valor ganha a
-   largura toda, em vez de quebrar no meio do número. */
-.metric {
-  container-type: inline-size;
-  min-width: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-2xl);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-card);
-}
-
-.metricInner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 100%;
-  min-height: 128px;
-  padding: 22px;
-}
-
-.metricIcon {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border: 1px solid var(--state-received-border);
-  border-radius: var(--radius-circle);
-  background: linear-gradient(145deg, var(--green-025), var(--green-050));
-  color: var(--green-500);
-}
-
-.metricText {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.metricLabel {
-  color: var(--slate-600);
-  font-size: var(--text-base);
-  line-height: var(--lh-dense);
-}
-
-.metricValue {
-  margin-top: 4px;
-  color: var(--text-heading);
-  font-size: clamp(20px, 1.6vw, 26px);
-  font-weight: var(--weight-bold);
-  line-height: var(--lh-heading);
-  letter-spacing: -0.04em;
-  overflow-wrap: anywhere;
-}
-
-.metricNote {
-  margin-top: 5px;
-  color: var(--text-subtle);
-  font-size: var(--text-xs);
-  line-height: var(--lh-dense);
-}
-
-@container (max-width: 300px) {
-  .metricInner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    min-height: 0;
-    padding: 18px;
-  }
-
-  .metricIcon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .metricIcon > svg {
-    width: 22px;
-    height: 22px;
-  }
-}
-
 .amount {
   text-align: right;
 }
@@ -258,12 +168,6 @@
 }
 
 /* Quatro colunas só cabem com o valor inteiro em linha a partir daqui. */
-@media (max-width: 1360px) {
-  .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 660px) {
   .hero {
     min-height: 0;
@@ -283,15 +187,6 @@
     min-width: 0;
     margin-left: 0;
     padding: 16px;
-  }
-
-  .metrics {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .metricValue {
-    font-size: var(--text-lg);
   }
 
   .salesStats {

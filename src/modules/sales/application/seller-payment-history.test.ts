@@ -52,7 +52,7 @@ describe("buildSellerPaymentHistory", () => {
       toDate,
     );
 
-    expect(history.months).toEqual([
+    expect(history.months).toMatchObject([
       {
         competence: "2026-09",
         stage: "em-conferencia",
@@ -82,6 +82,57 @@ describe("buildSellerPaymentHistory", () => {
       },
     ]);
     expect(history.outsideInstallments).toBe(1);
+  });
+
+  it("descreve o mês como o vendedor o lê", () => {
+    const history = buildSellerPaymentHistory(
+      [
+        installment("2026-06", "paga", 1_000),
+        installment("2026-07", "programada", 1_000),
+        installment("2026-08", "paga", 1_000),
+        installment("2026-08", "prevista", 1_000),
+        installment("2026-09", "prevista", 1_000),
+        installment("2026-05", "prevista", 1_000),
+        installment("2026-11", "prevista", 1_000),
+        installment("2026-12", "cancelada", 1_000),
+      ],
+      TODAY,
+      toDate,
+    );
+
+    expect(
+      history.timeline.map((month) => [month.competence, month.status]),
+    ).toEqual([
+      ["2026-05", "aguardando-fechamento"],
+      ["2026-06", "pago"],
+      ["2026-07", "programado"],
+      ["2026-08", "em-fechamento"],
+      ["2026-09", "previsto"],
+      ["2026-11", "previsto"],
+      ["2026-12", "sem-valor"],
+    ]);
+  });
+
+  it("traz todos os meses na linha do tempo e soma o que ainda vai receber", () => {
+    const history = buildSellerPaymentHistory(
+      [
+        installment("2026-12", "prevista", 5_000),
+        installment("2026-07", "paga", 1_000),
+        installment("2026-08", "programada", 2_000),
+        installment("2026-08", "ajustada", 9_000),
+      ],
+      TODAY,
+      toDate,
+    );
+
+    expect(history.timeline.map((month) => month.competence)).toEqual([
+      "2026-07",
+      "2026-08",
+      "2026-12",
+    ]);
+    expect(history.pendingInCents).toBe(BigInt(7_000));
+    expect(history.timeline[1].outsideInstallments).toBe(1);
+    expect(history.timeline[1].installments).toHaveLength(2);
   });
 
   it("mostra o futuro só quando o mês já foi conferido ou pago", () => {
@@ -173,6 +224,8 @@ describe("buildSellerPaymentHistory", () => {
     expect(buildSellerPaymentHistory([], TODAY, toDate)).toEqual({
       months: [],
       paidThisYearInCents: BigInt(0),
+      timeline: [],
+      pendingInCents: BigInt(0),
       lastPayment: null,
       nextPayment: null,
       outsideInstallments: 0,

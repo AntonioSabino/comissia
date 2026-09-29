@@ -10,7 +10,7 @@ import {
 } from "./schema";
 
 export const payoutRepository: PayoutRepository = {
-  async advance({ competence, sellerId, transition, changedAt }) {
+  async advance({ competence, sellerId, transition, now }) {
     return db.transaction(async (transaction) => {
       const conditions: SQL[] = [
         eq(commissionInstallments.competence, competence),
@@ -66,7 +66,8 @@ export const payoutRepository: PayoutRepository = {
           history: histories.get(installment.id) ?? [],
         })),
         transition,
-        changedAt,
+        // O instante é lido aqui, com a trava obtida e o histórico já lido.
+        now(),
       );
 
       if (events.length === 0) {

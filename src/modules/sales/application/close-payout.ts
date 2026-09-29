@@ -36,7 +36,7 @@ export async function reviewPayoutClosing(
   const result = await repository.advance({
     competence,
     transition: PAYOUT_REVIEW,
-    changedAt: now(),
+    now,
   });
 
   if (result.installments === 0) {
@@ -64,7 +64,7 @@ export async function paySellerPayout(
     competence,
     sellerId: input.sellerId,
     transition: PAYOUT_PAYMENT,
-    changedAt: now(),
+    now,
   });
 
   if (result.installments === 0) {

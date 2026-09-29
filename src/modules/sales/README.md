@@ -255,8 +255,13 @@ ignoradas, e não recusadas, então repetir a ação não falha por causa delas;
 quando nada muda, a rota responde `409` com uma mensagem. O repositório trava as
 parcelas do recorte com `FOR UPDATE OF commission_installments` antes de ler o
 histórico: uma segunda conferência simultânea espera a primeira terminar e não
-calcula a mesma sequência. O teste `payout-repository.db.test.ts` cobre esse
-caso contra o PostgreSQL.
+calcula a mesma sequência. O instante do evento também é lido só depois da
+trava e do histórico (o contrato recebe um relógio, `now`, e não uma data
+pronta): um pagamento que esperou uma conferência concorrente nunca grava um
+evento anterior ao dela, o que o domínio recusaria como retroativo. O teste
+`payout-repository.db.test.ts` cobre os dois casos contra o PostgreSQL,
+esperando o banco confirmar em `pg_stat_activity` que a operação está parada na
+trava antes de liberá-la.
 
 Recebimentos importados, corte por data de recebimento e repasses a parceiros,
 que aparecem no kit do Design System, ficam fora deste incremento.

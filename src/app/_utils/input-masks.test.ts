@@ -207,6 +207,29 @@ describe("digitação tecla a tecla", () => {
     });
   });
 
+  it("ignora a tecla que passaria do tamanho do campo", () => {
+    expect(typeKeys("phone", "119999988887777")).toEqual({
+      value: "(11) 99999-8888",
+      caret: 15,
+    });
+    expect(typeKeys("cpf", "123456789001234").value).toBe("123.456.789-00");
+    expect(typeKeys("percent", "1000").value).toBe("100");
+    expect(typeKeys("money", "123456789012345678").value).toBe(
+      "12.345.678.901.234.567",
+    );
+  });
+
+  it("ignora a tecla a mais também com o cursor no meio", () => {
+    // Campo cheio, cursor depois do DDD: o 9 digitado não entra.
+    expect(
+      typeKeys("phone", "9", { value: "(11) 99999-8888", caret: 4 }),
+    ).toEqual({ value: "(11) 99999-8888", caret: 4 });
+  });
+
+  it("aceita o código do país ao digitar, porque ele sai na formatação", () => {
+    expect(typeKeys("phone", "5511999998888").value).toBe("(11) 99999-8888");
+  });
+
   it("insere no meio do telefone sem jogar o cursor para o fim", () => {
     // "(11) 9|999-8888": o cursor está depois do primeiro 9.
     expect(

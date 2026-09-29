@@ -3,9 +3,10 @@
  * e validando o valor com ou sem formatação (`seller-profile`,
  * `seller-commission-rate` e `parseBrlToCents`).
  *
- * Regra das máscaras: nunca trocar o valor digitado por outro. Um valor que
- * passa do tamanho aceito não é cortado; ele fica sem formatação para que o
- * servidor o recuse, em vez de gravar um número diferente do que foi digitado.
+ * Regra das máscaras: nunca trocar o valor digitado por outro. Digitando, a
+ * tecla que passaria do tamanho aceito é ignorada. Colando, um valor grande
+ * demais não é cortado: fica sem formatação para que o servidor o recuse, em
+ * vez de gravar um número diferente do que foi colado.
  */
 export type InputMask = "cpf" | "phone" | "percent" | "money";
 
@@ -14,6 +15,8 @@ const PHONE_DIGITS = 11;
 const BRAZIL_COUNTRY_CODE = "55";
 /** O servidor aceita créditos de até 17 dígitos inteiros (limite do `bigint`). */
 const MONEY_INTEGER_DIGITS = 17;
+/** Percentual vai até 100: três dígitos inteiros bastam. */
+const PERCENT_INTEGER_DIGITS = 3;
 
 function onlyDigits(value: string): string {
   return value.replace(/\D/g, "");
@@ -33,16 +36,21 @@ export function maskCpf(value: string): string {
     .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
 }
 
+/** Dígitos do telefone, sem o código do país colado junto (+55). */
+function phoneDigits(value: string): string {
+  const digits = onlyDigits(value);
+
+  return digits.length > PHONE_DIGITS && digits.startsWith(BRAZIL_COUNTRY_CODE)
+    ? digits.slice(BRAZIL_COUNTRY_CODE.length)
+    : digits;
+}
+
 /**
  * DDD entre parênteses; 8 dígitos viram 9999-9999 e 9 viram 99999-9999. O
  * código do país (+55) colado junto é removido, e não confundido com o DDD.
  */
 export function maskPhone(value: string): string {
-  let digits = onlyDigits(value);
-
-  if (digits.length > PHONE_DIGITS && digits.startsWith(BRAZIL_COUNTRY_CODE)) {
-    digits = digits.slice(BRAZIL_COUNTRY_CODE.length);
-  }
+  const digits = phoneDigits(value);
 
   if (digits.length > PHONE_DIGITS) {
     return digits;
@@ -127,6 +135,31 @@ export function applyMask(mask: InputMask, value: string): string {
   return MASKS[mask](value);
 }
 
+function integerDigits(value: string, decimalSeparators: RegExp): string {
+  const separatorAt = value.search(decimalSeparators);
+
+  return withoutLeadingZeros(
+    onlyDigits(separatorAt < 0 ? value : value.slice(0, separatorAt)),
+  );
+}
+
+/** O valor passa do tamanho que o campo aceita. */
+export function exceedsLimit(mask: InputMask, value: string): boolean {
+  switch (mask) {
+    case "cpf":
+      return onlyDigits(value).length > CPF_DIGITS;
+    case "phone":
+      return phoneDigits(value).length > PHONE_DIGITS;
+    case "percent":
+      return integerDigits(value, /[,.]/).length > PERCENT_INTEGER_DIGITS;
+    case "money":
+      return (
+        integerDigits(value.replace(/^\s*R\$\s*/i, ""), /,/).length >
+        MONEY_INTEGER_DIGITS
+      );
+  }
+}
+
 /** Caracteres que o usuário digitou de fato: dígitos e a vírgula decimal. */
 function isSignificant(character: string): boolean {
   return /[\d,]/.test(character);
@@ -189,6 +222,16 @@ export function reformatAfterEdit(
   value: string,
   caret: number,
 ): { value: string; caret: number } {
+  // Uma tecla a mais num campo já cheio é ignorada: o campo fica como estava.
+  const typedPastLimit =
+    value.length === previous.length + 1 &&
+    exceedsLimit(mask, value) &&
+    !exceedsLimit(mask, previous);
+
+  if (typedPastLimit) {
+    return { value: previous, caret: Math.max(caret - 1, 0) };
+  }
+
   const removedOnlySeparator =
     value.length === previous.length - 1 &&
     caret > 0 &&

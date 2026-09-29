@@ -1,12 +1,21 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import { Banknote, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { Alert } from "@/app/_components/ui/alert";
 import { Button } from "@/app/_components/ui/button";
 import { readApiResult, readMessage } from "@/app/admin/_utils/api-result";
 import styles from "./payouts.module.css";
+
+/**
+ * Ícones pelo nome: este é um componente de cliente, e a página, que é de
+ * servidor, não pode passar um componente (função) como prop para ele.
+ */
+const ICONS = {
+  review: CheckCircle2,
+  payment: Banknote,
+} as const;
 
 export type PayoutBreakdownLine = {
   label: string;
@@ -19,7 +28,7 @@ type PayoutActionProps = {
   /** Rota que executa a transição. */
   endpoint: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: keyof typeof ICONS;
   variant?: "primary" | "secondary";
   size?: "sm" | "md";
   /** Nome acessível do botão, quando o rótulo sozinho é ambíguo numa tabela. */
@@ -101,7 +110,7 @@ export function PayoutAction({
       <Button
         variant={variant}
         size={size}
-        icon={icon}
+        icon={icon ? ICONS[icon] : undefined}
         onClick={open}
         disabled={disabled}
         aria-label={accessibleLabel}

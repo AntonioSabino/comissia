@@ -179,7 +179,7 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
           <PayoutAction
             endpoint={`/api/admin/payouts/${competence}/review`}
             label="Conferir fechamento"
-            icon={CheckCircle2}
+            icon="review"
             disabled={closing.plannedInstallments === 0}
             title={`Conferir fechamento de ${label}`}
             description="As parcelas previstas desta competência passam a programadas. Depois da conferência, registre o pagamento de cada vendedor."
@@ -296,7 +296,7 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
                         accessibleLabel={`Marcar como pago o repasse de ${seller.sellerName}`}
                         variant="secondary"
                         size="sm"
-                        icon={Banknote}
+                        icon="payment"
                         disabled={seller.scheduledInstallments === 0}
                         title={`Registrar pagamento de ${seller.sellerName}`}
                         description={`As parcelas programadas de ${label} passam a pagas. Parcelas ainda previstas continuam aguardando a conferência.`}

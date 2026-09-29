@@ -153,6 +153,10 @@ inline e são reescritos aqui.
   nunca é verde.
 - Um componente do Design System entra quando uma história precisa dele, não por
   antecipação.
+- CPF, telefone, percentual e valores em reais usam `MaskedInput`, que formata
+  enquanto se digita sem virar campo controlado (o formulário continua lendo o
+  `FormData`). A máscara é só de interface: o servidor aceita e valida o valor
+  com ou sem formatação. Datas usam o campo nativo do navegador.
 
 ## Convenções
 

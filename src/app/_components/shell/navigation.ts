@@ -7,6 +7,7 @@ import {
   Ruler,
   TrendingUp,
   UsersRound,
+  WalletCards,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,5 +52,6 @@ export const navigationByArea: Record<ShellArea, NavigationItem[]> = {
       label: "Previsão mensal",
       icon: CalendarClock,
     },
+    { href: "/seller/payments", label: "Pagamentos", icon: WalletCards },
   ],
 };

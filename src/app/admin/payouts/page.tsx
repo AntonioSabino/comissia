@@ -6,21 +6,23 @@ import {
   ChevronRight,
   Circle,
   Clock3,
+  FileText,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Alert } from "@/app/_components/ui/alert";
-import { Button } from "@/app/_components/ui/button";
+import { Button, ButtonLink } from "@/app/_components/ui/button";
 import { Card, CardHeading } from "@/app/_components/ui/card";
 import { DataTable } from "@/app/_components/ui/data-table";
 import { Input } from "@/app/_components/ui/field";
 import { PageBody, PageHeader } from "@/app/_components/ui/page-layout";
 import { EmptyState } from "@/app/_components/ui/state-block";
-import {
-  StatusBadge,
-  type StatusTone,
-} from "@/app/_components/ui/status-badge";
+import { StatusBadge } from "@/app/_components/ui/status-badge";
 import { formatCents, formatCompetence } from "@/app/_utils/format";
+import {
+  PAYOUT_STAGE_LABELS,
+  PAYOUT_STAGE_TONES,
+} from "@/app/_utils/payout-stage";
 import { getBusinessDate } from "@/lib/business-date";
 import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import type { PayoutStage } from "@/modules/commissions";
@@ -35,20 +37,6 @@ import styles from "./payouts.module.css";
 
 export const metadata: Metadata = {
   title: "Repasses | Comissia",
-};
-
-const STAGE_LABELS: Record<PayoutStage, string> = {
-  "em-conferencia": "Em conferência",
-  programado: "Programado",
-  pago: "Pago",
-  vazio: "Sem repasse",
-};
-
-const STAGE_TONES: Record<PayoutStage, StatusTone> = {
-  "em-conferencia": "pending",
-  programado: "reconciled",
-  pago: "received",
-  vazio: "neutral",
 };
 
 type StepState = "done" | "current" | "upcoming";
@@ -214,6 +202,18 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
             }
             title="Composição do fechamento"
             description="Canceladas e ajustadas aparecem aqui, mas ficam fora do valor a pagar."
+            action={
+              closing.sellers.length > 0 ? (
+                <ButtonLink
+                  href={`/admin/payouts/statement?competencia=${competence}`}
+                  variant="secondary"
+                  size="sm"
+                  icon={FileText}
+                >
+                  Conferência do fechamento
+                </ButtonLink>
+              ) : null
+            }
           />
 
           <div className={styles.totals} aria-label="Totais do fechamento">
@@ -256,6 +256,7 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
                   <th>A pagar</th>
                   <th>Pago</th>
                   <th>Situação</th>
+                  <th>Demonstrativo</th>
                   <th>Pagamento</th>
                 </tr>
               </thead>
@@ -285,9 +286,17 @@ export default async function PayoutsPage({ searchParams }: PayoutsPageProps) {
                     <td className="num">{formatCents(seller.toPayInCents)}</td>
                     <td className="num">{formatCents(seller.paidInCents)}</td>
                     <td>
-                      <StatusBadge tone={STAGE_TONES[seller.stage]}>
-                        {STAGE_LABELS[seller.stage]}
+                      <StatusBadge tone={PAYOUT_STAGE_TONES[seller.stage]}>
+                        {PAYOUT_STAGE_LABELS[seller.stage]}
                       </StatusBadge>
+                    </td>
+                    <td>
+                      <Link
+                        href={`/admin/payouts/statement?competencia=${competence}&vendedor=${seller.sellerId}`}
+                        aria-label={`Demonstrativo de ${seller.sellerName} em ${label}`}
+                      >
+                        Abrir
+                      </Link>
                     </td>
                     <td className={styles.rowAction}>
                       <PayoutAction

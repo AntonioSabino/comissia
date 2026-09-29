@@ -266,6 +266,40 @@ trava antes de liberá-la.
 Recebimentos importados, corte por data de recebimento e repasses a parceiros,
 que aparecem no kit do Design System, ficam fora deste incremento.
 
+## Pagamentos e demonstrativos
+
+`commissionStatementRepository` é a leitura dos demonstrativos: parcelas com a
+venda, o cliente, a administradora, o produto, o grupo e a cota, o vendedor e o
+instante da última mudança de situação, recortadas por vendedor e/ou
+competência. Nenhum percentual chega a ela — nem o do vendedor, nem o que a
+corretora recebe da administradora.
+
+Os totais saem do mesmo `buildPayoutClosing` da tela de repasses, genérico no
+tipo da parcela. O demonstrativo impresso soma, por construção, o que a
+administração conferiu, e o teste `commission-statement-repository.db.test.ts`
+confere isso contra a consulta de `/admin/commissions`.
+
+- **`/seller/payments`**: o histórico e a agenda do vendedor da sessão
+  (`buildSellerPaymentHistory`). Mostra um mês por competência até o mês
+  corrente, mais os meses futuros já conferidos ou pagos. O restante do futuro
+  é previsão e fica em `/seller/commissions`. A faixa de resumo traz o pago no
+  ano, o último pagamento (com a data em que foi registrado), o próximo
+  fechamento pendente e as parcelas fora do fechamento.
+- **`/seller/payments/statement?competencia=AAAA-MM`**: o demonstrativo do
+  vendedor. O vendedor vem sempre da sessão; não há parâmetro que alcance outro.
+- **`/admin/payouts/statement?competencia=AAAA-MM`**: a conferência do
+  fechamento, com todos os vendedores, os subtotais e o total geral.
+- **`/admin/payouts/statement?competencia=AAAA-MM&vendedor=<id>`**: o
+  demonstrativo de um vendedor, igual ao que ele baixa. Um vendedor
+  inexistente, ou uma competência inválida, é 404; um mês sem parcelas mostra o
+  estado vazio.
+
+O PDF sai do diálogo de impressão do navegador. Em `@media print`, o shell
+esconde o menu e a barra do celular, e o documento ocupa a página inteira: as
+linhas não se partem entre páginas, o cabeçalho da tabela se repete e códigos,
+datas e valores não quebram. Administradora e produto dividem uma coluna, como
+no kit, para a tabela caber na largura útil do A4.
+
 ## O que o vendedor vê
 
 A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos

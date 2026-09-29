@@ -77,7 +77,10 @@ export function groupInstallmentsByCompetence(
  * mesmo zerada, porque ali a escolha foi de quem navegou.
  */
 export function selectCompetence(
-  months: readonly MonthlyCommissionForecast[],
+  months: readonly Pick<
+    MonthlyCommissionForecast,
+    "competence" | "totalInCents"
+  >[],
   requested: string | undefined,
   today: string,
 ): string | null {

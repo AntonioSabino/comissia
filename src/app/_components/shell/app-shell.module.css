@@ -304,3 +304,19 @@
     cursor: pointer;
   }
 }
+
+/* Na impressão (demonstrativos), só o conteúdo: sem menu, barra nem atalhos. */
+@media print {
+  .shell {
+    display: block;
+    min-height: 0;
+    background: var(--white);
+  }
+
+  .sidebar,
+  .mobileBar,
+  .scrim,
+  .skipLink {
+    display: none;
+  }
+}

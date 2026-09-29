@@ -70,3 +70,13 @@ a:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+@page {
+  margin: 14mm 12mm;
+}
+
+@media print {
+  body {
+    background: var(--white);
+  }
+}

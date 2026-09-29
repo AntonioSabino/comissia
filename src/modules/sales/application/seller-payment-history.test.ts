@@ -116,6 +116,33 @@ describe("buildSellerPaymentHistory", () => {
     expect(history.nextPayment?.competence).toBe("2026-07");
   });
 
+  it("aponta como último o pagamento registrado por último, não a competência mais nova", () => {
+    const history = buildSellerPaymentHistory(
+      [
+        installment("2026-08", "paga", 8_000, "2026-08-07T14:00:00.000Z"),
+        installment("2026-06", "paga", 6_000, "2026-09-02T14:00:00.000Z"),
+      ],
+      TODAY,
+      toDate,
+    );
+
+    expect(history.lastPayment?.competence).toBe("2026-06");
+    expect(history.lastPayment?.paidOn).toBe("2026-09-02");
+  });
+
+  it("não aponta como próximo pagamento um mês futuro só previsto", () => {
+    const history = buildSellerPaymentHistory(
+      [
+        installment("2026-08", "paga", 1_000),
+        installment("2026-12", "prevista", 5_000),
+      ],
+      TODAY,
+      toDate,
+    );
+
+    expect(history.nextPayment).toBeNull();
+  });
+
   it("soma o pago no ano corrente, e só ele", () => {
     const history = buildSellerPaymentHistory(
       [

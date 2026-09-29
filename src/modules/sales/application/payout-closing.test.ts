@@ -85,6 +85,17 @@ describe("buildPayoutClosing", () => {
     expect(closing.toPayInCents).toBe(BigInt(80_236));
   });
 
+  it("conta a parcela programada de zero centavo como pagável", () => {
+    const closing = buildPayoutClosing([
+      installment("Ana", "programada", 0),
+      installment("Ana", "paga", 0),
+    ]);
+
+    expect(closing.sellers[0].scheduledInCents).toBe(BigInt(0));
+    expect(closing.sellers[0].scheduledInstallments).toBe(1);
+    expect(closing.sellers[0].stage).toBe("programado");
+  });
+
   it("ordena as parcelas do vendedor pela previsão", () => {
     const closing = buildPayoutClosing([
       installment("Ana", "prevista", 1, "2026-08-20"),

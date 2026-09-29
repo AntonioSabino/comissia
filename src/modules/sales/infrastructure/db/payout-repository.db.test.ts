@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { PAYOUT_PAYMENT, PAYOUT_REVIEW } from "@/modules/commissions";
@@ -13,6 +13,7 @@ import {
   administrators,
   commissionInstallments,
   commissionInstallmentStatusEvents,
+  sales,
 } from "./schema";
 
 /**
@@ -191,25 +192,57 @@ describe("fechamento dos repasses", () => {
     expect(await statusesOf(first.sellerId, "2026-05")).toEqual(["prevista"]);
   });
 
-  it("aceita duas conferências simultâneas sem duplicar o evento", async () => {
-    const [one, other] = await Promise.all([
-      payoutRepository.advance({
-        competence: "2026-06",
-        transition: PAYOUT_REVIEW,
-        changedAt: new Date(),
-      }),
-      payoutRepository.advance({
-        competence: "2026-06",
-        transition: PAYOUT_REVIEW,
-        changedAt: new Date(),
-      }),
-    ]);
+  it("espera um fechamento em andamento e não grava a mesma sequência", async () => {
+    let lockAcquired!: () => void;
+    let releaseLock!: () => void;
+    const locked = new Promise<void>((resolve) => (lockAcquired = resolve));
+    const release = new Promise<void>((resolve) => (releaseLock = resolve));
 
-    // Uma das duas programa tudo; a outra espera a trava e não acha previstas.
-    expect(Math.min(one.installments, other.installments)).toBe(0);
-    expect(await statusesOf(first.sellerId, "2026-06")).toEqual(["programada"]);
-    expect(await statusesOf(second.sellerId, "2026-06")).toEqual([
-      "programada",
-    ]);
+    // Outra conferência já travou a parcela de maio do vendedor e está prestes
+    // a gravar o evento de posição 2.
+    const inProgress = db.transaction(async (transaction) => {
+      const [installment] = await transaction
+        .select({ id: commissionInstallments.id })
+        .from(commissionInstallments)
+        .innerJoin(sales, eq(sales.id, commissionInstallments.saleId))
+        .where(
+          and(
+            eq(commissionInstallments.competence, "2026-05"),
+            eq(sales.sellerId, first.sellerId),
+          ),
+        )
+        .for("update", { of: commissionInstallments });
+
+      lockAcquired();
+      await release;
+
+      await transaction.insert(commissionInstallmentStatusEvents).values({
+        installmentId: installment.id,
+        sequence: 2,
+        previousStatus: "prevista",
+        status: "programada",
+        changedAt: new Date(),
+      });
+    });
+
+    await locked;
+    const advancing = payoutRepository.advance({
+      competence: "2026-05",
+      sellerId: first.sellerId,
+      transition: PAYOUT_REVIEW,
+      changedAt: new Date(Date.now() + 1_000),
+    });
+
+    // Sem a trava, o repositório gravaria a posição 2 neste intervalo e a
+    // transação em andamento falharia na chave única da sequência.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    releaseLock();
+
+    await expect(inProgress).resolves.toBeUndefined();
+    await expect(advancing).resolves.toEqual({
+      installments: 0,
+      totalInCents: BigInt(0),
+    });
+    expect(await statusesOf(first.sellerId, "2026-05")).toEqual(["programada"]);
   });
 });

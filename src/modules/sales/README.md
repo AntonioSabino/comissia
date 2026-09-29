@@ -226,6 +226,41 @@ A página exige papel `admin`. Tributação e conciliação não fazem parte des
 incremento: o valor mostrado é a comissão do vendedor preservada na parcela no
 momento do cadastro da venda.
 
+## Repasses mensais
+
+`/admin/payouts` é o fechamento de uma competência (`?competencia=AAAA-MM`; sem
+ela, o mês corrente). A tela mostra o valor a pagar do mês, as etapas
+Conferência e Pagamento e a composição por vendedor, lida pela mesma consulta de
+`/admin/commissions`. `buildPayoutClosing` separa, em centavos inteiros:
+
+- **a pagar**: parcelas previstas e programadas;
+- **pago**: parcelas pagas;
+- **fora do fechamento**: canceladas e ajustadas, que aparecem na composição mas
+  não entram no valor. Ajuste tem valor e motivo próprios e ganhará uma
+  operação específica.
+
+As duas ações gravam eventos no histórico de situação das parcelas, que continua
+apenas de inclusão:
+
+- **Conferir fechamento** (`POST /api/admin/payouts/[competence]/review`):
+  toda parcela prevista da competência passa a programada.
+- **Marcar como pago**
+  (`POST /api/admin/payouts/[competence]/sellers/[sellerId]/payment`): as
+  parcelas programadas do vendedor na competência passam a pagas. Parcelas
+  ainda previstas não são pagas sem conferência.
+
+Quem decide quais parcelas avançam e em que posição do histórico é o domínio
+(`planPayoutTransition`, em `commissions`). As parcelas que já avançaram são
+ignoradas, e não recusadas, então repetir a ação não falha por causa delas;
+quando nada muda, a rota responde `409` com uma mensagem. O repositório trava as
+parcelas do recorte com `FOR UPDATE OF commission_installments` antes de ler o
+histórico: uma segunda conferência simultânea espera a primeira terminar e não
+calcula a mesma sequência. O teste `payout-repository.db.test.ts` cobre esse
+caso contra o PostgreSQL.
+
+Recebimentos importados, corte por data de recebimento e repasses a parceiros,
+que aparecem no kit do Design System, ficam fora deste incremento.
+
 ## O que o vendedor vê
 
 A área do vendedor lê as próprias vendas e parcelas por quatro caminhos, todos

@@ -132,9 +132,28 @@ divergir do histórico. A tabela é apenas de inclusão, garantida pelo gatilho
 cuja situação anterior seja igual à nova. Toda parcela nasce com um evento
 `prevista` de situação anterior nula.
 
-Mudar a situação pela interface, consultar as parcelas e conciliar pagamentos
-são incrementos posteriores; neste ponto elas apenas nascem previstas junto com
-a venda.
+A consulta administrativa das parcelas e o fechamento mensal dos repasses já
+existem (ver o README de `sales`); a conciliação de pagamentos é um incremento
+posterior.
+
+## Fechamento mensal
+
+`commission-payout.ts` define o fluxo operacional dos repasses sobre as
+situações acima:
+
+- `PAYOUT_REVIEW`: a conferência do mês leva `prevista` para `programada`;
+- `PAYOUT_PAYMENT`: o registro do pagamento leva `programada` para `paga`.
+
+`planPayoutTransition` recebe o histórico de cada parcela e devolve os eventos a
+gravar, com a posição de cada um no histórico, somente para as parcelas que
+estão na situação de origem. As demais são ignoradas, para que repetir a ação
+não falhe. Parcela sem histórico continua sendo recusada.
+
+Só `prevista`, `programada` e `paga` compõem o fechamento (`isInPayoutClosing`).
+`cancelada` não é paga, e `ajustada` depende de uma operação com valor e motivo
+que ainda não existe. `payoutStageOf` resume um conjunto de parcelas, de um
+vendedor ou do mês, em `em-conferencia` (há alguma prevista), `programado`,
+`pago` ou `vazio`.
 
 ## Não pertence a este módulo
 

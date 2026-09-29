@@ -78,7 +78,7 @@ export function buildSellerPaymentHistory(
 
       return {
         month,
-        hasPaid: paid.length > 0,
+        paidAt,
         hasPending: list.some(
           (installment) =>
             installment.status === "prevista" ||
@@ -92,16 +92,26 @@ export function buildSellerPaymentHistory(
       };
     });
 
-  const months = allMonths
-    .filter(
-      ({ month, wasReviewed }) =>
-        month.competence <= currentCompetence || wasReviewed,
-    )
-    .map(({ month }) => month);
+  // O resumo olha os mesmos meses da tabela: o futuro só previsto fica na
+  // Previsão mensal, e não vira "próximo pagamento".
+  const shown = allMonths.filter(
+    ({ month, wasReviewed }) =>
+      month.competence <= currentCompetence || wasReviewed,
+  );
+  const months = shown.map(({ month }) => month);
   // O próximo pagamento é o fechamento pendente mais antigo, mesmo que seja
   // de um mês que ficou para trás sem conferência.
-  const next = [...allMonths].reverse().find(({ hasPending }) => hasPending);
-  const last = allMonths.find(({ hasPaid }) => hasPaid);
+  const next = [...shown].reverse().find(({ hasPending }) => hasPending);
+  // O último pagamento é o registrado por último, e não o da competência mais
+  // recente: a administração pode pagar um mês antigo depois de um mais novo.
+  const last = shown.reduce<(typeof shown)[number] | undefined>(
+    (current, candidate) =>
+      candidate.paidAt !== null &&
+      (current?.paidAt == null || candidate.paidAt > current.paidAt)
+        ? candidate
+        : current,
+    undefined,
+  );
   const currentYear = today.slice(0, 4);
 
   return {

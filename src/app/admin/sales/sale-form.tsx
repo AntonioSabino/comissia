@@ -13,6 +13,7 @@ import {
   Input,
   Select,
 } from "@/app/_components/ui/field";
+import { MaskedInput } from "@/app/_components/ui/masked-input";
 import {
   readApiResult,
   readFieldErrors,
@@ -171,11 +172,12 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
           label="Crédito vendido"
           error={fieldErrors.creditAmount}
         >
-          <Input
+          <MaskedInput
+            mask="money"
             name="creditAmount"
             numeric
             inputMode="decimal"
-            placeholder="R$ 200.000,00"
+            placeholder="200.000,00"
             maxLength={24}
             required
           />

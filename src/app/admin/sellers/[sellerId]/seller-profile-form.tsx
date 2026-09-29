@@ -12,6 +12,7 @@ import {
   FormGrid,
   Input,
 } from "@/app/_components/ui/field";
+import { MaskedInput } from "@/app/_components/ui/masked-input";
 import {
   readApiResult,
   readFieldErrors,
@@ -107,7 +108,8 @@ export function SellerProfileForm({
           label="CPF"
           error={fieldErrors.document}
         >
-          <Input
+          <MaskedInput
+            mask="cpf"
             name="document"
             defaultValue={document}
             numeric
@@ -139,13 +141,14 @@ export function SellerProfileForm({
           label="Telefone"
           error={fieldErrors.phone}
         >
-          <Input
+          <MaskedInput
+            mask="phone"
             name="phone"
             defaultValue={phone}
             type="tel"
             numeric
             placeholder="(11) 99999-9999"
-            maxLength={20}
+            maxLength={15}
             aria-invalid={Boolean(fieldErrors.phone)}
           />
         </Field>

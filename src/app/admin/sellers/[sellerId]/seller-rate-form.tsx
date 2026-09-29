@@ -12,6 +12,7 @@ import {
   FormGrid,
   Input,
 } from "@/app/_components/ui/field";
+import { MaskedInput } from "@/app/_components/ui/masked-input";
 import {
   readApiResult,
   readFieldErrors,
@@ -89,7 +90,8 @@ export function SellerRateForm({
           label="Novo percentual"
           error={fieldErrors.ratePercentage}
         >
-          <Input
+          <MaskedInput
+            mask="percent"
             name="ratePercentage"
             numeric
             inputMode="decimal"

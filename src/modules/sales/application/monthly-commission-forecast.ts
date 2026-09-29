@@ -22,6 +22,16 @@ export function competenceOf(date: string): string {
   return date.slice(0, 7);
 }
 
+/** Competência deslocada em meses, sem passar por `Date` nem fuso horário. */
+export function shiftCompetence(competence: string, months: number): string {
+  const [year, month] = competence.split("-").map(Number);
+  const index = year * 12 + (month - 1) + months;
+  const shiftedYear = Math.floor(index / 12);
+  const shiftedMonth = (index % 12) + 1;
+
+  return `${String(shiftedYear).padStart(4, "0")}-${String(shiftedMonth).padStart(2, "0")}`;
+}
+
 /**
  * Agrupa as parcelas por competência, da mais antiga para a mais recente, e
  * soma cada mês em centavos inteiros. A ordem da lista recebida não importa.

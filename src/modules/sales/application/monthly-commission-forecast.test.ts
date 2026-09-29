@@ -3,6 +3,7 @@ import {
   competenceOf,
   groupInstallmentsByCompetence,
   isCompetence,
+  shiftCompetence,
   selectCompetence,
 } from "./monthly-commission-forecast";
 import type { SellerCommissionInstallment } from "./seller-commission-repository";
@@ -196,5 +197,18 @@ describe("isCompetence", () => {
     expect(isCompetence(undefined)).toBe(false);
     expect(isCompetence(202609)).toBe(false);
     expect(isCompetence(["2026-09"])).toBe(false);
+  });
+});
+
+describe("shiftCompetence", () => {
+  it("avança e recua dentro do ano", () => {
+    expect(shiftCompetence("2026-08", 1)).toBe("2026-09");
+    expect(shiftCompetence("2026-08", -1)).toBe("2026-07");
+  });
+
+  it("atravessa a virada do ano nos dois sentidos", () => {
+    expect(shiftCompetence("2026-12", 1)).toBe("2027-01");
+    expect(shiftCompetence("2026-01", -1)).toBe("2025-12");
+    expect(shiftCompetence("2026-01", -13)).toBe("2024-12");
   });
 });

@@ -16,6 +16,7 @@ import { ButtonLink } from "@/app/_components/ui/button";
 import { Card, CardHeading } from "@/app/_components/ui/card";
 import { DataTable } from "@/app/_components/ui/data-table";
 import { PageBody, PageHeader } from "@/app/_components/ui/page-layout";
+import { MetricCard, MetricGrid } from "@/app/_components/ui/metric-card";
 import { EmptyState, ErrorState } from "@/app/_components/ui/state-block";
 import { StatusBadge } from "@/app/_components/ui/status-badge";
 import {
@@ -275,93 +276,55 @@ export default async function SellerPage() {
           ) : null}
         </section>
 
-        <ul className={styles.metrics} aria-label="Seus valores">
-          <li className={styles.metric}>
-            <div className={styles.metricInner}>
-              <span className={styles.metricIcon}>
-                <HandCoins size={26} strokeWidth={1.7} aria-hidden="true" />
-              </span>
-              <div className={styles.metricText}>
-                <span className={styles.metricLabel}>
-                  Previsto em {monthName(currentMonth.competence)}
-                </span>
-                <strong className={`num ${styles.metricValue}`}>
-                  {formatCents(currentMonth.totalInCents)}
-                </strong>
-                <span className={styles.metricNote}>
-                  {countLabel(
-                    currentMonth.closingInstallments,
-                    "parcela no mês",
-                    "parcelas no mês",
-                  )}
-                </span>
-              </div>
-            </div>
-          </li>
+        <MetricGrid label="Seus valores">
+          <MetricCard
+            icon={HandCoins}
+            label={`Previsto em ${monthName(currentMonth.competence)}`}
+            value={formatCents(currentMonth.totalInCents)}
+            note={countLabel(
+              currentMonth.closingInstallments,
+              "parcela no mês",
+              "parcelas no mês",
+            )}
+          />
 
-          <li className={styles.metric}>
-            <div className={styles.metricInner}>
-              <span className={styles.metricIcon}>
-                <CalendarClock size={26} strokeWidth={1.7} aria-hidden="true" />
-              </span>
-              <div className={styles.metricText}>
-                <span className={styles.metricLabel}>
-                  Programado para pagamento
-                </span>
-                <strong className={`num ${styles.metricValue}`}>
-                  {formatCents(scheduled.amountInCents)}
-                </strong>
-                <span className={styles.metricNote}>
-                  {scheduled.firstDueOn
-                    ? `${countLabel(scheduled.installments, "parcela", "parcelas")} · a partir de ${formatBusinessDate(scheduled.firstDueOn)}`
-                    : "Nada programado ainda"}
-                </span>
-              </div>
-            </div>
-          </li>
+          <MetricCard
+            icon={CalendarClock}
+            label="Programado para pagamento"
+            value={formatCents(scheduled.amountInCents)}
+            note={
+              scheduled.firstDueOn
+                ? `${countLabel(scheduled.installments, "parcela", "parcelas")} · a partir de ${formatBusinessDate(scheduled.firstDueOn)}`
+                : "Nada programado ainda"
+            }
+          />
 
-          <li className={styles.metric}>
-            <div className={styles.metricInner}>
-              <span className={styles.metricIcon}>
-                <BadgeCheck size={26} strokeWidth={1.7} aria-hidden="true" />
-              </span>
-              <div className={styles.metricText}>
-                <span className={styles.metricLabel}>
-                  {lastPayment
-                    ? `Pago em ${monthName(lastPayment.competence)}`
-                    : "Pago no último fechamento"}
-                </span>
-                <strong className={`num ${styles.metricValue}`}>
-                  {lastPayment ? formatCents(lastPayment.paidInCents) : "—"}
-                </strong>
-                <span className={styles.metricNote}>
-                  {lastPayment
-                    ? `Registrado em ${formatBusinessDate(lastPayment.paidOn)}`
-                    : "Nenhum pagamento registrado"}
-                </span>
-              </div>
-            </div>
-          </li>
+          <MetricCard
+            icon={BadgeCheck}
+            label={
+              lastPayment
+                ? `Pago em ${monthName(lastPayment.competence)}`
+                : "Pago no último fechamento"
+            }
+            value={lastPayment ? formatCents(lastPayment.paidInCents) : "—"}
+            note={
+              lastPayment
+                ? `Registrado em ${formatBusinessDate(lastPayment.paidOn)}`
+                : "Nenhum pagamento registrado"
+            }
+          />
 
-          <li className={styles.metric}>
-            <div className={styles.metricInner}>
-              <span className={styles.metricIcon}>
-                <CalendarRange size={26} strokeWidth={1.7} aria-hidden="true" />
-              </span>
-              <div className={styles.metricText}>
-                <span className={styles.metricLabel}>Próximos meses</span>
-                <strong className={`num ${styles.metricValue}`}>
-                  {formatCents(upcoming.amountInCents)}
-                </strong>
-                <span className={styles.metricNote}>
-                  {upcoming.installments > 0
-                    ? `Ainda previsto · ${countLabel(upcoming.competences, "competência", "competências")}`
-                    : "Nada previsto depois deste mês"}
-                </span>
-              </div>
-            </div>
-          </li>
-        </ul>
+          <MetricCard
+            icon={CalendarRange}
+            label="Próximos meses"
+            value={formatCents(upcoming.amountInCents)}
+            note={
+              upcoming.installments > 0
+                ? `Ainda previsto · ${countLabel(upcoming.competences, "competência", "competências")}`
+                : "Nada previsto depois deste mês"
+            }
+          />
+        </MetricGrid>
 
         <Card flush aria-labelledby="seller-month-title">
           <CardHeading

@@ -9,7 +9,10 @@
   border-bottom: 1px solid var(--slate-150);
 }
 
+/* Posicionado para conter o `.visually-hidden` (absoluto) dos cabeçalhos:
+   sem isso ele escapa da rolagem e alarga a página no celular. */
 .scroll {
+  position: relative;
   width: 100%;
   overflow-x: auto;
 }

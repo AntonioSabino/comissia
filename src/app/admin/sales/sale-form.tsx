@@ -178,7 +178,7 @@ export function SaleForm({ administrators, sellers, today }: SaleFormProps) {
             numeric
             inputMode="decimal"
             placeholder="200.000,00"
-            maxLength={24}
+            maxLength={28}
             required
           />
         </Field>

@@ -148,7 +148,7 @@ export function SellerProfileForm({
             type="tel"
             numeric
             placeholder="(11) 99999-9999"
-            maxLength={15}
+            maxLength={20}
             aria-invalid={Boolean(fieldErrors.phone)}
           />
         </Field>

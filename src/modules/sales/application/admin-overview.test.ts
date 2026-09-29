@@ -64,6 +64,13 @@ describe("soldPeriodOf", () => {
     expect(soldPeriodOf("2028-02").soldTo).toBe("2028-02-29");
   });
 
+  it("segue a regra gregoriana do bissexto em qualquer ano aceito", () => {
+    expect(soldPeriodOf("0000-02").soldTo).toBe("0000-02-29");
+    expect(soldPeriodOf("0099-02").soldTo).toBe("0099-02-28");
+    expect(soldPeriodOf("1900-02").soldTo).toBe("1900-02-28");
+    expect(soldPeriodOf("2000-02").soldTo).toBe("2000-02-29");
+  });
+
   it("fecha dezembro em 31", () => {
     expect(soldPeriodOf("2026-12").soldTo).toBe("2026-12-31");
   });
@@ -163,6 +170,21 @@ describe("buildAdminOverview", () => {
     expect(overview.closing.paidInCents).toBe(BigInt(10_000));
     expect(overview.closing.outsideInCents).toBe(BigInt(5_000));
     expect(overview.closing.sellers).toHaveLength(2);
+    expect(overview.installments).toBe(3);
+  });
+
+  it("conta as parcelas de um mês só com canceladas e ajustadas", () => {
+    const overview = buildAdminOverview(
+      [],
+      [
+        installment("Marina", "cancelada", 5_000),
+        installment("Marina", "ajustada", 2_000),
+      ],
+    );
+
+    expect(overview.closing.closingInstallments).toBe(0);
+    expect(overview.installments).toBe(2);
+    expect(overview.closing.outsideInCents).toBe(BigInt(7_000));
   });
 
   it("devolve um mês vazio sem dividir por zero", () => {

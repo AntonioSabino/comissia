@@ -24,6 +24,11 @@ export type AdministratorProduction = {
 export type AdminOverview = {
   sales: number;
   creditInCents: bigint;
+  /**
+   * Parcelas da competência em qualquer situação, inclusive as canceladas e
+   * ajustadas que ficam fora do fechamento mas continuam em Repasses.
+   */
+  installments: number;
   /** Os vendedores que mais venderam no mês, pelo crédito. */
   ranking: SellerProduction[];
   /** Vendedores com venda no mês, além dos que aparecem no ranking. */
@@ -33,17 +38,25 @@ export type AdminOverview = {
   closing: PayoutClosing;
 };
 
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** Regra gregoriana, sem `Date`: `Date.UTC` trata os anos 0–99 como 1900–1999. */
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
 /**
  * Período de datas de venda de uma competência (AAAA-MM), do primeiro ao
- * último dia, para recortar a lista de vendas. O último dia é calculado em UTC
- * para não depender do fuso horário do servidor.
+ * último dia, para recortar a lista de vendas. O último dia sai da aritmética
+ * do calendário, sem fuso horário nem `Date`.
  */
 export function soldPeriodOf(competence: string): {
   soldFrom: string;
   soldTo: string;
 } {
   const [year, month] = competence.split("-").map(Number);
-  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const lastDay =
+    month === 2 && isLeapYear(year) ? 29 : DAYS_IN_MONTH[month - 1];
 
   return {
     soldFrom: `${competence}-01`,
@@ -112,6 +125,7 @@ export function buildAdminOverview(
   return {
     sales: sales.length,
     creditInCents,
+    installments: installments.length,
     ranking: ranked.slice(0, RANKING_SIZE),
     otherSellers: Math.max(ranked.length - RANKING_SIZE, 0),
     administrators: [...administrators.values()]

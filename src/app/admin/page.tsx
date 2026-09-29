@@ -153,7 +153,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               }
             />
 
-            {closing.closingInstallments > 0 ? (
+            {overview.installments > 0 ? (
               <>
                 <div className={styles.payout}>
                   <span className={styles.payoutIcon}>
@@ -181,6 +181,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       )}{" "}
                       · {formatCents(closing.paidInCents)} já pagos
                     </span>
+                    {overview.installments > closing.closingInstallments ? (
+                      <span>
+                        {countLabel(
+                          overview.installments - closing.closingInstallments,
+                          "parcela fora",
+                          "parcelas fora",
+                        )}{" "}
+                        do fechamento (canceladas ou ajustadas)
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className={styles.cardFooter}>

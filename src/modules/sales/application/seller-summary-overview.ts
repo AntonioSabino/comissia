@@ -1,16 +1,18 @@
-import type {
-  CommissionInstallmentStatus,
-  PayoutStage,
-} from "@/modules/commissions";
+import type { CommissionInstallmentStatus } from "@/modules/commissions";
 import type { StatementInstallment } from "./commission-statement-repository";
 import { sumInstallmentAmounts } from "./installment-totals";
 import { competenceOf } from "./monthly-commission-forecast";
 import { buildPayoutClosing } from "./payout-closing";
+import {
+  buildSellerPaymentHistory,
+  type SellerMonthStatus,
+} from "./seller-payment-history";
 
 export type SellerSummaryNextPayment = {
   /** Competência no formato AAAA-MM. */
   competence: string;
-  stage: PayoutStage;
+  /** A mesma situação que a tela de Pagamentos mostra para o mês. */
+  status: SellerMonthStatus;
   /** Previstas e programadas do mês: o que ainda falta pagar. */
   toPayInCents: bigint;
   /** Parcelas que ainda faltam pagar no mês. */
@@ -72,13 +74,6 @@ function earliest(values: readonly string[]): string | null {
   );
 }
 
-function latest(values: readonly string[]): string | null {
-  return values.reduce<string | null>(
-    (current, value) => (current === null || value > current ? value : current),
-    null,
-  );
-}
-
 function byDueDate(
   first: StatementInstallment,
   second: StatementInstallment,
@@ -95,10 +90,10 @@ function byDueDate(
  * pelo mesmo fechamento da tela de repasses, sempre em centavos inteiros, e
  * canceladas e ajustadas nunca entram em valor nenhum.
  *
- * O próximo pagamento segue a regra da tela de Pagamentos: o fechamento
- * pendente mais antigo entre os meses até o corrente e os futuros já
- * conferidos. O futuro só previsto entra em "Próximos meses", e não vira
- * próximo pagamento.
+ * O próximo e o último pagamento são os de `buildSellerPaymentHistory`, a
+ * mesma regra da tela de Pagamentos: o próximo é o fechamento pendente mais
+ * antigo entre os meses até o corrente e os futuros já conferidos, e o último
+ * é o registrado por último. O futuro só previsto entra em "Próximos meses".
  *
  * `businessDateOf` converte o instante do evento na data de negócio, para que
  * esta regra não dependa de fuso horário.
@@ -117,35 +112,28 @@ export function buildSellerSummaryOverview(
     byCompetence.set(installment.competence, list);
   }
 
-  const competences = [...byCompetence.keys()].sort();
-
-  const nextCompetence = competences.find((competence) => {
-    const list = byCompetence.get(competence) ?? [];
-    const wasReviewed = list.some(
-      (installment) =>
-        installment.status === "programada" || installment.status === "paga",
-    );
-
-    return (
-      (competence <= currentCompetence || wasReviewed) &&
-      list.some((installment) => isPending(installment.status))
-    );
-  });
-  let nextPayment: SellerSummaryNextPayment | null = null;
-
-  if (nextCompetence !== undefined) {
-    const list = byCompetence.get(nextCompetence) ?? [];
-    const pending = list.filter((installment) => isPending(installment.status));
-    const closing = buildPayoutClosing(list);
-
-    nextPayment = {
-      competence: nextCompetence,
-      stage: closing.stage,
-      toPayInCents: closing.toPayInCents,
-      pendingInstallments: pending.length,
-      dueOn: earliest(pending.map((installment) => installment.dueOn)) ?? "",
-    };
-  }
+  // Próximo e último pagamento vêm do mesmo histórico da tela de Pagamentos:
+  // as duas telas nunca discordam sobre qual é o mês nem sobre a situação dele.
+  const history = buildSellerPaymentHistory(
+    installments,
+    today,
+    businessDateOf,
+  );
+  const next = history.nextPayment;
+  const nextPayment: SellerSummaryNextPayment | null = next
+    ? {
+        competence: next.competence,
+        status: next.status,
+        toPayInCents: next.toPayInCents,
+        pendingInstallments: next.pendingInstallments,
+        dueOn:
+          earliest(
+            next.installments
+              .filter((installment) => isPending(installment.status))
+              .map((installment) => installment.dueOn),
+          ) ?? "",
+      }
+    : null;
 
   const currentList = byCompetence.get(currentCompetence) ?? [];
   const currentClosing = buildPayoutClosing(currentList);
@@ -154,27 +142,15 @@ export function buildSellerSummaryOverview(
     (installment) => installment.status === "programada",
   );
 
-  // O último pagamento é o registrado por último, e não o da competência mais
-  // recente: a administração pode pagar um mês antigo depois de um mais novo.
-  let lastPayment: SellerSummaryLastPayment | null = null;
-  let lastPaidAt: string | null = null;
-
-  for (const competence of competences) {
-    const list = byCompetence.get(competence) ?? [];
-    const paid = list.filter((installment) => installment.status === "paga");
-    const paidAt = latest(
-      paid.map((installment) => installment.statusChangedAt),
-    );
-
-    if (paidAt !== null && (lastPaidAt === null || paidAt > lastPaidAt)) {
-      lastPaidAt = paidAt;
-      lastPayment = {
-        competence,
-        paidInCents: sumInstallmentAmounts(paid),
-        paidOn: businessDateOf(paidAt),
-      };
-    }
-  }
+  const last = history.lastPayment;
+  const lastPayment: SellerSummaryLastPayment | null =
+    last?.paidOn != null
+      ? {
+          competence: last.competence,
+          paidInCents: last.paidInCents,
+          paidOn: last.paidOn,
+        }
+      : null;
 
   const upcoming = installments.filter(
     (installment) =>

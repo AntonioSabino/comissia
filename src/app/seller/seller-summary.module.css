@@ -1,4 +1,5 @@
-/* Destaque do próximo pagamento: a superfície escura do kit (Card inverse). */
+/* Destaque do próximo pagamento: a superfície escura do kit (Card inverse).
+   O brilho é cobalto: verde fica para dinheiro. */
 .hero {
   display: flex;
   flex-wrap: wrap;
@@ -10,7 +11,7 @@
   background:
     radial-gradient(
       circle at 78% 15%,
-      rgba(57, 217, 160, 0.22),
+      rgba(75, 131, 232, 0.24),
       transparent 32%
     ),
     linear-gradient(135deg, var(--navy-950), var(--navy-800));

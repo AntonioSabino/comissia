@@ -345,10 +345,12 @@ parcelas vazia — que é o que ela é.
 O resumo em `/seller` não acrescenta um quinto caminho de leitura. Os
 pagamentos vêm do demonstrativo (`commissionStatementRepository`, recortado pelo
 vendedor da sessão) e passam por `buildSellerSummaryOverview`, que soma pelo
-mesmo `buildPayoutClosing` da tela de repasses: o próximo pagamento (o
-fechamento pendente mais antigo, com a mesma regra de `/seller/payments`), o
+mesmo `buildPayoutClosing` da tela de repasses: o próximo pagamento, o
 previsto no mês corrente, o programado para pagamento, o último pagamento
-registrado e o que ainda está previsto em competências futuras. Canceladas e
+registrado e o que ainda está previsto em competências futuras. O próximo e o
+último pagamento não têm regra própria: vêm de `buildSellerPaymentHistory`,
+com a mesma situação do mês (`SellerMonthStatus`) que `/seller/payments`
+mostra, então as duas telas nunca discordam. Canceladas e
 ajustadas aparecem na lista do mês com a própria situação, mas não entram em
 soma nenhuma. A visão mês a mês fica em `/seller/payments`; o resumo só aponta
 para ela.

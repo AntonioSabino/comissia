@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { requirePageRole } from "@/modules/auth/infrastructure/next/current-user";
 import { isCompetence } from "@/modules/sales/application/monthly-commission-forecast";
 
 type SellerCommissionsPageProps = {
@@ -13,6 +14,10 @@ type SellerCommissionsPageProps = {
 export default async function SellerCommissionsPage({
   searchParams,
 }: SellerCommissionsPageProps) {
+  // Toda página protegida confere a sessão por conta própria, mesmo quando só
+  // redireciona: o layout do vendedor pode ter sido reaproveitado na
+  // navegação do cliente e não roda de novo.
+  await requirePageRole("seller");
   const { competencia } = await searchParams;
 
   redirect(

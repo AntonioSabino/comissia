@@ -131,8 +131,22 @@ describe("buildSellerPaymentHistory", () => {
       "2026-12",
     ]);
     expect(history.pendingInCents).toBe(BigInt(7_000));
+    expect(history.timeline.map((month) => month.pendingInstallments)).toEqual([
+      0, 1, 1,
+    ]);
     expect(history.timeline[1].outsideInstallments).toBe(1);
     expect(history.timeline[1].installments).toHaveLength(2);
+  });
+
+  it("conta como pendente o mês com parcela de zero centavo", () => {
+    const history = buildSellerPaymentHistory(
+      [installment("2026-10", "prevista", 0)],
+      TODAY,
+      toDate,
+    );
+
+    expect(history.pendingInCents).toBe(BigInt(0));
+    expect(history.timeline[0].pendingInstallments).toBe(1);
   });
 
   it("mostra o futuro só quando o mês já foi conferido ou pago", () => {

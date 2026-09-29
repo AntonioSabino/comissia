@@ -266,6 +266,21 @@ trava antes de liberá-la.
 Recebimentos importados, corte por data de recebimento e repasses a parceiros,
 que aparecem no kit do Design System, ficam fora deste incremento.
 
+## Visão geral da administração
+
+`/admin` resume uma competência (`?competencia=AAAA-MM`; sem ela, o mês
+corrente) com duas leituras que já existiam: as vendas feitas no mês
+(`saleRepository.list` recortado por `soldPeriodOf`, do primeiro ao último dia)
+e as parcelas da competência (`adminCommissionRepository`).
+`buildAdminOverview` soma, em centavos inteiros, o crédito vendido, o ranking
+dos cinco vendedores com mais crédito (com desempate pelo nome), a produção e
+a participação de cada administradora (em pontos-base, arredondada para baixo)
+e o fechamento do mês pelo mesmo `buildPayoutClosing` de Repasses.
+
+Os blocos do kit que dependem de recebimentos importados e de metas das
+administradoras ("Recebido líquido", "Projeção Porto Elite" e "Itaú
+iConquista") ficam fora até esses dados existirem.
+
 ## Pagamentos e demonstrativos
 
 `commissionStatementRepository` é a leitura dos demonstrativos: parcelas com a
